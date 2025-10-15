@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from llm_dataset_engine.utils import RateLimiter
+from src.utils import RateLimiter
 
 
 class TestRateLimiter:

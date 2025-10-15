@@ -10,9 +10,9 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from llm_dataset_engine.adapters.llm_client import LLMClient
-from llm_dataset_engine.core.models import LLMResponse
-from llm_dataset_engine.core.specifications import (
+from src.adapters.llm_client import LLMClient
+from src.core.models import LLMResponse
+from src.core.specifications import (
     DatasetSpec,
     DataSourceType,
     LLMProvider,

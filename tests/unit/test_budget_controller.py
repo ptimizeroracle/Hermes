@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from llm_dataset_engine.utils import BudgetController, BudgetExceededError
+from src.utils import BudgetController, BudgetExceededError
 
 
 class TestBudgetController:

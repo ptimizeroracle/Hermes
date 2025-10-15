@@ -85,7 +85,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=llm_dataset_engine --cov-report=term-missing"
+addopts = "-v --cov=src --cov-report=term-missing"
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
 ]

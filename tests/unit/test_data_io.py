@@ -6,14 +6,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from llm_dataset_engine.adapters.data_io import (
+from src.adapters.data_io import (
     CSVReader,
     CSVWriter,
     DataFrameReader,
     create_data_reader,
     create_data_writer,
 )
-from llm_dataset_engine.core.specifications import DataSourceType
+from src.core.specifications import DataSourceType
 
 
 class TestDataReaders:
@@ -167,7 +167,7 @@ class TestCheckpointStorage:
     def test_checkpoint_save_and_load(self):
         """Test saving and loading checkpoints."""
         from uuid import uuid4
-        from llm_dataset_engine.adapters import LocalFileCheckpointStorage
+        from src.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = LocalFileCheckpointStorage(temp_dir)
@@ -192,7 +192,7 @@ class TestCheckpointStorage:
     def test_checkpoint_list(self):
         """Test listing checkpoints."""
         from uuid import uuid4
-        from llm_dataset_engine.adapters import LocalFileCheckpointStorage
+        from src.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = LocalFileCheckpointStorage(temp_dir)
@@ -209,7 +209,7 @@ class TestCheckpointStorage:
     def test_checkpoint_delete(self):
         """Test deleting checkpoints."""
         from uuid import uuid4
-        from llm_dataset_engine.adapters import LocalFileCheckpointStorage
+        from src.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = LocalFileCheckpointStorage(temp_dir)

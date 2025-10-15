@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from llm_dataset_engine.utils import CostTracker
+from src.utils import CostTracker
 
 
 class TestCostTracker:

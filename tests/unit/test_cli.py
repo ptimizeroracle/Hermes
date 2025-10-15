@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from click.testing import CliRunner
 
-from llm_dataset_engine.cli.main import cli
+from src.cli.main import cli
 
 
 class TestCLI:

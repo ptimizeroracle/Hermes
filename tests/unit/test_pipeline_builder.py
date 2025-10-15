@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from llm_dataset_engine import PipelineBuilder
-from llm_dataset_engine.core.specifications import (
+from src.core.specifications import (
     DataSourceType,
     LLMProvider,
 )

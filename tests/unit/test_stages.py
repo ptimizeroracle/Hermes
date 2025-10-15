@@ -5,14 +5,14 @@ from decimal import Decimal
 import pandas as pd
 import pytest
 
-from llm_dataset_engine.core.models import LLMResponse, PromptBatch, RowMetadata
-from llm_dataset_engine.core.specifications import (
+from src.core.models import LLMResponse, PromptBatch, RowMetadata
+from src.core.specifications import (
     DatasetSpec,
     DataSourceType,
     PromptSpec,
 )
-from llm_dataset_engine.orchestration import ExecutionContext
-from llm_dataset_engine.stages import (
+from src.orchestration import ExecutionContext
+from src.stages import (
     DataLoaderStage,
     JSONParser,
     LLMInvocationStage,
@@ -148,7 +148,7 @@ class TestLLMInvocationStage:
 
     def test_llm_invocation_with_mock_client(self):
         """Test LLM invocation with mock client."""
-        from llm_dataset_engine.core.specifications import LLMProvider, LLMSpec
+        from src.core.specifications import LLMProvider, LLMSpec
         
         mock_client = MockLLMClient(
             spec=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
@@ -175,7 +175,7 @@ class TestLLMInvocationStage:
 
     def test_llm_invocation_maintains_order(self):
         """Test LLM invocation maintains response order."""
-        from llm_dataset_engine.core.specifications import LLMProvider, LLMSpec
+        from src.core.specifications import LLMProvider, LLMSpec
         
         mock_client = MockLLMClient(
             spec=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
@@ -264,7 +264,7 @@ class TestResponseParserStage:
 
     def test_response_parser_stage_with_json(self):
         """Test response parser stage with JSON parser."""
-        from llm_dataset_engine.core.models import ResponseBatch
+        from src.core.models import ResponseBatch
         
         parser = JSONParser()
         stage = ResponseParserStage(parser=parser, output_columns=["name", "value"])

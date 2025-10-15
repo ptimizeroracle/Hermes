@@ -2,7 +2,7 @@
 
 import pytest
 
-from llm_dataset_engine.utils import (
+from src.utils import (
     NetworkError,
     RateLimitError,
     RetryHandler,

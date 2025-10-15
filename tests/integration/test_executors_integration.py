@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from llm_dataset_engine import PipelineBuilder
-from llm_dataset_engine.orchestration import AsyncExecutor, StreamingExecutor
+from src.orchestration import AsyncExecutor, StreamingExecutor
 
 
 @pytest.mark.integration

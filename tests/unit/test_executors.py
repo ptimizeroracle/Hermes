@@ -6,14 +6,14 @@ from decimal import Decimal
 import pandas as pd
 import pytest
 
-from llm_dataset_engine.core.models import ProcessingStats
-from llm_dataset_engine.orchestration import (
+from src.core.models import ProcessingStats
+from src.orchestration import (
     AsyncExecutor,
     ExecutionContext,
     StreamingExecutor,
     SyncExecutor,
 )
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
+from src.stages.pipeline_stage import PipelineStage
 
 
 class MockStage(PipelineStage):
@@ -25,7 +25,7 @@ class MockStage(PipelineStage):
 
     def validate_input(self, input_data, context):
         """Validate input."""
-        from llm_dataset_engine.core.models import ValidationResult
+        from src.core.models import ValidationResult
         return ValidationResult(is_valid=True, errors=[])
 
     def process(self, input_data, context):
@@ -37,7 +37,7 @@ class MockStage(PipelineStage):
 
     def estimate_cost(self, input_data, context):
         """Estimate cost."""
-        from llm_dataset_engine.core.models import CostEstimate
+        from src.core.models import CostEstimate
         return CostEstimate(
             total_cost=Decimal("0.0"),
             total_tokens=0,

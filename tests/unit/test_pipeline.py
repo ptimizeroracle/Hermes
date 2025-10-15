@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from decimal import Decimal
 
-from llm_dataset_engine.api.pipeline import Pipeline
-from llm_dataset_engine.core.specifications import (
+from src.api.pipeline import Pipeline
+from src.core.specifications import (
     DatasetSpec,
     DataSourceType,
     LLMProvider,
@@ -122,7 +122,7 @@ class TestPipeline:
 
     def test_add_observer(self):
         """Test adding observers to pipeline."""
-        from llm_dataset_engine.orchestration import LoggingObserver
+        from src.orchestration import LoggingObserver
         
         specs = PipelineSpecifications(
             dataset=DatasetSpec(
@@ -143,7 +143,7 @@ class TestPipeline:
 
     def test_pipeline_with_executor(self):
         """Test pipeline with custom executor."""
-        from llm_dataset_engine.orchestration import SyncExecutor
+        from src.orchestration import SyncExecutor
         
         specs = PipelineSpecifications(
             dataset=DatasetSpec(

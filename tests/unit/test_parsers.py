@@ -3,7 +3,7 @@
 import pytest
 from pydantic import BaseModel
 
-from llm_dataset_engine.stages import (
+from src.stages import (
     JSONParser,
     PydanticParser,
     RawTextParser,

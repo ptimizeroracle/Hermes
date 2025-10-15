@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from llm_dataset_engine import PipelineBuilder
-from llm_dataset_engine.stages import JSONParser, PydanticParser, RegexParser
+from src.stages import JSONParser, PydanticParser, RegexParser
 
 
 @pytest.mark.integration

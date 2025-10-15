@@ -2,12 +2,12 @@
 
 import pytest
 
-from llm_dataset_engine.core.error_handler import (
+from src.core.error_handler import (
     ErrorAction,
     ErrorDecision,
     ErrorHandler,
 )
-from llm_dataset_engine.core.specifications import ErrorPolicy
+from src.core.specifications import ErrorPolicy
 
 
 class TestErrorHandler:
@@ -98,7 +98,7 @@ class TestErrorRecovery:
 
     def test_retry_with_backoff(self):
         """Test retry with exponential backoff."""
-        from llm_dataset_engine.utils import RetryHandler
+        from src.utils import RetryHandler
         
         handler = RetryHandler(
             max_attempts=3,
