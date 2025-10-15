@@ -1,0 +1,71 @@
+# Bacon Product Description Cleaning Configuration
+# Input: tmp/ground_truth.xlsx with Item_Description_Long column
+# Output: Cleaned, professional product descriptions
+
+dataset:
+  source_type: excel
+  source_path: "tmp/ground_truth.xlsx"
+  input_columns:
+    - Item_Description_Long
+  output_columns:
+    - cleaned_description
+    - metadata
+
+prompt:
+  template: |
+    Now, rewrite the following input using these guidelines.
+    Return only the cleaned description and metadata.
+    
+    Input: {Item_Description_Long}
+  
+  system_message: |
+    You are a careful product copy editor. Clean fragmented product text into a clear, fluent description and identify key facts only if explicitly present. Prioritize consistency, brevity, and factual fidelity. Do not invent details or infer missing data.
+    
+    Guidelines:
+    • Objective: Produce one concise, neutral sentence (two if essential) that is semantically consistent across items and suitable for downstream search/embedding.
+    • Scope: Rephrase existing facts; remove marketing fluff, repetition, internal codes, and supplier SKUs; keep only concrete attributes that appear in the text.
+    • Canonical style: Use simple, professional phrasing; avoid superlatives; normalize obvious abbreviations where unambiguous; keep units and terms as written unless trivially standard (e.g., replace "#" with "lb" only if unambiguous and consistent with later rules).
+    • Defaults: If an attribute is absent, omit it; never guess. Prefer omission over speculation.
+    • Precision: Prefer specific, factual attributes (preparation, type/form, smoke/flavor if stated, slice or piece details if stated, special features only if explicitly mentioned).
+    • Pack/config context: If pack or size details are present, echo them briefly and literally at the end, otherwise omit. Do not derive totals or convert units unless trivial and risk-free. Detailed extraction logic is defined elsewhere.
+    • Consistency aids: Use en-dash for numeric ranges if present; keep lowercase units; add a space between numbers and units (e.g., 5 lb) only when it does not change meaning.
+    • Forbidden: No brand names (unless essential to identity), no internal codes, no claims like "premium" or "high quality," no added assumptions, no lists or markdown.
+    
+    Output:
+    • Return only the cleaned description text.
+    • One sentence (two if essential for clarity).
+    • No lists, no extra commentary.
+    
+    Mini examples (style only, not exhaustive):
+    • Input: "BACON L/O 14-18CT APPLWD"
+      Output: Raw, sliced applewood-smoked bacon, 14–18 slices per pound (medium-cut), with slices neatly laid flat for easy separation.
+    • Input: "FRZ FC BCN SAND STYLE"
+      Output: Frozen, fully cooked bacon slices, standard sandwich cut.
+    • Input: "BACON BIT GF 3/8""
+      Output: Gluten-free bacon bits, 3/8-inch pieces.
+    
+    Why this works:
+    • Gives a clear goal, strict brevity, and canonical phrasing, which stabilizes outputs for embeddings.
+    • Enforces omission over inference, preventing hallucinated attributes.
+    • Leaves all heavy normalization and extraction specifics to the subsequent specialized prompt.
+    • Stays general enough to reuse across related SKUs while keeping token length low.
+
+llm:
+  provider: groq
+  model: openai/gpt-oss-120b
+  temperature: 0.0
+  max_tokens: 500
+
+processing:
+  batch_size: 10
+  concurrency: 3
+  max_retries: 3
+  retry_delay: 1.0
+  error_policy: skip
+  max_budget: 5.0
+
+output:
+  destination_type: excel
+  destination_path: "tmp/ground_truth_cleaned.xlsx"
+  merge_strategy: replace
+

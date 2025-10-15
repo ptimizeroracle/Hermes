@@ -53,10 +53,10 @@ dev = [
 ]
 
 [project.scripts]
-llm-dataset = "llm_dataset_engine.cli.main:cli"
+llm-dataset = "src.cli.main:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/llm_dataset_engine"]
+packages = ["src"]
 
 [build-system]
 requires = ["hatchling"]

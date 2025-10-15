@@ -8,12 +8,12 @@ Models with reliability, observability, and cost control.
 __version__ = "1.0.0"
 
 # Layer 4: High-Level API
-from llm_dataset_engine.api.pipeline import Pipeline
-from llm_dataset_engine.api.pipeline_builder import PipelineBuilder
-from llm_dataset_engine.api.dataset_processor import DatasetProcessor
+from src.api.pipeline import Pipeline
+from src.api.pipeline_builder import PipelineBuilder
+from src.api.dataset_processor import DatasetProcessor
 
 # Core configuration models
-from llm_dataset_engine.core.specifications import (
+from src.core.specifications import (
     DatasetSpec,
     PromptSpec,
     LLMSpec,
