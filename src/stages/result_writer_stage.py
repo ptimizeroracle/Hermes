@@ -22,7 +22,7 @@ from src.stages.pipeline_stage import PipelineStage
 
 class ResultWriterStage(
     PipelineStage[
-        tuple[pd.DataFrame, pd.DataFrame, OutputSpec], WriteConfirmation
+        tuple[pd.DataFrame, pd.DataFrame, OutputSpec], pd.DataFrame
     ]
 ):
     """
@@ -32,7 +32,7 @@ class ResultWriterStage(
     - Merge results with original data
     - Write to configured destination
     - Support atomic writes
-    - Return confirmation
+    - Return merged DataFrame
     """
 
     def __init__(self):
@@ -43,8 +43,8 @@ class ResultWriterStage(
         self,
         input_data: tuple[pd.DataFrame, pd.DataFrame, OutputSpec],
         context: Any,
-    ) -> WriteConfirmation:
-        """Write results to destination."""
+    ) -> pd.DataFrame:
+        """Write results to destination and return merged DataFrame."""
         original_df, results_df, output_spec = input_data
         
         # Merge results with original data
@@ -69,15 +69,9 @@ class ResultWriterStage(
                 f"Wrote {confirmation.rows_written} rows to "
                 f"{confirmation.path}"
             )
-            
-            return confirmation
-        else:
-            # No destination specified, return in-memory confirmation
-            return WriteConfirmation(
-                path="<in-memory>",
-                rows_written=len(merged_df),
-                success=True,
-            )
+        
+        # Always return the merged DataFrame (needed for quality validation)
+        return merged_df
 
     def _merge_results(
         self,

@@ -65,7 +65,15 @@ processing:
   max_retries: 3
   retry_delay: 1.0
   error_policy: skip
-  max_budget: 5.0
+  max_budget: 10.0
+  
+  # Input preprocessing (removes noise, normalizes whitespace)
+  enable_preprocessing: true
+  preprocessing_max_length: 500
+  
+  # Auto-retry failed rows (rows with null outputs)
+  auto_retry_failed: true
+  max_retry_attempts: 2
 
 output:
   destination_type: excel

@@ -17,6 +17,11 @@ from src.utils.retry_handler import (
     RetryableError,
     RetryHandler,
 )
+from src.utils.input_preprocessing import (
+    preprocess_text,
+    preprocess_dataframe,
+    analyze_preprocessing_impact,
+)
 
 __all__ = [
     "RetryHandler",
@@ -30,5 +35,8 @@ __all__ = [
     "configure_logging",
     "get_logger",
     "sanitize_for_logging",
+    "preprocess_text",
+    "preprocess_dataframe",
+    "analyze_preprocessing_impact",
 ]
 

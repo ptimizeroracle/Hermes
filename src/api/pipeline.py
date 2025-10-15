@@ -221,6 +221,11 @@ class Pipeline:
             observer.on_pipeline_start(self, context)
         
         try:
+            # Optional: Preprocess inputs
+            if self.specifications.processing.enable_preprocessing:
+                self.logger.info("Preprocessing inputs...")
+                self.dataframe = self._preprocess_inputs(self.dataframe)
+            
             # Execute stages
             result_df = self._execute_stages(context, state_manager)
             
@@ -244,6 +249,10 @@ class Pipeline:
                 end_time=context.end_time,
                 success=True,
             )
+            
+            # Optional: Auto-retry failed rows
+            if self.specifications.processing.auto_retry_failed:
+                result = self._auto_retry_failed_rows(result)
             
             # Cleanup checkpoints on success
             state_manager.cleanup_checkpoints(context.session_id)
@@ -428,4 +437,88 @@ class Pipeline:
             for observer in self.observers:
                 observer.on_stage_error(stage, context, e)
             raise
+    
+    def _preprocess_inputs(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess input columns to clean and normalize text."""
+        from src.utils.input_preprocessing import preprocess_dataframe
+        
+        cleaned_df, stats = preprocess_dataframe(
+            df,
+            input_columns=self.specifications.dataset.input_columns,
+            max_length=self.specifications.processing.preprocessing_max_length,
+        )
+        
+        self.logger.info(
+            f"Preprocessing complete: "
+            f"{stats.reduction_pct:.1f}% char reduction, "
+            f"{stats.truncated_count} truncated"
+        )
+        
+        return cleaned_df
+    
+    def _auto_retry_failed_rows(self, result: ExecutionResult) -> ExecutionResult:
+        """Auto-retry rows with null outputs."""
+        specs = self.specifications
+        output_cols = specs.dataset.output_columns
+        
+        # Check quality
+        quality = result.validate_output_quality(output_cols)
+        
+        if quality.null_outputs == 0:
+            self.logger.info("No failed rows to retry")
+            return result
+        
+        self.logger.info(
+            f"Auto-retry enabled: {quality.null_outputs} null outputs detected"
+        )
+        
+        # Try up to max_retry_attempts
+        for attempt in range(1, specs.processing.max_retry_attempts + 1):
+            # Find null rows
+            null_mask = result.data[output_cols[0]].isna()
+            failed_indices = result.data[null_mask].index.tolist()
+            
+            if not failed_indices:
+                break
+            
+            self.logger.info(
+                f"Retry attempt {attempt}/{specs.processing.max_retry_attempts}: "
+                f"{len(failed_indices)} rows"
+            )
+            
+            # Extract failed rows from original data
+            retry_df = self.dataframe.loc[failed_indices].copy()
+            
+            # Create new pipeline for retry (same config)
+            retry_pipeline = Pipeline(
+                self.specifications,
+                dataframe=retry_df,
+                observers=[],  # No observers for retry
+            )
+            
+            # Execute retry
+            retry_result = retry_pipeline.execute()
+            
+            # Merge retry results back
+            for col in output_cols:
+                for idx in retry_result.data.index:
+                    result.data.loc[idx, col] = retry_result.data.loc[idx, col]
+            
+            # Update costs
+            result.costs.total_cost += retry_result.costs.total_cost
+            result.costs.total_tokens += retry_result.costs.total_tokens
+            
+            # Check quality again
+            quality = result.validate_output_quality(output_cols)
+            self.logger.info(
+                f"After retry {attempt}: "
+                f"{quality.valid_outputs}/{quality.total_rows} valid "
+                f"({quality.success_rate:.1f}%)"
+            )
+            
+            # Stop if acceptable
+            if quality.is_acceptable:
+                break
+        
+        return result
 

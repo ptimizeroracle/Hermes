@@ -201,6 +201,22 @@ class ProcessingSpec(BaseModel):
     checkpoint_dir: Path = Field(
         default=Path(".checkpoints"), description="Checkpoint directory"
     )
+    
+    # Input preprocessing
+    enable_preprocessing: bool = Field(
+        default=False, description="Enable input preprocessing"
+    )
+    preprocessing_max_length: int = Field(
+        default=500, gt=0, description="Max chars after preprocessing"
+    )
+    
+    # Auto-retry failed rows
+    auto_retry_failed: bool = Field(
+        default=False, description="Auto-retry rows with null outputs"
+    )
+    max_retry_attempts: int = Field(
+        default=1, ge=1, le=3, description="Max retry attempts for failed rows"
+    )
 
     @field_validator("checkpoint_dir")
     @classmethod
