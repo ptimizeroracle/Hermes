@@ -26,31 +26,48 @@ from src.core.specifications import (
 console = Console()
 
 
+HERMES_BANNER = """
+[bold cyan]
+    ╦ ╦╔═╗╦═╗╔╦╗╔═╗╔═╗
+    ╠═╣║╣ ╠╦╝║║║║╣ ╚═╗
+    ╩ ╩╚═╝╩╚═╩ ╩╚═╝╚═╝[/bold cyan]
+[dim]    The LLM Dataset Engine[/dim]
+[bold]━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold]
+"""
+
+
+def show_banner():
+    """Display the Hermes banner."""
+    console.print(HERMES_BANNER)
+
+
 @click.group()
 @click.version_option(version=__version__, prog_name="llm-dataset")
-def cli():
+@click.pass_context
+def cli(ctx):
     """
-    LLM Dataset Engine - Process tabular datasets using LLMs.
+    🪽 HERMES - LLM Dataset Engine
     
-    A production-grade SDK for processing CSV, Excel, and Parquet files
-    with Large Language Models, featuring reliability, cost control, and
-    observability.
+    Process tabular datasets using LLMs with production-grade reliability,
+    cost control, and observability.
     
     Examples:
     
         # Process a dataset
-        llm-dataset process --config config.yaml --input data.csv --output result.csv
+        llm-dataset process --config config.yaml
         
         # Estimate cost before processing
-        llm-dataset estimate --config config.yaml --input data.csv
+        llm-dataset estimate --config config.yaml
         
         # Resume from checkpoint
-        llm-dataset resume --session-id abc-123 --checkpoint-dir .checkpoints
+        llm-dataset resume --session-id abc-123
         
         # Validate configuration
         llm-dataset validate --config config.yaml
     """
-    pass
+    # Show banner only for main commands (not for --help)
+    if ctx.invoked_subcommand is not None:
+        show_banner()
 
 
 @cli.command()

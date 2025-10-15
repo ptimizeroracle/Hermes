@@ -7,9 +7,17 @@ Adapter pattern and Dependency Inversion principle.
 
 import os
 import time
+import warnings
 from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
+
+# Suppress dependency warnings before importing llama_index
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*PyTorch.*TensorFlow.*Flax.*")
+
+# Suppress transformers warnings about missing deep learning frameworks
+os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
 import tiktoken
 from llama_index.core.llms import ChatMessage
@@ -310,14 +318,22 @@ class GroqClient(LLMClient):
         
         latency_ms = (time.time() - start_time) * 1000
         
+        # Extract text from response - handle both string and object responses
+        if hasattr(response, 'message') and hasattr(response.message, 'content'):
+            response_text = response.message.content or ""
+        elif hasattr(response, 'content'):
+            response_text = response.content or ""
+        else:
+            response_text = str(response) if response else ""
+        
         # Extract token usage
         tokens_in = len(self.tokenizer.encode(prompt))
-        tokens_out = len(self.tokenizer.encode(str(response)))
+        tokens_out = len(self.tokenizer.encode(response_text))
         
         cost = self.calculate_cost(tokens_in, tokens_out)
         
         return LLMResponse(
-            text=str(response),
+            text=response_text,
             tokens_in=tokens_in,
             tokens_out=tokens_out,
             model=self.model,

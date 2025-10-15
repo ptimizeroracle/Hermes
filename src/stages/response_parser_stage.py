@@ -30,8 +30,16 @@ class RawTextParser(ResponseParser):
     """Parser that returns raw text."""
 
     def parse(self, response: str) -> Dict[str, Any]:
-        """Return response as-is."""
-        return {"output": response.strip()}
+        """Return response as-is, after cleaning chat format artifacts."""
+        cleaned = response.strip()
+        
+        # Strip common chat format prefixes (assistant:, user:, system:)
+        for prefix in ["assistant:", "user:", "system:"]:
+            if cleaned.lower().startswith(prefix):
+                cleaned = cleaned[len(prefix):].strip()
+                break
+        
+        return {"output": cleaned}
 
 
 class JSONParser(ResponseParser):

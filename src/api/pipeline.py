@@ -213,6 +213,9 @@ class Pipeline:
                 CostTrackingObserver(),
             ]
         
+        # Attach observers to context for progress notifications
+        context.observers = self.observers
+        
         # Notify observers of start
         for observer in self.observers:
             observer.on_pipeline_start(self, context)
@@ -284,17 +287,13 @@ class Pipeline:
         
         # Stage 1: Load data
         loader = DataLoaderStage(self.dataframe)
-        self._execute_stage(loader, specs.dataset, context)
-        df = context.intermediate_data["loaded_data"] = (
-            loader.process(specs.dataset, context)
-        )
+        df = self._execute_stage(loader, specs.dataset, context)
+        context.intermediate_data["loaded_data"] = df
         
         # Stage 2: Format prompts
         formatter = PromptFormatterStage(specs.processing.batch_size)
-        self._execute_stage(formatter, (df, specs.prompt), context)
-        batches = context.intermediate_data["prompt_batches"] = (
-            formatter.process((df, specs.prompt), context)
-        )
+        batches = self._execute_stage(formatter, (df, specs.prompt), context)
+        context.intermediate_data["prompt_batches"] = batches
         
         # Stage 3: Invoke LLM
         llm_client = create_llm_client(specs.llm)
@@ -316,10 +315,9 @@ class Pipeline:
             error_policy=specs.processing.error_policy,
             max_retries=specs.processing.max_retries,
         )
-        self._execute_stage(llm_stage, batches, context)
-        response_batches = context.intermediate_data["response_batches"] = (
-            llm_stage.process(batches, context)
-        )
+        # Stage 3: Execute LLM invocation
+        response_batches = self._execute_stage(llm_stage, batches, context)
+        context.intermediate_data["response_batches"] = response_batches
         
         # Check budget after LLM invocation
         if budget_controller:
@@ -334,22 +332,18 @@ class Pipeline:
             parser=RawTextParser(),
             output_columns=specs.dataset.output_columns,
         )
-        self._execute_stage(
+        results_df = self._execute_stage(
             parser_stage,
             (response_batches, specs.dataset.output_columns),
             context,
-        )
-        results_df = parser_stage.process(
-            (response_batches, specs.dataset.output_columns), context
         )
         
         # Stage 5: Write results (if output spec provided)
         if specs.output:
             writer = ResultWriterStage()
-            self._execute_stage(
+            final_df = self._execute_stage(
                 writer, (df, results_df, specs.output), context
             )
-            final_df = writer.process((df, results_df, specs.output), context)
             return final_df
         else:
             # Merge results with original
@@ -413,7 +407,7 @@ class Pipeline:
 
     def _execute_stage(
         self, stage: Any, input_data: Any, context: ExecutionContext
-    ) -> None:
+    ) -> Any:
         """Execute a single stage with observer notifications."""
         # Notify observers of stage start
         for observer in self.observers:
@@ -426,6 +420,8 @@ class Pipeline:
             # Notify observers of completion
             for observer in self.observers:
                 observer.on_stage_complete(stage, context, result)
+            
+            return result
                 
         except Exception as e:
             # Notify observers of error

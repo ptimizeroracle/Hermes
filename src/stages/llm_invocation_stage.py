@@ -81,7 +81,7 @@ class LLMInvocationStage(
         """Execute LLM calls for all prompt batches."""
         response_batches: List[ResponseBatch] = []
         
-        for batch in batches:
+        for batch_idx, batch in enumerate(batches):
             self.logger.info(
                 f"Processing batch {batch.batch_id} "
                 f"({len(batch.prompts)} prompts)"
@@ -91,6 +91,10 @@ class LLMInvocationStage(
             responses = self._process_batch_concurrent(
                 batch.prompts, context
             )
+            
+            # Notify progress after each batch
+            if hasattr(context, 'notify_progress'):
+                context.notify_progress()
             
             # Calculate batch metrics
             total_tokens = sum(r.tokens_in + r.tokens_out for r in responses)

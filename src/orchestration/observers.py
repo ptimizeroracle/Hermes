@@ -65,6 +65,12 @@ class ExecutionObserver(ABC):
         """Called on fatal pipeline failure."""
         pass
 
+    def on_progress_update(
+        self, context: ExecutionContext
+    ) -> None:
+        """Called periodically during execution for progress updates."""
+        pass
+
 
 class ProgressBarObserver(ExecutionObserver):
     """Observer that displays progress bar with tqdm."""
@@ -121,6 +127,16 @@ class ProgressBarObserver(ExecutionObserver):
         if self.progress_bar:
             self.progress_bar.close()
             self.progress_bar = None
+
+    def on_progress_update(self, context: ExecutionContext) -> None:
+        """Update progress bar with current row count."""
+        if self.progress_bar:
+            self.progress_bar.n = context.last_processed_row
+            self.progress_bar.set_postfix({
+                "cost": f"${context.accumulated_cost:.4f}",
+                "progress": f"{context.get_progress():.1f}%"
+            })
+            self.progress_bar.refresh()
 
 
 class LoggingObserver(ExecutionObserver):
@@ -179,6 +195,14 @@ class LoggingObserver(ExecutionObserver):
     ) -> None:
         """Log pipeline error."""
         self.logger.error(f"Pipeline execution failed: {error}")
+
+    def on_progress_update(self, context: ExecutionContext) -> None:
+        """Log progress update."""
+        # Make progress very visible with separators
+        self.logger.info(
+            f"━━━━━━ PROGRESS: {context.last_processed_row}/{context.total_rows} rows "
+            f"({context.get_progress():.1f}%) | Cost: ${context.accumulated_cost:.4f} ━━━━━━"
+        )
 
 
 class CostTrackingObserver(ExecutionObserver):
@@ -246,4 +270,8 @@ class CostTrackingObserver(ExecutionObserver):
         self.logger.info(
             f"Cost at failure: ${context.accumulated_cost:.4f}"
         )
+
+    def on_progress_update(self, context: ExecutionContext) -> None:
+        """No action on progress update for cost tracking."""
+        pass
 

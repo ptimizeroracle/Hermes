@@ -12,12 +12,23 @@ sys.path.insert(0, "src")
 import pandas as pd
 from src import PipelineBuilder
 
-# Set API key
-os.environ["GROQ_API_KEY"] = "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"
+# ========================================
+# CONFIGURATION - Adjust these as needed
+# ========================================
+MAX_TOKENS = 400           # Groq recommended: 400-800 for detailed outputs
+MAX_RETRIES = 3            # Number of retries on API errors
+BATCH_SIZE = 10            # Rows per batch
+CONCURRENCY = 3            # Parallel requests per batch
+MAX_BUDGET = 5.0           # Maximum spend in USD
+
+# Groq Pricing (as of 2024)
+GROQ_INPUT_COST_PER_1K = 0.00005   # $0.05 per 1M input tokens
+GROQ_OUTPUT_COST_PER_1K = 0.00008  # $0.08 per 1M output tokens
 
 print("🥓 BACON PRODUCT DESCRIPTION CLEANING")
 print("="*100)
-print("Processing ALL 365 rows with detailed transformation prompts")
+print(f"Processing ALL 365 rows with detailed transformation prompts")
+print(f"Config: max_tokens={MAX_TOKENS}, max_retries={MAX_RETRIES}, concurrency={CONCURRENCY}")
 print("="*100 + "\n")
 
 # Load ALL rows
@@ -34,13 +45,16 @@ print()
 # Your detailed transformation prompt (simplified but following your rules)
 transformation_prompt = """Rewrite this bacon description to be clean, professional, and factual.
 
+**CRITICAL: Always return a valid description. Never return "None" or empty text.**
+
 Follow these rules:
 1. Include (if present): preparation (raw/fully cooked/frozen), special features (sugar-cured, gluten-free, etc), 
    smoke type (applewood-smoked, hickory-smoked, etc), bacon type (sliced/slab/bits), 
    slice count (e.g., "18-22 slices per pound"), layflat if L/O/layout present
-2. Remove: brand names (OLD SMOKEHOUSE, etc), codes (BCN, PL, CC, CSMK, etc), pack sizes, abbreviations
-3. Expand: APPLWD→applewood, GF→gluten-free, FZ→frozen, FC→fully cooked
+2. Remove: brand names (OLD SMOKEHOUSE, HORMEL, etc), codes (BCN, PL, CC, CSMK, etc), pack sizes, abbreviations
+3. Expand: APPLWD→applewood, GF→gluten-free, FZ→frozen, FC/CKD→fully cooked, AWS→applewood
 4. Format as one concise sentence: [prep], [features], [smoke] [type], [count], [layflat]
+5. **If unsure, make best effort** - extract what you can identify and write partial description
 
 Examples:
 - Input: "BACON SLICED APPLEWOOD SMOKED LAYOUT 18-22 CT"
@@ -52,6 +66,9 @@ Examples:
 - Input: "BACON BIT FC GF 3/8"
   Output: "Fully cooked gluten-free bacon bits, 3/8-inch pieces"
 
+- Input: "BCN,PL,SYS-CLC,BITS,2/5#,1/2",FC,DICD,GF"
+  Output: "Fully cooked gluten-free bacon bits, 1/2-inch pieces"
+
 Now clean this:
 Input: {Item_Description_Long}
 
@@ -61,7 +78,8 @@ system_message = """You are a professional product description editor specializi
 Clean fragmented text into clear, consistent, factual descriptions.
 Remove all marketing fluff, brand names, and internal codes.
 Be concise and follow the rules exactly.
-Output only the cleaned description - no explanations."""
+Output only the cleaned description - no explanations.
+NEVER return "None" or empty output - always provide your best effort description."""
 
 # Build pipeline
 print("⚙️  Building pipeline...")
@@ -80,12 +98,14 @@ pipeline = (
         provider="groq",
         model="openai/gpt-oss-120b",
         temperature=0.0,
-        max_tokens=200
+        max_tokens=MAX_TOKENS,
+        input_cost_per_1k_tokens=GROQ_INPUT_COST_PER_1K,
+        output_cost_per_1k_tokens=GROQ_OUTPUT_COST_PER_1K
     )
-    .with_batch_size(10)
-    .with_concurrency(3)
-    .with_max_retries(3)
-    .with_max_budget(5.0)
+    .with_batch_size(BATCH_SIZE)
+    .with_concurrency(CONCURRENCY)
+    .with_max_retries(MAX_RETRIES)
+    .with_max_budget(MAX_BUDGET)
     .build()
 )
 print("✅ Pipeline built\n")
@@ -127,8 +147,8 @@ print(f"   Total rows: {result.metrics.total_rows}")
 print(f"   Processed: {result.metrics.processed_rows}")
 print(f"   Failed: {result.metrics.failed_rows}")
 print(f"   Skipped: {result.metrics.skipped_rows}")
-print(f"   Duration: {result.duration:.2f}s ({result.duration/60:.1f} minutes)")
-print(f"   Throughput: {result.metrics.throughput:.2f} rows/sec")
+print(f"   Duration: {result.metrics.total_duration_seconds:.2f}s ({result.metrics.total_duration_seconds/60:.1f} minutes)")
+print(f"   Throughput: {result.metrics.rows_per_second:.2f} rows/sec")
 
 print(f"\n💰 Cost:")
 print(f"   Total cost: ${result.costs.total_cost}")

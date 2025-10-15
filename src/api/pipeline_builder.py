@@ -283,6 +283,19 @@ class PipelineBuilder:
         self._processing_spec.rate_limit_rpm = rpm
         return self
 
+    def with_max_retries(self, retries: int) -> "PipelineBuilder":
+        """
+        Configure maximum retry attempts.
+
+        Args:
+            retries: Maximum number of retry attempts
+
+        Returns:
+            Self for chaining
+        """
+        self._processing_spec.max_retries = retries
+        return self
+
     def with_max_budget(self, budget: float) -> "PipelineBuilder":
         """
         Configure maximum budget.

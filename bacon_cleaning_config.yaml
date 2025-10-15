@@ -134,7 +134,7 @@ llm:
   provider: groq
   model: openai/gpt-oss-120b
   temperature: 0.0
-  max_tokens: 500
+  max_tokens: 400  # Increased from 200 to avoid truncation (Groq recommended: 400-800)
   input_cost_per_1k_tokens: 0.00005  # Groq pricing: $0.05 per 1M input tokens
   output_cost_per_1k_tokens: 0.00008  # Groq pricing: $0.08 per 1M output tokens
 

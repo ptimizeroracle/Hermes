@@ -86,6 +86,17 @@ class ErrorHandler:
             exc_info=True,
         )
 
+        # Check for FATAL errors that should always fail immediately
+        if self._is_fatal_error(error):
+            logger.error(
+                f"❌ FATAL ERROR: {error}\n"
+                f"   This error cannot be recovered. Pipeline will terminate."
+            )
+            return ErrorDecision(
+                action=ErrorAction.FAIL,
+                context=context,
+            )
+
         # Apply policy
         if self.policy == ErrorPolicy.RETRY:
             if attempt < self.max_retries:
@@ -138,6 +149,36 @@ class ErrorHandler:
                 context=context,
             )
 
+    def _is_fatal_error(self, error: Exception) -> bool:
+        """
+        Determine if error is fatal and should always fail immediately.
+        
+        Fatal errors are configuration/authentication issues that cannot
+        be recovered by retrying or skipping rows.
+
+        Args:
+            error: The exception
+
+        Returns:
+            True if error is fatal
+        """
+        error_str = str(error).lower()
+        
+        # Fatal error patterns
+        fatal_patterns = [
+            "invalid api key",
+            "invalid_api_key",
+            "authentication failed",
+            "401",
+            "403",  # Forbidden
+            "api key not found",
+            "unauthorized",
+            "invalid credentials",
+            "permission denied",
+        ]
+        
+        return any(pattern in error_str for pattern in fatal_patterns)
+
     def should_retry(self, error: Exception) -> bool:
         """
         Determine if error should be retried.
@@ -148,6 +189,10 @@ class ErrorHandler:
         Returns:
             True if retriable
         """
+        # Don't retry fatal errors
+        if self._is_fatal_error(error):
+            return False
+        
         retriable_keywords = [
             "rate limit",
             "timeout",

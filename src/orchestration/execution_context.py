@@ -7,10 +7,13 @@ Implements Memento pattern for checkpoint serialization.
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, List
 from uuid import UUID, uuid4
 
 from src.core.models import ProcessingStats
+
+if TYPE_CHECKING:
+    from src.orchestration.observers import ExecutionObserver
 
 
 @dataclass
@@ -42,6 +45,9 @@ class ExecutionContext:
     # Statistics
     failed_rows: int = 0
     skipped_rows: int = 0
+    
+    # Observers for progress notifications
+    observers: List["ExecutionObserver"] = field(default_factory=list)
 
     def update_stage(self, stage_index: int) -> None:
         """Update current stage."""
@@ -55,6 +61,15 @@ class ExecutionContext:
         """Add cost and token usage."""
         self.accumulated_cost += cost
         self.accumulated_tokens += tokens
+
+    def notify_progress(self) -> None:
+        """Notify all observers of progress update."""
+        for observer in self.observers:
+            try:
+                observer.on_progress_update(self)
+            except Exception:
+                # Silently ignore observer errors to not break pipeline
+                pass
 
     def get_progress(self) -> float:
         """Get completion percentage."""
