@@ -570,8 +570,8 @@ def list_checkpoints(checkpoint_dir: Path):
         
         console.print(f"[cyan]Scanning {checkpoint_dir} for checkpoints...[/cyan]")
         
-        storage = LocalFileCheckpointStorage(str(checkpoint_dir))
-        checkpoints = storage.list_all()
+        storage = LocalFileCheckpointStorage(checkpoint_dir)
+        checkpoints = storage.list_checkpoints()
         
         if not checkpoints:
             console.print("[yellow]No checkpoints found[/yellow]")
