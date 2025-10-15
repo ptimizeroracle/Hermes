@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "session_id": "d240c1ab-b979-4ccc-b805-fe16c5bdf6b8",
+  "timestamp": "2025-10-15T18:13:24.123084",
+  "data": {
+    "session_id": "d240c1ab-b979-4ccc-b805-fe16c5bdf6b8",
+    "pipeline_id": "2d9fd21b-8800-443d-8fbe-c1fe4e525a74",
+    "start_time": "2025-10-15T18:13:22.963847",
+    "end_time": null,
+    "current_stage_index": 0,
+    "last_processed_row": 0,
+    "total_rows": 1,
+    "accumulated_cost": "0.0000",
+    "accumulated_tokens": 368,
+    "intermediate_data": {
+      "loaded_data": "                                              review\n0  The product arrived late and the packaging was...",
+      "prompt_batches": [
+        "PromptBatch(prompts=['You are a professional customer service representative. Be empathetic, apologetic, and offer solutions. Keep responses concise and actionable.\\n\\nWrite a response to this customer review: The product arrived late and the packaging was damaged.'], metadata=[RowMetadata(row_index=0, row_id=None, batch_id=None, attempt=1, custom={})], batch_id=0)"
+      ],
+      "response_batches": [
+        "ResponseBatch(responses=['assistant: Dear [Customer Name],\\n\\nI\u2019m very sorry to hear that your order arrived late and the packaging was damaged. I understand how frustrating this must be, and I appreciate you bringing it to our attention.\\n\\nTo make this right, we can:\\n1. **Send a replacement** immediately at no extra cost, or  \\n2. **Issue a full refund** if you prefer.\\n\\nPlease let us know which option works best for you, and if you could share your order number, we\u2019ll expedite the process right away.\\n\\nThank you for your patience, and we\u2019re committed to ensuring a better experience moving forward.\\n\\nSincerely,  \\n[Your Name]  \\nCustomer Service Team  \\n[Contact Email / Phone]'], metadata=[RowMetadata(row_index=0, row_id=None, batch_id=None, attempt=1, custom={})], tokens_used=187, cost=Decimal('0.0000'), batch_id=0, latencies_ms=[561.1557960510254])"
+      ]
+    },
+    "failed_rows": 0,
+    "skipped_rows": 0
+  }
+}
