@@ -158,8 +158,29 @@ def process(
         # Override with CLI arguments
         specs.dataset.source_path = input
         
+        # Set output configuration
         if specs.output:
             specs.output.destination_path = output
+        else:
+            # Create output spec if not in config
+            from llm_dataset_engine.core.specifications import OutputSpec, MergeStrategy
+            
+            # Detect output type from extension
+            output_suffix = output.suffix.lower()
+            if output_suffix == ".csv":
+                output_type = DataSourceType.CSV
+            elif output_suffix in [".xlsx", ".xls"]:
+                output_type = DataSourceType.EXCEL
+            elif output_suffix == ".parquet":
+                output_type = DataSourceType.PARQUET
+            else:
+                output_type = DataSourceType.CSV  # Default
+            
+            specs.output = OutputSpec(
+                destination_type=output_type,
+                destination_path=output,
+                merge_strategy=MergeStrategy.REPLACE,
+            )
         
         if provider:
             specs.llm.provider = LLMProvider(provider)
@@ -227,9 +248,10 @@ def process(
         results_table.add_column("Metric", style="cyan")
         results_table.add_column("Value", style="green")
         
-        results_table.add_row("Rows Processed", str(result.metrics.total_rows))
-        results_table.add_row("Successful", str(result.metrics.successful_rows))
+        results_table.add_row("Total Rows", str(result.metrics.total_rows))
+        results_table.add_row("Processed", str(result.metrics.processed_rows))
         results_table.add_row("Failed", str(result.metrics.failed_rows))
+        results_table.add_row("Skipped", str(result.metrics.skipped_rows))
         results_table.add_row("Duration", f"{result.duration:.2f}s")
         results_table.add_row("Total Cost", f"${result.costs.total_cost}")
         results_table.add_row("Cost per Row", f"${result.costs.total_cost / result.metrics.total_rows:.6f}")
