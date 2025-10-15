@@ -51,10 +51,10 @@ class ControlCharRemover:
     """Remove control characters that confuse tokenizers."""
     
     def clean(self, text: str) -> str:
-        """Remove \x00, \x01, etc."""
+        """Replace control chars with space (preserves word boundaries)."""
         return ''.join(
-            char for char in text 
-            if unicodedata.category(char)[0] != 'C'
+            char if unicodedata.category(char)[0] != 'C' else ' '
+            for char in text
         )
 
 

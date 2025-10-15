@@ -503,20 +503,33 @@ class Pipeline:
             # Extract failed rows from original (preprocessed) data
             retry_df = original_df.loc[failed_indices].copy()
             
-            # Create new pipeline for retry (same config)
+            # Store original indices for mapping back
+            original_indices = retry_df.index.tolist()
+            retry_df = retry_df.reset_index(drop=True)
+            
+            # Create modified specs for retry (use dataframe, not file)
+            from src.core.specifications import DataSourceType
+            
+            retry_specs = self.specifications.model_copy(deep=True)
+            retry_specs.dataset.source_type = DataSourceType.DATAFRAME
+            retry_specs.dataset.source_path = None  # Force use of dataframe
+            retry_specs.processing.enable_preprocessing = False  # Already preprocessed
+            retry_specs.processing.auto_retry_failed = False  # Prevent infinite retry loop
+            retry_specs.output = None  # Don't write to file during retry
+            
+            # Create new pipeline for retry
             retry_pipeline = Pipeline(
-                self.specifications,
+                retry_specs,
                 dataframe=retry_df,
-                observers=[],  # No observers for retry
             )
             
             # Execute retry
             retry_result = retry_pipeline.execute()
             
-            # Merge retry results back
+            # Merge retry results back (map reset indices to original indices)
             for col in output_cols:
-                for idx in retry_result.data.index:
-                    result.data.loc[idx, col] = retry_result.data.loc[idx, col]
+                for new_idx, original_idx in enumerate(original_indices):
+                    result.data.loc[original_idx, col] = retry_result.data.loc[new_idx, col]
             
             # Update costs
             result.costs.total_cost += retry_result.costs.total_cost

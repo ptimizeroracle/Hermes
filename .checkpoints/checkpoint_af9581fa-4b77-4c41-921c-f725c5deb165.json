@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "session_id": "af9581fa-4b77-4c41-921c-f725c5deb165",
+  "timestamp": "2025-10-15T23:18:42.404020",
+  "data": {
+    "session_id": "af9581fa-4b77-4c41-921c-f725c5deb165",
+    "pipeline_id": "8b2cb819-d9ea-4fae-b2ea-49c7d97a9e47",
+    "start_time": "2025-10-15T23:18:41.876031",
+    "end_time": null,
+    "current_stage_index": 0,
+    "last_processed_row": 0,
+    "total_rows": 3,
+    "accumulated_cost": "0.0",
+    "accumulated_tokens": 0,
+    "intermediate_data": {
+      "loaded_data": "                  text\n0      BACON\u00ae  SLICED\u2122\n1  APPLEWOOD\\n\\nSMOKED\n2         THICK    CUT",
+      "preprocessed_data": "               text\n0      BACON SLICED\n1  APPLEWOOD SMOKED\n2         THICK CUT",
+      "prompt_batches": [
+        "PromptBatch(prompts=['You are a cleaner\\n\\nClean: BACON SLICED', 'You are a cleaner\\n\\nClean: APPLEWOOD SMOKED', 'You are a cleaner\\n\\nClean: THICK CUT'], metadata=[RowMetadata(row_index=0, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=1, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=2, row_id=None, batch_id=None, attempt=1, custom={})], batch_id=0)"
+      ]
+    },
+    "failed_rows": 0,
+    "skipped_rows": 0
+  }
+}

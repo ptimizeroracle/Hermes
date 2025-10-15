@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "session_id": "5a5fac5c-db99-414c-9002-890e840faf45",
+  "timestamp": "2025-10-15T23:28:01.317211",
+  "data": {
+    "session_id": "5a5fac5c-db99-414c-9002-890e840faf45",
+    "pipeline_id": "58f7384a-605b-4b7f-89ca-6c604fcb68b9",
+    "start_time": "2025-10-15T23:28:01.310386",
+    "end_time": "2025-10-15T23:28:01.314432",
+    "current_stage_index": 0,
+    "last_processed_row": 9,
+    "total_rows": 10,
+    "accumulated_cost": "0.0020",
+    "accumulated_tokens": 400,
+    "intermediate_data": {
+      "loaded_data": "      pk     text          cleaned\n0  row_0  BACON 0  Cleaned bacon 0\n1  row_1  BACON 1  Cleaned bacon 1\n2  row_2  BACON 2                 \n3  row_3  BACON 3  Cleaned bacon 3\n4  row_4  BACON 4  Cleaned bacon 4\n5  row_5  BACON 5                 \n6  row_6  BACON 6  Cleaned bacon 6\n7  row_7  BACON 7  Cleaned bacon 7\n8  row_8  BACON 8                 \n9  row_9  BACON 9  Cleaned bacon 9",
+      "prompt_batches": [
+        "PromptBatch(prompts=['Clean: BACON 0', 'Clean: BACON 1', 'Clean: BACON 2', 'Clean: BACON 3', 'Clean: BACON 4', 'Clean: BACON 5', 'Clean: BACON 6', 'Clean: BACON 7', 'Clean: BACON 8', 'Clean: BACON 9'], metadata=[RowMetadata(row_index=0, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=1, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=2, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=3, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=4, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=5, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=6, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=7, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=8, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=9, row_id=None, batch_id=None, attempt=1, custom={})], batch_id=0)"
+      ],
+      "response_batches": [
+        "ResponseBatch(responses=['Cleaned bacon 0', 'Cleaned bacon 1', '', 'Cleaned bacon 3', 'Cleaned bacon 4', '', 'Cleaned bacon 6', 'Cleaned bacon 7', '', 'Cleaned bacon 9'], metadata=[RowMetadata(row_index=0, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=1, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=2, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=3, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=4, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=5, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=6, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=7, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=8, row_id=None, batch_id=None, attempt=1, custom={}), RowMetadata(row_index=9, row_id=None, batch_id=None, attempt=1, custom={})], tokens_used=200, cost=Decimal('0.0010'), batch_id=0, latencies_ms=[100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0])"
+      ]
+    },
+    "failed_rows": 0,
+    "skipped_rows": 0
+  }
+}

@@ -119,8 +119,8 @@ class ExecutionResult:
                 if self.data[col].dtype == 'object':
                     empty_count += (self.data[col].astype(str).str.strip() == '').sum()
         
-        # Calculate per-column metrics (use worst column for overall score)
-        valid_outputs = total - null_count
+        # Calculate per-column metrics (exclude both nulls and empties)
+        valid_outputs = total - null_count - empty_count
         success_rate = (valid_outputs / total * 100) if total > 0 else 0.0
         
         # Determine quality score
