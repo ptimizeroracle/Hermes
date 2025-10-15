@@ -81,6 +81,10 @@ addopts = "-v --cov=llm_dataset_engine --cov-report=term-missing"
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
 ]
+filterwarnings = [
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+    "ignore::pydantic._internal._generate_schema.UnsupportedFieldAttributeWarning",
+]
 
 [dependency-groups]
 dev = [
