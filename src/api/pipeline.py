@@ -221,12 +221,7 @@ class Pipeline:
             observer.on_pipeline_start(self, context)
         
         try:
-            # Optional: Preprocess inputs
-            if self.specifications.processing.enable_preprocessing:
-                self.logger.info("Preprocessing inputs...")
-                self.dataframe = self._preprocess_inputs(self.dataframe)
-            
-            # Execute stages
+            # Execute stages (preprocessing happens inside if enabled)
             result_df = self._execute_stages(context, state_manager)
             
             # Mark completion
@@ -252,7 +247,9 @@ class Pipeline:
             
             # Optional: Auto-retry failed rows
             if self.specifications.processing.auto_retry_failed:
-                result = self._auto_retry_failed_rows(result)
+                # Get preprocessed data from context (or loaded data if no preprocessing)
+                retry_source_df = context.intermediate_data.get("preprocessed_data") or context.intermediate_data.get("loaded_data")
+                result = self._auto_retry_failed_rows(result, retry_source_df)
             
             # Cleanup checkpoints on success
             state_manager.cleanup_checkpoints(context.session_id)
@@ -298,6 +295,24 @@ class Pipeline:
         loader = DataLoaderStage(self.dataframe)
         df = self._execute_stage(loader, specs.dataset, context)
         context.intermediate_data["loaded_data"] = df
+        
+        # Optional: Preprocess loaded data
+        if specs.processing.enable_preprocessing:
+            from src.utils.input_preprocessing import preprocess_dataframe
+            
+            self.logger.info("Preprocessing loaded data...")
+            df, stats = preprocess_dataframe(
+                df,
+                input_columns=specs.dataset.input_columns,
+                max_length=specs.processing.preprocessing_max_length,
+            )
+            self.logger.info(
+                f"Preprocessing complete: "
+                f"{stats.reduction_pct:.1f}% char reduction, "
+                f"{stats.truncated_count} truncated"
+            )
+            # Store preprocessed data for retry
+            context.intermediate_data["preprocessed_data"] = df
         
         # Stage 2: Format prompts
         formatter = PromptFormatterStage(specs.processing.batch_size)
@@ -438,26 +453,16 @@ class Pipeline:
                 observer.on_stage_error(stage, context, e)
             raise
     
-    def _preprocess_inputs(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Preprocess input columns to clean and normalize text."""
-        from src.utils.input_preprocessing import preprocess_dataframe
-        
-        cleaned_df, stats = preprocess_dataframe(
-            df,
-            input_columns=self.specifications.dataset.input_columns,
-            max_length=self.specifications.processing.preprocessing_max_length,
-        )
-        
-        self.logger.info(
-            f"Preprocessing complete: "
-            f"{stats.reduction_pct:.1f}% char reduction, "
-            f"{stats.truncated_count} truncated"
-        )
-        
-        return cleaned_df
-    
-    def _auto_retry_failed_rows(self, result: ExecutionResult) -> ExecutionResult:
+    def _auto_retry_failed_rows(
+        self, 
+        result: ExecutionResult,
+        original_df: pd.DataFrame
+    ) -> ExecutionResult:
         """Auto-retry rows with null outputs."""
+        if original_df is None:
+            self.logger.warning("Cannot retry: original dataframe is None")
+            return result
+        
         specs = self.specifications
         output_cols = specs.dataset.output_columns
         
@@ -486,8 +491,8 @@ class Pipeline:
                 f"{len(failed_indices)} rows"
             )
             
-            # Extract failed rows from original data
-            retry_df = self.dataframe.loc[failed_indices].copy()
+            # Extract failed rows from original (preprocessed) data
+            retry_df = original_df.loc[failed_indices].copy()
             
             # Create new pipeline for retry (same config)
             retry_pipeline = Pipeline(

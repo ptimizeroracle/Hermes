@@ -1,11 +1,11 @@
 {
   "version": "1.0",
-  "session_id": "3ede175b-3ca6-44e6-bd25-269b2fb42cef",
-  "timestamp": "2025-10-15T18:36:53.587243",
+  "session_id": "f929bae2-5877-4f63-95fe-5c0f3b1fb6c4",
+  "timestamp": "2025-10-15T22:41:22.321310",
   "data": {
-    "session_id": "3ede175b-3ca6-44e6-bd25-269b2fb42cef",
-    "pipeline_id": "114f4847-045b-457a-8001-fd30961492cf",
-    "start_time": "2025-10-15T18:36:53.587035",
+    "session_id": "f929bae2-5877-4f63-95fe-5c0f3b1fb6c4",
+    "pipeline_id": "796653e2-472c-4431-b44d-ae0bf426e2ca",
+    "start_time": "2025-10-15T22:41:22.321169",
     "end_time": null,
     "current_stage_index": 0,
     "last_processed_row": 0,
