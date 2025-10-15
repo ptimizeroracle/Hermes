@@ -121,29 +121,24 @@ class LLMInvocationStage(
     def _process_batch_concurrent(
         self, prompts: List[str], context: Any
     ) -> List[Any]:
-        """Process prompts concurrently."""
-        responses = []
-        
+        """Process prompts concurrently while maintaining order."""
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.concurrency
         ) as executor:
-            # Submit all tasks
-            future_to_prompt = {
-                executor.submit(
-                    self._invoke_with_retry_and_ratelimit, prompt
-                ): prompt
+            # Submit all tasks and keep them in order
+            futures = [
+                executor.submit(self._invoke_with_retry_and_ratelimit, prompt)
                 for prompt in prompts
-            }
+            ]
             
-            # Collect results as they complete
-            for idx, future in enumerate(
-                concurrent.futures.as_completed(future_to_prompt)
-            ):
+            # Collect results in submission order
+            responses = []
+            for idx, future in enumerate(futures):
                 try:
                     response = future.result()
                     responses.append(response)
                 except Exception as e:
-                    prompt = future_to_prompt[future]
+                    prompt = prompts[idx]
                     
                     # Apply error policy
                     decision = self.error_handler.handle_error(
@@ -156,8 +151,20 @@ class LLMInvocationStage(
                     )
                     
                     if decision.action == ErrorAction.SKIP:
-                        # Skip this row, continue processing
-                        continue
+                        # Create placeholder response for skipped row
+                        from llm_dataset_engine.core.models import LLMResponse
+                        from decimal import Decimal
+                        
+                        placeholder = LLMResponse(
+                            text="[SKIPPED]",
+                            tokens_in=0,
+                            tokens_out=0,
+                            model=self.llm_client.spec.model,
+                            cost=Decimal("0.0"),
+                            latency_ms=0.0,
+                            metadata={"error": str(e), "action": "skipped"},
+                        )
+                        responses.append(placeholder)
                     elif decision.action == ErrorAction.USE_DEFAULT:
                         # Use default response
                         responses.append(decision.default_value)
