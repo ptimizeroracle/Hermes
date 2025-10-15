@@ -146,9 +146,10 @@ class CostTracker:
             CostEstimate object
         """
         with self._lock:
+            total_tokens = self._total_input_tokens + self._total_output_tokens
             return CostEstimate(
                 total_cost=self._total_cost,
-                total_tokens=self.total_tokens,
+                total_tokens=total_tokens,
                 input_tokens=self._total_input_tokens,
                 output_tokens=self._total_output_tokens,
                 rows=rows,
