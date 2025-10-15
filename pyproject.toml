@@ -1,0 +1,87 @@
+[project]
+name = "llm-dataset-engine"
+version = "1.0.0"
+description = "Production-grade SDK for processing tabular datasets using LLMs with reliability, observability, and cost control"
+requires-python = ">=3.10"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["llm", "dataset", "batch-processing", "data-engineering", "llama-index"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "llama-index>=0.12.0",
+    "llama-index-llms-openai>=0.3.0",
+    "llama-index-llms-azure-openai>=0.3.0",
+    "llama-index-llms-anthropic>=0.3.0",
+    "llama-index-llms-groq>=0.3.0",
+    "pandas>=2.0.0",
+    "polars>=0.20.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "tqdm>=4.66.0",
+    "tenacity>=8.2.0",
+    "openpyxl>=3.1.0",
+    "pyarrow>=15.0.0",
+    "tiktoken>=0.5.0",
+    "structlog>=24.0.0",
+    "jinja2>=3.1.0",
+    "prometheus-client>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.0.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "ipython>=8.20.0",
+    "jupyter>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 79
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 79
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "C90"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=llm_dataset_engine --cov-report=term-missing"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+]

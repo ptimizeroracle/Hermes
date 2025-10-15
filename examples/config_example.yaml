@@ -1,0 +1,55 @@
+# Example Pipeline Configuration - YAML Format
+# This file demonstrates loading pipeline configuration from YAML
+
+name: "product_cleaning_pipeline"
+version: "1.0"
+
+dataset:
+  source_type: "csv"
+  source_path: "products.csv"
+  input_columns:
+    - "description"
+  output_columns:
+    - "cleaned_description"
+  delimiter: ","
+  encoding: "utf-8"
+
+prompt:
+  template: "Clean this product description: {description}\n\nCleaned:"
+  system_message: "You are a helpful assistant that cleans product descriptions."
+  few_shot_examples:
+    - input: "BACON APPLEWOOD SMOKED 14/18"
+      output: "Applewood Smoked Bacon, 14-18 oz"
+    - input: "LETTUCE ICEBERG 24CT CASE"
+      output: "Iceberg Lettuce, 24 count case"
+
+llm:
+  provider: "groq"
+  model: "openai/gpt-oss-120b"
+  temperature: 0.0
+  max_tokens: 100
+  input_cost_per_1k_tokens: "0.00005"
+  output_cost_per_1k_tokens: "0.00008"
+
+processing:
+  batch_size: 100
+  concurrency: 5
+  checkpoint_interval: 500
+  max_retries: 3
+  retry_delay: 1.0
+  error_policy: "skip"
+  rate_limit_rpm: 60
+  max_budget: "10.00"
+  checkpoint_dir: ".checkpoints"
+
+output:
+  destination_type: "csv"
+  destination_path: "cleaned_products.csv"
+  merge_strategy: "replace"
+  atomic_write: true
+
+metadata:
+  project: "product_data_cleaning"
+  owner: "data_team"
+  created_at: "2025-01-15"
+
