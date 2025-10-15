@@ -39,12 +39,18 @@ def configure_logging(
     ]
 
     if include_timestamp:
-        processors.append(structlog.processors.TimeStamper(fmt="iso"))
+        processors.append(structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"))
 
     if json_format:
         processors.append(structlog.processors.JSONRenderer())
     else:
-        processors.append(structlog.dev.ConsoleRenderer())
+        # Use ConsoleRenderer without padding
+        processors.append(
+            structlog.dev.ConsoleRenderer(
+                pad_event=0,  # No padding on log levels
+                colors=True,
+            )
+        )
 
     structlog.configure(
         processors=processors,

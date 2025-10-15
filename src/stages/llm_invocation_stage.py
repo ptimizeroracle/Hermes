@@ -122,6 +122,10 @@ class LLMInvocationStage(
         self, prompts: List[str], context: Any
     ) -> List[Any]:
         """Process prompts concurrently while maintaining order."""
+        self.logger.info(
+            f"Processing {len(prompts)} prompts with concurrency={self.concurrency}"
+        )
+        
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.concurrency
         ) as executor:
@@ -131,12 +135,27 @@ class LLMInvocationStage(
                 for prompt in prompts
             ]
             
+            self.logger.info(f"Submitted {len(futures)} parallel tasks to executor")
+            
             # Collect results in submission order
             responses = []
             for idx, future in enumerate(futures):
+                # Update progress periodically
+                if (idx + 1) % max(1, len(futures) // 4) == 0:  # Log at 25%, 50%, 75%, 100%
+                    progress = ((idx + 1) / len(futures)) * 100
+                    self.logger.info(
+                        f"Batch progress: {idx + 1}/{len(futures)} requests completed ({progress:.1f}%)"
+                    )
+                
                 try:
                     response = future.result()
                     responses.append(response)
+                    
+                    # Update context with row progress and cost
+                    if context:
+                        context.update_row(context.last_processed_row + 1)
+                        if hasattr(response, 'cost') and hasattr(response, 'tokens_in'):
+                            context.add_cost(response.cost, response.tokens_in + response.tokens_out)
                 except Exception as e:
                     prompt = prompts[idx]
                     
