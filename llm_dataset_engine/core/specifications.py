@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DataSourceType(str, Enum):
@@ -235,6 +235,11 @@ class OutputSpec(BaseModel):
 class PipelineSpecifications(BaseModel):
     """Container for all pipeline specifications."""
 
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
+    )
+
     dataset: DatasetSpec
     prompt: PromptSpec
     llm: LLMSpec
@@ -243,10 +248,4 @@ class PipelineSpecifications(BaseModel):
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Custom metadata"
     )
-
-    class Config:
-        """Pydantic configuration."""
-
-        arbitrary_types_allowed = True
-        validate_assignment = True
 
