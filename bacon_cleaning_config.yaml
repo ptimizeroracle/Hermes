@@ -9,7 +9,6 @@ dataset:
     - Item_Description_Long
   output_columns:
     - cleaned_description
-    - metadata
 
 prompt:
   template: |
