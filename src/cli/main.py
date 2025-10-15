@@ -11,7 +11,11 @@ from typing import Optional
 from uuid import UUID
 
 import click
-from rich.console import Console
+from rich.console import Console, Group
+from rich.panel import Panel
+from rich.align import Align
+from rich import box
+from rich.text import Text
 from rich.table import Table
 
 from src import __version__
@@ -26,20 +30,40 @@ from src.core.specifications import (
 console = Console()
 
 
-HERMES_BANNER = """
-[bold cyan]
-    ╦ ╦ ╦ ╦╔═╗╦═╗╔╦╗╔═╗╔═╗ ╦ ╦ ╦
-    ║ ║ ║ ╠═╣║╣ ╠╦╝║║║║╣ ╚═╗ ║ ║ ║
-    ╚ ╚ ╚ ╩ ╩╚═╝╩╚═╩ ╩╚═╝╚═╝ ╚ ╚ ╚[/bold cyan]
-
-[dim]           The LLM Dataset Engine[/dim]
-[bold]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold]
+HERMES_ART = r"""
+ ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄       ▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
+▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌     ▐░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░▌░▌   ▐░▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ 
+▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌▐░▌▐░▌ ▐░▌▐░▌▐░▌          ▐░▌          
+▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░▌ ▐░▐░▌ ▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄ 
+▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌  ▐░▌  ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀█░█▀▀ ▐░▌   ▀   ▐░▌▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀█░▌
+▐░▌       ▐░▌▐░▌          ▐░▌     ▐░▌  ▐░▌       ▐░▌▐░▌                    ▐░▌
+▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░▌      ▐░▌ ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄█░▌
+▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+ ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀ 
 """
 
 
 def show_banner():
-    """Display the Hermes banner."""
-    console.print(HERMES_BANNER)
+    """Display the Hermes banner (centered, creative, robust)."""
+    # Color gradient: cyan to magenta
+    lines = HERMES_ART.strip().split('\n')
+    colored_lines = []
+    colors = ["bright_cyan", "cyan", "bright_blue", "blue", "bright_magenta", "magenta", "bright_magenta", "blue", "bright_blue", "cyan", "bright_cyan"]
+    
+    for i, line in enumerate(lines):
+        color = colors[i % len(colors)]
+        colored_lines.append(Text(line, style=f"bold {color}"))
+    
+    title = Group(*colored_lines)
+    subtitle_text = Text("The LLM Dataset Engine", style="dim italic bright_white")
+    content = Group(title, "", subtitle_text)
+    
+    console.print()
+    console.print(content)
+    console.print("[bold bright_cyan]" + "─" * 80 + "[/bold bright_cyan]")
+    console.print()
 
 
 @click.group()
