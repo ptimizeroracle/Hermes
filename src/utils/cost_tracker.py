@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Dict, Optional
 
-from llm_dataset_engine.core.models import CostEstimate
+from src.core.models import CostEstimate
 
 
 @dataclass

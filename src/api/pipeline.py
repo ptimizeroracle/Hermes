@@ -11,16 +11,16 @@ from uuid import UUID, uuid4
 
 import pandas as pd
 
-from llm_dataset_engine.adapters import (
+from src.adapters import (
     LocalFileCheckpointStorage,
     create_llm_client,
 )
-from llm_dataset_engine.core.models import (
+from src.core.models import (
     CostEstimate,
     ExecutionResult,
     ValidationResult,
 )
-from llm_dataset_engine.core.specifications import (
+from src.core.specifications import (
     DatasetSpec,
     LLMSpec,
     OutputSpec,
@@ -28,7 +28,7 @@ from llm_dataset_engine.core.specifications import (
     ProcessingSpec,
     PromptSpec,
 )
-from llm_dataset_engine.orchestration import (
+from src.orchestration import (
     AsyncExecutor,
     CostTrackingObserver,
     ExecutionContext,
@@ -40,7 +40,7 @@ from llm_dataset_engine.orchestration import (
     StreamingExecutor,
     SyncExecutor,
 )
-from llm_dataset_engine.stages import (
+from src.stages import (
     DataLoaderStage,
     LLMInvocationStage,
     PromptFormatterStage,
@@ -48,7 +48,7 @@ from llm_dataset_engine.stages import (
     ResponseParserStage,
     ResultWriterStage,
 )
-from llm_dataset_engine.utils import RateLimiter, RetryHandler, get_logger
+from src.utils import RateLimiter, RetryHandler, get_logger
 
 logger = get_logger(__name__)
 
@@ -273,7 +273,7 @@ class Pipeline:
         # Create budget controller if max_budget specified
         budget_controller = None
         if specs.processing.max_budget:
-            from llm_dataset_engine.utils import BudgetController
+            from src.utils import BudgetController
             
             budget_controller = BudgetController(
                 max_budget=specs.processing.max_budget,

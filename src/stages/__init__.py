@@ -1,8 +1,8 @@
 """Processing stages for data transformation."""
 
-from llm_dataset_engine.stages.data_loader_stage import DataLoaderStage
-from llm_dataset_engine.stages.llm_invocation_stage import LLMInvocationStage
-from llm_dataset_engine.stages.multi_run_stage import (
+from src.stages.data_loader_stage import DataLoaderStage
+from src.stages.llm_invocation_stage import LLMInvocationStage
+from src.stages.multi_run_stage import (
     AggregationStrategy,
     AllStrategy,
     AverageStrategy,
@@ -10,11 +10,11 @@ from llm_dataset_engine.stages.multi_run_stage import (
     FirstSuccessStrategy,
     MultiRunStage,
 )
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
-from llm_dataset_engine.stages.prompt_formatter_stage import (
+from src.stages.pipeline_stage import PipelineStage
+from src.stages.prompt_formatter_stage import (
     PromptFormatterStage,
 )
-from llm_dataset_engine.stages.response_parser_stage import (
+from src.stages.response_parser_stage import (
     JSONParser,
     PydanticParser,
     RawTextParser,
@@ -22,7 +22,7 @@ from llm_dataset_engine.stages.response_parser_stage import (
     ResponseParser,
     ResponseParserStage,
 )
-from llm_dataset_engine.stages.result_writer_stage import ResultWriterStage
+from src.stages.result_writer_stage import ResultWriterStage
 
 __all__ = [
     "PipelineStage",

@@ -10,9 +10,9 @@ from typing import AsyncIterator, Iterator, List, Union
 
 import pandas as pd
 
-from llm_dataset_engine.core.models import ExecutionResult
-from llm_dataset_engine.orchestration.execution_context import ExecutionContext
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
+from src.core.models import ExecutionResult
+from src.orchestration.execution_context import ExecutionContext
+from src.stages.pipeline_stage import PipelineStage
 
 
 class ExecutionStrategy(ABC):

@@ -22,8 +22,8 @@ except ImportError:
             return func
         return decorator
 
-from llm_dataset_engine.api import Pipeline
-from llm_dataset_engine.config import ConfigLoader
+from src.api import Pipeline
+from src.config import ConfigLoader
 
 
 @task(name="llm_transform")
@@ -43,7 +43,7 @@ def llm_transform_task(
     
     Example:
         from prefect import flow
-        from llm_dataset_engine.integrations.prefect import llm_transform_task
+        from src.integrations.prefect import llm_transform_task
         
         @flow
         def data_pipeline():
@@ -85,7 +85,7 @@ def llm_transform_task(
         specs.processing.max_budget = Decimal(str(max_budget))
     
     if provider_override:
-        from llm_dataset_engine.core.specifications import LLMProvider
+        from src.core.specifications import LLMProvider
         specs.llm.provider = LLMProvider(provider_override)
     
     if model_override:
@@ -102,7 +102,7 @@ def llm_transform_task(
     
     # Set output if specified
     if output_file:
-        from llm_dataset_engine.core.specifications import (
+        from src.core.specifications import (
             DataSourceType,
             MergeStrategy,
             OutputSpec,

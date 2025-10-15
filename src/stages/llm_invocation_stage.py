@@ -5,18 +5,18 @@ import time
 from decimal import Decimal
 from typing import Any, List
 
-from llm_dataset_engine.adapters.llm_client import LLMClient
-from llm_dataset_engine.core.error_handler import ErrorAction, ErrorHandler
-from llm_dataset_engine.core.models import (
+from src.adapters.llm_client import LLMClient
+from src.core.error_handler import ErrorAction, ErrorHandler
+from src.core.models import (
     CostEstimate,
     LLMResponse,
     PromptBatch,
     ResponseBatch,
     ValidationResult,
 )
-from llm_dataset_engine.core.specifications import ErrorPolicy
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
-from llm_dataset_engine.utils import (
+from src.core.specifications import ErrorPolicy
+from src.stages.pipeline_stage import PipelineStage
+from src.utils import (
     NetworkError,
     RateLimitError,
     RateLimiter,
@@ -152,7 +152,7 @@ class LLMInvocationStage(
                     
                     if decision.action == ErrorAction.SKIP:
                         # Create placeholder response for skipped row
-                        from llm_dataset_engine.core.models import LLMResponse
+                        from src.core.models import LLMResponse
                         from decimal import Decimal
                         
                         placeholder = LLMResponse(

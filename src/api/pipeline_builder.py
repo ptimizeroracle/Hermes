@@ -10,8 +10,8 @@ from typing import List, Optional
 
 import pandas as pd
 
-from llm_dataset_engine.api.pipeline import Pipeline
-from llm_dataset_engine.core.specifications import (
+from src.api.pipeline import Pipeline
+from src.core.specifications import (
     DatasetSpec,
     DataSourceType,
     LLMProvider,
@@ -22,7 +22,7 @@ from llm_dataset_engine.core.specifications import (
     ProcessingSpec,
     PromptSpec,
 )
-from llm_dataset_engine.orchestration import (
+from src.orchestration import (
     AsyncExecutor,
     ExecutionStrategy,
     StreamingExecutor,

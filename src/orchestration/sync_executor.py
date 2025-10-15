@@ -11,23 +11,23 @@ from typing import List
 
 import pandas as pd
 
-from llm_dataset_engine.adapters import create_llm_client
-from llm_dataset_engine.core.models import (
+from src.adapters import create_llm_client
+from src.core.models import (
     CostEstimate,
     ExecutionResult,
     ProcessingStats,
 )
-from llm_dataset_engine.orchestration.execution_context import ExecutionContext
-from llm_dataset_engine.orchestration.execution_strategy import ExecutionStrategy
-from llm_dataset_engine.stages import (
+from src.orchestration.execution_context import ExecutionContext
+from src.orchestration.execution_strategy import ExecutionStrategy
+from src.stages import (
     DataLoaderStage,
     LLMInvocationStage,
     PromptFormatterStage,
     ResponseParserStage,
     ResultWriterStage,
 )
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
-from llm_dataset_engine.utils import RateLimiter, RetryHandler, get_logger
+from src.stages.pipeline_stage import PipelineStage
+from src.utils import RateLimiter, RetryHandler, get_logger
 
 logger = get_logger(__name__)
 

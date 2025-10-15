@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "session_id": "3ede175b-3ca6-44e6-bd25-269b2fb42cef",
+  "timestamp": "2025-10-15T18:36:53.587243",
+  "data": {
+    "session_id": "3ede175b-3ca6-44e6-bd25-269b2fb42cef",
+    "pipeline_id": "114f4847-045b-457a-8001-fd30961492cf",
+    "start_time": "2025-10-15T18:36:53.587035",
+    "end_time": null,
+    "current_stage_index": 0,
+    "last_processed_row": 0,
+    "total_rows": 0,
+    "accumulated_cost": "0.0",
+    "accumulated_tokens": 0,
+    "intermediate_data": {},
+    "failed_rows": 0,
+    "skipped_rows": 0
+  }
+}

@@ -10,8 +10,8 @@ from typing import Any, Dict
 
 import yaml
 
-from llm_dataset_engine.api.pipeline import Pipeline
-from llm_dataset_engine.core.specifications import PipelineSpecifications
+from src.api.pipeline import Pipeline
+from src.core.specifications import PipelineSpecifications
 
 
 class ConfigLoader:

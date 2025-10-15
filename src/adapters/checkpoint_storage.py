@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from llm_dataset_engine.core.models import CheckpointInfo
+from src.core.models import CheckpointInfo
 
 
 class CheckpointStorage(ABC):

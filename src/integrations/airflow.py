@@ -15,8 +15,8 @@ except ImportError:
     AIRFLOW_AVAILABLE = False
     BaseOperator = object  # Placeholder
 
-from llm_dataset_engine.api import Pipeline
-from llm_dataset_engine.config import ConfigLoader
+from src.api import Pipeline
+from src.config import ConfigLoader
 
 
 if AIRFLOW_AVAILABLE:
@@ -28,7 +28,7 @@ if AIRFLOW_AVAILABLE:
         Integrates LLM Dataset Engine into Airflow DAGs with minimal boilerplate.
         
         Example:
-            from llm_dataset_engine.integrations.airflow import LLMTransformOperator
+            from src.integrations.airflow import LLMTransformOperator
             
             llm_task = LLMTransformOperator(
                 task_id='llm_enrichment',
@@ -98,7 +98,7 @@ if AIRFLOW_AVAILABLE:
                 specs.processing.max_budget = Decimal(str(self.max_budget))
             
             if self.provider_override:
-                from llm_dataset_engine.core.specifications import LLMProvider
+                from src.core.specifications import LLMProvider
                 specs.llm.provider = LLMProvider(self.provider_override)
             
             if self.model_override:
@@ -121,7 +121,7 @@ if AIRFLOW_AVAILABLE:
             # Set output if specified
             if self.output_file:
                 from pathlib import Path
-                from llm_dataset_engine.core.specifications import OutputSpec, MergeStrategy, DataSourceType
+                from src.core.specifications import OutputSpec, MergeStrategy, DataSourceType
                 
                 specs.output = OutputSpec(
                     destination_type=DataSourceType.CSV,

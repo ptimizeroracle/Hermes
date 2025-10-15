@@ -6,14 +6,14 @@ from typing import Any, Dict, List
 import pandas as pd
 from jinja2 import Template as Jinja2Template
 
-from llm_dataset_engine.core.models import (
+from src.core.models import (
     CostEstimate,
     PromptBatch,
     RowMetadata,
     ValidationResult,
 )
-from llm_dataset_engine.core.specifications import PromptSpec
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
+from src.core.specifications import PromptSpec
+from src.stages.pipeline_stage import PipelineStage
 
 
 class PromptFormatterStage(

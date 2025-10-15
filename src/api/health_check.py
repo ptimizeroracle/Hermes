@@ -7,8 +7,8 @@ Provides status information for operational monitoring.
 from datetime import datetime
 from typing import Any, Dict
 
-from llm_dataset_engine.api.pipeline import Pipeline
-from llm_dataset_engine.utils import get_logger
+from src.api.pipeline import Pipeline
+from src.utils import get_logger
 
 logger = get_logger(__name__)
 

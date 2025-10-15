@@ -14,10 +14,10 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from llm_dataset_engine import __version__
-from llm_dataset_engine.api import Pipeline
-from llm_dataset_engine.config import ConfigLoader
-from llm_dataset_engine.core.specifications import (
+from src import __version__
+from src.api import Pipeline
+from src.config import ConfigLoader
+from src.core.specifications import (
     DataSourceType,
     LLMProvider,
     PipelineSpecifications,
@@ -163,7 +163,7 @@ def process(
             specs.output.destination_path = output
         else:
             # Create output spec if not in config
-            from llm_dataset_engine.core.specifications import OutputSpec, MergeStrategy
+            from src.core.specifications import OutputSpec, MergeStrategy
             
             # Detect output type from extension
             output_suffix = output.suffix.lower()
@@ -407,8 +407,8 @@ def resume(
         llm-dataset resume -s abc-123 --checkpoint-dir /path/to/checkpoints
     """
     try:
-        from llm_dataset_engine.adapters import LocalFileCheckpointStorage
-        from llm_dataset_engine.orchestration import StateManager
+        from src.adapters import LocalFileCheckpointStorage
+        from src.orchestration import StateManager
         
         # Load checkpoint
         console.print(f"[cyan]Looking for checkpoint in {checkpoint_dir}...[/cyan]")
@@ -566,7 +566,7 @@ def list_checkpoints(checkpoint_dir: Path):
         llm-dataset list-checkpoints --checkpoint-dir /path/to/checkpoints
     """
     try:
-        from llm_dataset_engine.adapters import LocalFileCheckpointStorage
+        from src.adapters import LocalFileCheckpointStorage
         
         console.print(f"[cyan]Scanning {checkpoint_dir} for checkpoints...[/cyan]")
         

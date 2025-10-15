@@ -8,7 +8,7 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from llm_dataset_engine.api.pipeline_builder import PipelineBuilder
+from src.api.pipeline_builder import PipelineBuilder
 
 
 class DatasetProcessor:

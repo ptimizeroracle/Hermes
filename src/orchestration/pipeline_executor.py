@@ -12,12 +12,12 @@ from uuid import UUID, uuid4
 
 import pandas as pd
 
-from llm_dataset_engine.core.models import ExecutionResult
-from llm_dataset_engine.orchestration.execution_context import ExecutionContext
-from llm_dataset_engine.orchestration.observers import ExecutionObserver
-from llm_dataset_engine.orchestration.state_manager import StateManager
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
-from llm_dataset_engine.utils import get_logger
+from src.core.models import ExecutionResult
+from src.orchestration.execution_context import ExecutionContext
+from src.orchestration.observers import ExecutionObserver
+from src.orchestration.state_manager import StateManager
+from src.stages.pipeline_stage import PipelineStage
+from src.utils import get_logger
 
 logger = get_logger(__name__)
 

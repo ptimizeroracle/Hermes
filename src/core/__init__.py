@@ -1,6 +1,6 @@
 """Core configuration and data models."""
 
-from llm_dataset_engine.core.models import (
+from src.core.models import (
     CheckpointInfo,
     CostEstimate,
     ErrorInfo,
@@ -13,7 +13,7 @@ from llm_dataset_engine.core.models import (
     ValidationResult,
     WriteConfirmation,
 )
-from llm_dataset_engine.core.specifications import (
+from src.core.specifications import (
     DatasetSpec,
     DataSourceType,
     ErrorPolicy,

@@ -12,8 +12,8 @@ from typing import Iterator, Optional, Union
 import pandas as pd
 import polars as pl
 
-from llm_dataset_engine.core.models import WriteConfirmation
-from llm_dataset_engine.core.specifications import DataSourceType
+from src.core.models import WriteConfirmation
+from src.core.specifications import DataSourceType
 
 
 class DataReader(ABC):

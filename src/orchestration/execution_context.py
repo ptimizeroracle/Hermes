@@ -10,7 +10,7 @@ from decimal import Decimal
 from typing import Any, Dict
 from uuid import UUID, uuid4
 
-from llm_dataset_engine.core.models import ProcessingStats
+from src.core.models import ProcessingStats
 
 
 @dataclass

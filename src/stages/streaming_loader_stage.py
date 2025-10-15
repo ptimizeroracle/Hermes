@@ -9,10 +9,10 @@ from typing import Any, Iterator
 
 import pandas as pd
 
-from llm_dataset_engine.adapters.data_io import create_data_reader
-from llm_dataset_engine.core.models import CostEstimate, ValidationResult
-from llm_dataset_engine.core.specifications import DatasetSpec
-from llm_dataset_engine.stages.pipeline_stage import PipelineStage
+from src.adapters.data_io import create_data_reader
+from src.core.models import CostEstimate, ValidationResult
+from src.core.specifications import DatasetSpec
+from src.stages.pipeline_stage import PipelineStage
 
 
 class StreamingDataLoaderStage(PipelineStage[DatasetSpec, Iterator[pd.DataFrame]]):

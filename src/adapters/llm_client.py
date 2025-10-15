@@ -18,8 +18,8 @@ from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.llms.groq import Groq
 from llama_index.llms.openai import OpenAI
 
-from llm_dataset_engine.core.models import LLMResponse
-from llm_dataset_engine.core.specifications import LLMProvider, LLMSpec
+from src.core.models import LLMResponse
+from src.core.specifications import LLMProvider, LLMSpec
 
 
 class LLMClient(ABC):

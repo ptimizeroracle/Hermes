@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Optional
 
-from llm_dataset_engine.core.specifications import ErrorPolicy
-from llm_dataset_engine.utils import get_logger
+from src.core.specifications import ErrorPolicy
+from src.utils import get_logger
 
 logger = get_logger(__name__)
 

@@ -6,7 +6,7 @@ Provides instrumentation for external monitoring systems.
 
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
 
-from llm_dataset_engine.utils import get_logger
+from src.utils import get_logger
 
 logger = get_logger(__name__)
 

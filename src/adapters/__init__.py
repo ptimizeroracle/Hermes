@@ -1,10 +1,10 @@
 """Infrastructure adapters for external systems."""
 
-from llm_dataset_engine.adapters.checkpoint_storage import (
+from src.adapters.checkpoint_storage import (
     CheckpointStorage,
     LocalFileCheckpointStorage,
 )
-from llm_dataset_engine.adapters.data_io import (
+from src.adapters.data_io import (
     CSVReader,
     CSVWriter,
     DataFrameReader,
@@ -17,7 +17,7 @@ from llm_dataset_engine.adapters.data_io import (
     create_data_reader,
     create_data_writer,
 )
-from llm_dataset_engine.adapters.llm_client import (
+from src.adapters.llm_client import (
     AnthropicClient,
     AzureOpenAIClient,
     GroqClient,
