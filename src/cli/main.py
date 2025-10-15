@@ -28,11 +28,12 @@ console = Console()
 
 HERMES_BANNER = """
 [bold cyan]
-    ╦ ╦╔═╗╦═╗╔╦╗╔═╗╔═╗
-    ╠═╣║╣ ╠╦╝║║║║╣ ╚═╗
-    ╩ ╩╚═╝╩╚═╩ ╩╚═╝╚═╝[/bold cyan]
-[dim]    The LLM Dataset Engine[/dim]
-[bold]━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold]
+    ╦ ╦ ╦ ╦╔═╗╦═╗╔╦╗╔═╗╔═╗ ╦ ╦ ╦
+    ║ ║ ║ ╠═╣║╣ ╠╦╝║║║║╣ ╚═╗ ║ ║ ║
+    ╚ ╚ ╚ ╩ ╩╚═╝╩╚═╩ ╩╚═╝╚═╝ ╚ ╚ ╚[/bold cyan]
+
+[dim]           The LLM Dataset Engine[/dim]
+[bold]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold]
 """
 
 
