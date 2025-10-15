@@ -540,12 +540,12 @@ class Pipeline:
             self.logger.info(
                 f"After retry {attempt}: "
                 f"{quality.valid_outputs}/{quality.total_rows} valid "
-                f"({quality.success_rate:.1f}%)"
+                f"({quality.success_rate:.1f}%), "
+                f"{quality.null_outputs + quality.empty_outputs} still failed"
             )
             
-            # Stop if acceptable
-            if quality.is_acceptable:
-                break
+            # Continue to next attempt to maximize completeness
+            # (Don't stop early - use all attempts to get closest to 100%)
         
         return result
 

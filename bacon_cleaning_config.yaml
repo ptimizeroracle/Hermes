@@ -60,8 +60,8 @@ llm:
   output_cost_per_1k_tokens: 0.00008  # Groq pricing: $0.08 per 1M output tokens
 
 processing:
-  batch_size: 10
-  concurrency: 3
+  batch_size: 20
+  concurrency: 5
   max_retries: 3
   retry_delay: 1.0
   error_policy: skip
@@ -73,7 +73,7 @@ processing:
   
   # Auto-retry failed rows (rows with null outputs)
   auto_retry_failed: true
-  max_retry_attempts: 2
+  max_retry_attempts: 3
 
 output:
   destination_type: excel
