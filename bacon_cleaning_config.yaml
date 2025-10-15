@@ -60,10 +60,10 @@ llm:
   output_cost_per_1k_tokens: 0.00008  # Groq pricing: $0.08 per 1M output tokens
 
 processing:
-  batch_size: 20
-  concurrency: 5
+  batch_size: 10
+  concurrency: 3
   max_retries: 3
-  retry_delay: 1.0
+  retry_delay: 2.0
   error_policy: skip
   max_budget: 10.0
   

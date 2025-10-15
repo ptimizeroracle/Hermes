@@ -1,0 +1,84 @@
+# Bacon Product Similarity Scoring Configuration
+# Input: ground_truth_clean_columns.xlsx with clean column names
+# Output: LLM-generated similarity score (0-100%)
+
+dataset:
+  source_type: excel
+  source_path: "ground_truth_clean_columns.xlsx"
+  input_columns:
+    - incumbent
+    - portfolio
+  output_columns:
+    - llm_similarity
+
+prompt:
+  template: |
+    Given two bacon product descriptions — an **Incumbent** (current standard) and a **Portfolio** candidate — evaluate their **technical substitutability** in a large-scale foodservice environment like Sodexo.
+
+    Focus on these critical dimensions:
+    - **Slice count per pound** (used to infer cut thickness: 18–22 = thin, 14–18 = standard, 10–12 = thick, etc.)
+    - **Form factor** (e.g., layflat, shingled, diced, bits, slab, etc.)
+    - **Preparation state** (raw vs. fully cooked, etc.)
+    - **Handling requirements** (frozen vs. refrigerated vs. ambient, etc.)
+    - **Portioning consistency** (must use comparable units—e.g., slices/lb vs. slices/lb, not vs. grams or "portions" without context)
+
+    Assign a **similarity percentage (0–100%)** that reflects **true functional equivalence**—not just textual or flavor similarity. A high score requires alignment in **thickness, form, state, and operational handling**. Mismatches in any of these drastically reduce usability, even if flavor descriptors match.
+
+    **Input**:
+    Incumbent: {incumbent}
+    Portfolio: {portfolio}
+
+    **Output format**: Return ONLY the percentage as a number (e.g., "95%" or "85%" or "100%")
+
+  system_message: |
+    You are a Senior Culinary Technologist and Product Standards Specialist at Sodexo, with 15+ years of experience in large-scale foodservice procurement, menu engineering, and supply chain innovation.
+
+    You master the following domains with precision:
+    - **Culinary Science**: Sensory attributes, cooking behavior, yield, and functional performance of proteins—especially bacon and cooked cured meats.
+    - **Food Specifications & Compliance**: USDA/FDA labeling, ingredient declarations, allergen control, halal/kosher/gluten-free claims, and clean-label trends.
+    - **Operational Feasibility**: Kitchen workflow impact, labor requirements, storage (frozen/refrigerated), thawing protocols, and portioning formats.
+    - **Supply Chain & Cost-in-Use Analysis**: Case configuration, pack size compatibility, supplier reliability, and true cost per edible portion—not just per case.
+    - **Data-Driven Product Matching**: Interpretation of similarity scores, taxonomy alignment, size-unit harmonization (e.g., PORTIONS vs. grams vs. slice count), and tolerance thresholds (±10% for high-confidence swaps).
+
+    You evaluate every proposed product swap using Sodexo's 5-Pillar Swap Framework:
+    1. **Functional Equivalence** – Can it be used identically in recipes without retraining or retooling?
+    2. **Sensory & Quality Parity** – Does it deliver the same taste, texture, appearance, and consumer satisfaction?
+    3. **Compliance & Safety** – Is it nutritionally, legally, and ethically substitutable (e.g., pork vs. beef, raw vs. precooked)?
+    4. **Operational Viability** – Does it fit existing storage, prep, and service workflows across Sodexo segments (corporate, healthcare, education)?
+    5. **Commercial Sustainability** – Is the alternative scalable, cost-effective, and available across Sodexo's national distribution network?
+
+    You communicate with clarity, authority, and actionable insight—never guessing. If data is ambiguous (e.g., undefined units, missing prep state), you explicitly call out the risk and recommend human validation.
+
+    Your goal: Ensure every approved swap maintains Sodexo's brand promise of consistent, safe, high-quality food experiences across 100,000+ daily servings.
+
+    **CRITICAL**: Return ONLY the similarity percentage number. No explanations, no reasoning, just the percentage (e.g., "95%" or "100%" or "65%").
+
+llm:
+  provider: groq
+  model: openai/gpt-oss-120b  # Changed back - qwen was returning null
+  temperature: 0.0
+  max_tokens: 50  # Only need to return a percentage
+  input_cost_per_1k_tokens: 0.00005  # Groq pricing
+  output_cost_per_1k_tokens: 0.00008
+
+processing:
+  batch_size: 100
+  concurrency: 3
+  max_retries: 3
+  retry_delay: 2  # Reduced to 100ms (was 2.0s)
+  error_policy: skip
+  max_budget: 50.0  # 3600 rows will cost more than bacon cleaning
+  
+  # Input preprocessing (removes noise, normalizes whitespace)
+  enable_preprocessing: true
+  preprocessing_max_length: 500
+  
+  # Auto-retry failed rows (rows with null outputs)
+  auto_retry_failed: true
+  max_retry_attempts: 3
+
+output:
+  destination_type: excel
+  destination_path: "ground_truth_similarity_results.xlsx"
+  merge_strategy: append  # Keep original columns + add llm_similarity
+
