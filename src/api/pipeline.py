@@ -248,7 +248,9 @@ class Pipeline:
             # Optional: Auto-retry failed rows
             if self.specifications.processing.auto_retry_failed:
                 # Get preprocessed data from context (or loaded data if no preprocessing)
-                retry_source_df = context.intermediate_data.get("preprocessed_data") or context.intermediate_data.get("loaded_data")
+                retry_source_df = context.intermediate_data.get("preprocessed_data")
+                if retry_source_df is None:
+                    retry_source_df = context.intermediate_data.get("loaded_data")
                 result = self._auto_retry_failed_rows(result, retry_source_df)
             
             # Cleanup checkpoints on success
