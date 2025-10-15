@@ -85,13 +85,16 @@ class ExecutionContext:
             else (self.end_time - self.start_time).total_seconds()
         )
         
+        # last_processed_row is 0-based index, so add 1 for count
+        actual_processed = self.last_processed_row + 1 if self.last_processed_row >= 0 else 0
+        
         rows_per_second = (
-            self.last_processed_row / duration if duration > 0 else 0.0
+            actual_processed / duration if duration > 0 else 0.0
         )
         
         return ProcessingStats(
             total_rows=self.total_rows,
-            processed_rows=self.last_processed_row,
+            processed_rows=actual_processed,
             failed_rows=self.failed_rows,
             skipped_rows=self.skipped_rows,
             rows_per_second=rows_per_second,
