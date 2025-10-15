@@ -460,7 +460,7 @@ class Pipeline:
         result: ExecutionResult,
         original_df: pd.DataFrame
     ) -> ExecutionResult:
-        """Auto-retry rows with null outputs."""
+        """Auto-retry rows with null OR empty outputs."""
         if original_df is None:
             self.logger.warning("Cannot retry: original dataframe is None")
             return result
@@ -471,19 +471,26 @@ class Pipeline:
         # Check quality
         quality = result.validate_output_quality(output_cols)
         
-        if quality.null_outputs == 0:
+        # Count both nulls and empties as failures
+        total_failed = quality.null_outputs + quality.empty_outputs
+        
+        if total_failed == 0:
             self.logger.info("No failed rows to retry")
             return result
         
         self.logger.info(
-            f"Auto-retry enabled: {quality.null_outputs} null outputs detected"
+            f"Auto-retry enabled: {quality.null_outputs} null + "
+            f"{quality.empty_outputs} empty = {total_failed} failed outputs"
         )
         
         # Try up to max_retry_attempts
         for attempt in range(1, specs.processing.max_retry_attempts + 1):
-            # Find null rows
-            null_mask = result.data[output_cols[0]].isna()
-            failed_indices = result.data[null_mask].index.tolist()
+            # Find null OR empty rows
+            output_col = result.data[output_cols[0]]
+            null_mask = output_col.isna()
+            empty_mask = output_col.astype(str).str.strip() == ""
+            failed_mask = null_mask | empty_mask
+            failed_indices = result.data[failed_mask].index.tolist()
             
             if not failed_indices:
                 break
