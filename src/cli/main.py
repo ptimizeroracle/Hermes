@@ -81,16 +81,16 @@ def cli(ctx):
 @click.option(
     "--input",
     "-i",
-    required=True,
+    required=False,
     type=click.Path(exists=True, path_type=Path),
-    help="Path to input data file (CSV, Excel, Parquet)",
+    help="Path to input data file (overrides config)",
 )
 @click.option(
     "--output",
     "-o",
-    required=True,
+    required=False,
     type=click.Path(path_type=Path),
-    help="Path to output file",
+    help="Path to output file (overrides config)",
 )
 @click.option(
     "--provider",
@@ -134,8 +134,8 @@ def cli(ctx):
 )
 def process(
     config: Path,
-    input: Path,
-    output: Path,
+    input: Optional[Path],
+    output: Optional[Path],
     provider: Optional[str],
     model: Optional[str],
     max_budget: Optional[float],
@@ -148,8 +148,7 @@ def process(
     """
     Process a dataset using LLM transformations.
     
-    Reads data from INPUT file, applies LLM transformations according to CONFIG,
-    and writes results to OUTPUT file.
+    Reads data from config file. INPUT and OUTPUT flags override config values if provided.
     
     Examples:
     
@@ -172,32 +171,34 @@ def process(
         console.print(f"[cyan]Loading configuration from {config}...[/cyan]")
         specs = ConfigLoader.from_yaml(str(config))
         
-        # Override with CLI arguments
-        specs.dataset.source_path = input
+        # Override with CLI arguments (if provided)
+        if input:
+            specs.dataset.source_path = input
         
-        # Set output configuration
-        if specs.output:
-            specs.output.destination_path = output
-        else:
-            # Create output spec if not in config
-            from src.core.specifications import OutputSpec, MergeStrategy
-            
-            # Detect output type from extension
-            output_suffix = output.suffix.lower()
-            if output_suffix == ".csv":
-                output_type = DataSourceType.CSV
-            elif output_suffix in [".xlsx", ".xls"]:
-                output_type = DataSourceType.EXCEL
-            elif output_suffix == ".parquet":
-                output_type = DataSourceType.PARQUET
+        # Set output configuration (if provided)
+        if output:
+            if specs.output:
+                specs.output.destination_path = output
             else:
-                output_type = DataSourceType.CSV  # Default
-            
-            specs.output = OutputSpec(
-                destination_type=output_type,
-                destination_path=output,
-                merge_strategy=MergeStrategy.REPLACE,
-            )
+                # Create output spec if not in config
+                from src.core.specifications import OutputSpec, MergeStrategy
+                
+                # Detect output type from extension
+                output_suffix = output.suffix.lower()
+                if output_suffix == ".csv":
+                    output_type = DataSourceType.CSV
+                elif output_suffix in [".xlsx", ".xls"]:
+                    output_type = DataSourceType.EXCEL
+                elif output_suffix == ".parquet":
+                    output_type = DataSourceType.PARQUET
+                else:
+                    output_type = DataSourceType.CSV  # Default
+                
+                specs.output = OutputSpec(
+                    destination_type=output_type,
+                    destination_path=output,
+                    merge_strategy=MergeStrategy.REPLACE,
+                )
         
         if provider:
             specs.llm.provider = LLMProvider(provider)
