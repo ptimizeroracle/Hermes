@@ -22,6 +22,12 @@ from llm_dataset_engine.core.specifications import (
     ProcessingSpec,
     PromptSpec,
 )
+from llm_dataset_engine.orchestration import (
+    AsyncExecutor,
+    ExecutionStrategy,
+    StreamingExecutor,
+    SyncExecutor,
+)
 
 
 class PipelineBuilder:
@@ -48,6 +54,7 @@ class PipelineBuilder:
         self._processing_spec: ProcessingSpec = ProcessingSpec()
         self._output_spec: Optional[OutputSpec] = None
         self._dataframe: Optional[pd.DataFrame] = None
+        self._executor: Optional[ExecutionStrategy] = None
 
     @staticmethod
     def create() -> "PipelineBuilder":
@@ -325,6 +332,53 @@ class PipelineBuilder:
         )
         return self
 
+    def with_executor(self, executor: ExecutionStrategy) -> "PipelineBuilder":
+        """
+        Set custom execution strategy.
+
+        Args:
+            executor: ExecutionStrategy instance
+
+        Returns:
+            Self for chaining
+        """
+        self._executor = executor
+        return self
+
+    def with_async_execution(
+        self, max_concurrency: int = 10
+    ) -> "PipelineBuilder":
+        """
+        Use async execution strategy.
+        
+        Enables async/await for non-blocking execution.
+        Ideal for FastAPI, aiohttp, and async frameworks.
+
+        Args:
+            max_concurrency: Maximum concurrent async tasks
+
+        Returns:
+            Self for chaining
+        """
+        self._executor = AsyncExecutor(max_concurrency=max_concurrency)
+        return self
+
+    def with_streaming(self, chunk_size: int = 1000) -> "PipelineBuilder":
+        """
+        Use streaming execution strategy.
+        
+        Processes data in chunks for memory-efficient handling.
+        Ideal for large datasets (100K+ rows).
+
+        Args:
+            chunk_size: Number of rows per chunk
+
+        Returns:
+            Self for chaining
+        """
+        self._executor = StreamingExecutor(chunk_size=chunk_size)
+        return self
+
     def build(self) -> Pipeline:
         """
         Build final Pipeline.
@@ -353,5 +407,9 @@ class PipelineBuilder:
         )
         
         # Create and return pipeline
-        return Pipeline(specifications, dataframe=self._dataframe)
+        return Pipeline(
+            specifications,
+            dataframe=self._dataframe,
+            executor=self._executor,
+        )
 

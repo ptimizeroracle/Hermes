@@ -6,7 +6,7 @@ This is the primary entry point that users interact with.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, List
+from typing import Any, Iterator, List
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -29,12 +29,16 @@ from llm_dataset_engine.core.specifications import (
     PromptSpec,
 )
 from llm_dataset_engine.orchestration import (
+    AsyncExecutor,
     CostTrackingObserver,
     ExecutionContext,
     ExecutionObserver,
+    ExecutionStrategy,
     LoggingObserver,
     ProgressBarObserver,
     StateManager,
+    StreamingExecutor,
+    SyncExecutor,
 )
 from llm_dataset_engine.stages import (
     DataLoaderStage,
@@ -65,6 +69,7 @@ class Pipeline:
         self,
         specifications: PipelineSpecifications,
         dataframe: pd.DataFrame | None = None,
+        executor: ExecutionStrategy | None = None,
     ):
         """
         Initialize pipeline with specifications.
@@ -72,10 +77,12 @@ class Pipeline:
         Args:
             specifications: Complete pipeline configuration
             dataframe: Optional pre-loaded DataFrame
+            executor: Optional execution strategy (default: SyncExecutor)
         """
         self.id = uuid4()
         self.specifications = specifications
         self.dataframe = dataframe
+        self.executor = executor or SyncExecutor()
         self.observers: List[ExecutionObserver] = []
         self.logger = get_logger(f"{__name__}.{self.id}")
 
@@ -349,6 +356,60 @@ class Pipeline:
             for col in results_df.columns:
                 df[col] = results_df[col]
             return df
+
+    async def execute_async(
+        self, resume_from: UUID | None = None
+    ) -> ExecutionResult:
+        """
+        Execute pipeline asynchronously.
+        
+        Uses AsyncExecutor for non-blocking execution. Ideal for integration
+        with FastAPI, aiohttp, and other async frameworks.
+
+        Args:
+            resume_from: Optional session ID to resume from checkpoint
+
+        Returns:
+            ExecutionResult with data and metrics
+            
+        Raises:
+            ValueError: If executor doesn't support async
+        """
+        if not self.executor.supports_async():
+            raise ValueError(
+                "Current executor doesn't support async. "
+                "Use AsyncExecutor: Pipeline(specs, executor=AsyncExecutor())"
+            )
+        
+        # Use executor's async execute method
+        return await self.executor.execute([], ExecutionContext())
+
+    def execute_stream(
+        self, chunk_size: int = 1000
+    ) -> Iterator[pd.DataFrame]:
+        """
+        Execute pipeline in streaming mode.
+        
+        Processes data in chunks for memory-efficient handling of large datasets.
+        Ideal for datasets that don't fit in memory.
+
+        Args:
+            chunk_size: Number of rows per chunk
+
+        Yields:
+            DataFrames with processed chunks
+            
+        Raises:
+            ValueError: If executor doesn't support streaming
+        """
+        if not self.executor.supports_streaming():
+            raise ValueError(
+                "Current executor doesn't support streaming. "
+                f"Use StreamingExecutor: Pipeline(specs, executor=StreamingExecutor({chunk_size}))"
+            )
+        
+        # Use executor's streaming execute method
+        return self.executor.execute([], ExecutionContext())
 
     def _execute_stage(
         self, stage: Any, input_data: Any, context: ExecutionContext
