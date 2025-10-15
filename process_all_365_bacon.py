@@ -56,19 +56,6 @@ Follow these rules:
 4. Format as one concise sentence: [prep], [features], [smoke] [type], [count], [layflat]
 5. **If unsure, make best effort** - extract what you can identify and write partial description
 
-Examples:
-- Input: "BACON SLICED APPLEWOOD SMOKED LAYOUT 18-22 CT"
-  Output: "Applewood-smoked sliced bacon, 18-22 slices per pound, layflat"
-  
-- Input: "BACON SLAB SUGAR CURE FRZN"  
-  Output: "Frozen sugar-cured slab bacon"
-
-- Input: "BACON BIT FC GF 3/8"
-  Output: "Fully cooked gluten-free bacon bits, 3/8-inch pieces"
-
-- Input: "BCN,PL,SYS-CLC,BITS,2/5#,1/2",FC,DICD,GF"
-  Output: "Fully cooked gluten-free bacon bits, 1/2-inch pieces"
-
 Now clean this:
 Input: {Item_Description_Long}
 
@@ -153,6 +140,34 @@ print(f"   Throughput: {result.metrics.rows_per_second:.2f} rows/sec")
 print(f"\n💰 Cost:")
 print(f"   Total cost: ${result.costs.total_cost}")
 print(f"   Cost per row: ${result.costs.total_cost / max(result.metrics.processed_rows, 1):.4f}")
+
+# Validate output quality
+print(f"\n🔍 Quality Validation:")
+quality = result.validate_output_quality(["cleaned_description"])
+print(f"   Valid outputs: {quality.valid_outputs}/{quality.total_rows}")
+print(f"   Success rate: {quality.success_rate:.1f}%")
+print(f"   Null outputs: {quality.null_outputs}")
+print(f"   Quality score: {quality.quality_score.upper()}")
+
+if quality.warnings:
+    print(f"\n⚠️  Warnings:")
+    for warning in quality.warnings:
+        print(f"   • {warning}")
+
+if quality.issues:
+    print(f"\n🚨 Issues Detected:")
+    for issue in quality.issues:
+        print(f"   • {issue}")
+    print(f"\n💡 Consider:")
+    print(f"   • Review your prompt complexity (simpler prompts often work better)")
+    print(f"   • Check LLM provider logs for errors")
+    print(f"   • Increase max_tokens if outputs are truncated")
+    print(f"   • Verify API key and rate limits")
+
+if quality.is_acceptable:
+    print(f"\n✅ Output quality is ACCEPTABLE ({quality.success_rate:.1f}% success)")
+else:
+    print(f"\n❌ Output quality is BELOW ACCEPTABLE THRESHOLD ({quality.success_rate:.1f}% < 70%)")
 
 print(f"\n📄 Output files created:")
 print(f"   ✅ {output_excel}")

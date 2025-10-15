@@ -36,6 +36,14 @@ from src.core.specifications import (
     PipelineSpecifications,
 )
 
+# Core result models
+from src.core.models import (
+    ExecutionResult,
+    QualityReport,
+    ProcessingStats,
+    CostEstimate,
+)
+
 __all__ = [
     "__version__",
     "Pipeline",
@@ -46,5 +54,9 @@ __all__ = [
     "LLMSpec",
     "ProcessingSpec",
     "PipelineSpecifications",
+    "ExecutionResult",
+    "QualityReport",
+    "ProcessingStats",
+    "CostEstimate",
 ]
 

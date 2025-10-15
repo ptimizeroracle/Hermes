@@ -12,123 +12,44 @@ dataset:
 
 prompt:
   template: |
-    Rewrite the input into a single, concise, professional product description in fluent English—strictly factual, neutral in tone, and optimized for foodservice procurement and semantic consistency.
+    Rewrite this bacon description to be clean, professional, and factual.
 
-    ✅ Include **only** the following attributes, in this exact order, **as a single sentence**:
-    1. **Preparation**:
-       - "raw", "fully cooked", or "frozen"
-       - If frozen and cooked: "frozen, fully cooked"
-    2. **Special features** (only if explicitly stated; expand to include honey-cured, sugar-cured, pepper-crusted, organic, gluten-free, nitrate-free, halal, or uncured):
-       - List comma-separated if multiple
-    3. **Smoke/flavor** (only if stated):
-       - applewood-smoked, cherrywood-smoked, hickory-smoked, pecanwood-smoked, fruitwood-smoked, hardwood-smoked, cold-smoked, or smoked (fallback if smoking mentioned but no type)
-       - If cold-smoked with wood type (e.g., "applewood cold smoked") → "applewood cold-smoked"
-    4. **Type**:
-       - sliced bacon, slab bacon, bacon bits, bacon pieces, bacon topping, bacon ends, beef bacon, Canadian style bacon, or round bacon
-    5. **Slice or piece detail** (if applicable):
-       - For sliced: "[X–Y] slices per pound ([cut])", where:
-         • ≤12 → thick-cut
-         • 13–16 → medium-cut
-         • ≥17 → thin-cut
-       - For bits/pieces: "X-inch pieces" (e.g., "3/8-inch pieces", "1/2-inch pieces"), "finely crumbled", or "random" if unspecified
-       - Always include the exact range/size from input alongside the label
-    6. **Layflat** (if "L/O", "layout", "layflat", "shingle", or "wide shingled" is present):
-       - Append: ", layflat"
+    **CRITICAL: Always return a valid description. Never return "None" or empty text.**
 
-    🚫 **Strictly omit from the sentence**:
-    - All pack sizes, weights, case counts (e.g., 5#, 150 CT, 32/36, "per pound" as quantity)
-    - Brand names, supplier codes, SKUs (e.g., Hormel, GFS, BCN, PL, FC, CSMK, SYSUP)
-    - Abbreviations — expand or interpret (e.g., "GF" → "gluten-free", "APPLWD" → "applewood", "FZ" → "frozen")
-    - Redundant terms: "pork bacon", "real bacon", "premium", "natural", "style", "quality"
-    - Any phrase not directly grounded in the input (e.g., "for easy separation", "delicate flavor", "premium cut")
+    Follow these rules:
+    1. Include (if present): preparation (raw/fully cooked/frozen), special features (sugar-cured, gluten-free, etc), 
+       smoke type (applewood-smoked, hickory-smoked, etc), bacon type (sliced/slab/bits), 
+       slice count (e.g., "18-22 slices per pound"), layflat if L/O/layout present
+    2. Remove: brand names (OLD SMOKEHOUSE, HORMEL, etc), codes (BCN, PL, CC, CSMK, etc), pack sizes, abbreviations
+    3. Expand: APPLWD→applewood, GF→gluten-free, FZ→frozen, FC/CKD→fully cooked, AWS→applewood
+    4. Format as one concise sentence: [prep], [features], [smoke] [type], [count], [layflat]
+    5. **If unsure, make best effort** - extract what you can identify and write partial description
 
-    🗣️ **Tone & Style**:
-    - Cold, professional, and concise
-    - No storytelling, no adjectives beyond required attributes
-    - No invented details — if smoke type isn't stated, omit it entirely (use 'smoked' only if implied)
-    - Use natural sentence flow, but prioritize **consistency over style**
-    - Start with preparation/special features; end with layflat if applicable
+    Examples:
+    - Input: "BACON SLICED APPLEWOOD SMOKED LAYOUT 18-22 CT"
+      Output: "Applewood-smoked sliced bacon, 18-22 slices per pound, layflat"
+      
+    - Input: "BACON SLAB SUGAR CURE FRZN"  
+      Output: "Frozen sugar-cured slab bacon"
 
-    🧠 **Key Rules**:
-    - "10/12", "10–12 CT", "10-12C" → "10–12 slices per pound (thick-cut)"
-    - "L/O", "layout", "layflat", "shingle" → add ", layflat" at the end
-    - "Cold smoked" ≠ "smoked" — only use "cold-smoked" if explicitly stated
-    - "Fully cooked" covers: cooked, pre-cooked, CKD, FC
-    - If multiple input variants, cross-reference for completeness (e.g., use the most explicit term)
-    - For ambiguities (e.g., non-standard cuts like "192 count" or "3.5-inch"), omit from sentence but note in metadata
+    - Input: "BACON BIT FC GF 3/8"
+      Output: "Fully cooked gluten-free bacon bits, 3/8-inch pieces"
 
-    ✅ **Output Format**:
-    - First: The cleaned description sentence.
-    - Then: A 'Metadata' section (bulleted) capturing omitted/raw details, e.g.:
-      - Original abbreviations/codes: [list]
-      - Omitted sizes/weights: [list]
-      - Preserved nuances: [e.g., 'Implied as round shape from "RND"']
-      - Any flagged ambiguities: [e.g., 'Slice count inconsistent across inputs']
+    - Input: "BCN,PL,SYS-CLC,BITS,2/5#,1/2",FC,DICD,GF"
+      Output: "Fully cooked gluten-free bacon bits, 1/2-inch pieces"
 
-    ✅ **Examples**:
-    Input:
-    BCN,PL,SYSUP,APLWD,10-12C,CSMK,GF | BACON 10/12 CT SLICED APPLEWOOD COLD SMOKED
-    Output:
-    Gluten-free, applewood cold-smoked sliced bacon, 10–12 slices per pound (thick-cut), layflat.
-    Metadata:
-    - Original codes: BCN, PL, SYSUP, CSMK
-    - Omitted sizes: 10/12 CT
-    - Preserved nuances: None
-
-    Input:
-    BACON BIT FC 3/8" GF | REAL BACON BITS COOKED GLUTEN FREE
-    Output:
-    Fully cooked, gluten-free bacon bits, 3/8-inch pieces.
-    Metadata:
-    - Original codes: FC
-    - Omitted sizes: None
-    - Preserved nuances: "REAL" implies non-imitation, but omitted per rules
-
-    Input:
-    SLAB BACON RAW CHERRYWOOD SMOKED
-    Output:
-    Raw, cherrywood-smoked slab bacon.
-    Metadata:
-    - Original codes: None
-    - Omitted sizes: None
-    - Preserved nuances: None
-
-    Now, rewrite the following input using these guidelines.
-    Return only the cleaned description and metadata.
-    
+    Now clean this:
     Input: {Item_Description_Long}
-  
-  system_message: |
-    You are a careful product copy editor. Clean fragmented product text into a clear, fluent description and identify key facts only if explicitly present. Prioritize consistency, brevity, and factual fidelity. Do not invent details or infer missing data.
-    
-    Guidelines:
-    • Objective: Produce one concise, neutral sentence (two if essential) that is semantically consistent across items and suitable for downstream search/embedding.
-    • Scope: Rephrase existing facts; remove marketing fluff, repetition, internal codes, and supplier SKUs; keep only concrete attributes that appear in the text.
-    • Canonical style: Use simple, professional phrasing; avoid superlatives; normalize obvious abbreviations where unambiguous; keep units and terms as written unless trivially standard (e.g., replace "#" with "lb" only if unambiguous and consistent with later rules).
-    • Defaults: If an attribute is absent, omit it; never guess. Prefer omission over speculation.
-    • Precision: Prefer specific, factual attributes (preparation, type/form, smoke/flavor if stated, slice or piece details if stated, special features only if explicitly mentioned).
-    • Pack/config context: If pack or size details are present, echo them briefly and literally at the end, otherwise omit. Do not derive totals or convert units unless trivial and risk-free. Detailed extraction logic is defined elsewhere.
-    • Consistency aids: Use en-dash for numeric ranges if present; keep lowercase units; add a space between numbers and units (e.g., 5 lb) only when it does not change meaning.
-    • Forbidden: No brand names (unless essential to identity), no internal codes, no claims like "premium" or "high quality," no added assumptions, no lists or markdown.
-    
+
     Output:
-    • Return only the cleaned description text.
-    • One sentence (two if essential for clarity).
-    • No lists, no extra commentary.
     
-    Mini examples (style only, not exhaustive):
-    • Input: "BACON L/O 14-18CT APPLWD"
-      Output: Raw, sliced applewood-smoked bacon, 14–18 slices per pound (medium-cut), with slices neatly laid flat for easy separation.
-    • Input: "FRZ FC BCN SAND STYLE"
-      Output: Frozen, fully cooked bacon slices, standard sandwich cut.
-    • Input: "BACON BIT GF 3/8""
-      Output: Gluten-free bacon bits, 3/8-inch pieces.
-    
-    Why this works:
-    • Gives a clear goal, strict brevity, and canonical phrasing, which stabilizes outputs for embeddings.
-    • Enforces omission over inference, preventing hallucinated attributes.
-    • Leaves all heavy normalization and extraction specifics to the subsequent specialized prompt.
-    • Stays general enough to reuse across related SKUs while keeping token length low.
+  system_message: |
+    You are a professional product description editor specializing in foodservice products.
+    Clean fragmented text into clear, consistent, factual descriptions.
+    Remove all marketing fluff, brand names, and internal codes.
+    Be concise and follow the rules exactly.
+    Output only the cleaned description - no explanations.
+    NEVER return "None" or empty output - always provide your best effort description.
 
 llm:
   provider: groq

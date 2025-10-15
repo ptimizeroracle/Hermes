@@ -301,7 +301,47 @@ def process(
         
         console.print(results_table)
         
-        console.print(f"\n[green]Output written to: {output}[/green]")
+        # Validate output quality
+        console.print("\n[cyan]📊 Validating output quality...[/cyan]")
+        quality = result.validate_output_quality(specs.dataset.output_columns)
+        
+        quality_table = Table(title="Quality Report")
+        quality_table.add_column("Metric", style="cyan")
+        quality_table.add_column("Value", style="green")
+        
+        quality_table.add_row("Valid Outputs", f"{quality.valid_outputs}/{quality.total_rows}")
+        quality_table.add_row("Success Rate", f"{quality.success_rate:.1f}%")
+        quality_table.add_row("Null Outputs", str(quality.null_outputs))
+        quality_table.add_row("Empty Outputs", str(quality.empty_outputs))
+        
+        # Color-code quality score
+        score_color = "green" if quality.quality_score in ["excellent", "good"] else "yellow" if quality.quality_score == "poor" else "red"
+        quality_table.add_row("Quality Score", f"[{score_color}]{quality.quality_score.upper()}[/{score_color}]")
+        
+        console.print(quality_table)
+        
+        # Display warnings and issues
+        if quality.warnings:
+            console.print("\n[yellow]⚠️  Warnings:[/yellow]")
+            for warning in quality.warnings:
+                console.print(f"  [yellow]• {warning}[/yellow]")
+        
+        if quality.issues:
+            console.print("\n[red]🚨 Issues Detected:[/red]")
+            for issue in quality.issues:
+                console.print(f"  [red]• {issue}[/red]")
+            console.print("\n[red]Consider:[/red]")
+            console.print("  [dim]• Review your prompt complexity (simpler prompts often work better)[/dim]")
+            console.print("  [dim]• Check LLM provider logs for errors[/dim]")
+            console.print("  [dim]• Increase max_tokens if outputs are truncated[/dim]")
+            console.print("  [dim]• Verify API key and rate limits[/dim]")
+        
+        if quality.is_acceptable:
+            console.print(f"\n[green]✅ Output quality is acceptable ({quality.success_rate:.1f}% success)[/green]")
+        else:
+            console.print(f"\n[red]❌ Output quality is below acceptable threshold ({quality.success_rate:.1f}% < 70%)[/red]")
+        
+        console.print(f"\n[green]Output written to: {specs.output.destination_path}[/green]")
         
     except Exception as e:
         console.print(f"[red]❌ Error: {e}[/red]")
