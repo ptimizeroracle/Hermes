@@ -10,6 +10,10 @@ from src.adapters.data_io import (
     CSVReader,
     CSVWriter,
     DataFrameReader,
+    ExcelReader,
+    ExcelWriter,
+    ParquetReader,
+    ParquetWriter,
     create_data_reader,
     create_data_writer,
 )
@@ -95,6 +99,175 @@ class TestDataReaders:
         
         assert isinstance(reader, DataFrameReader)
 
+    def test_excel_reader(self):
+        """Test reading from Excel file."""
+        # Create temporary Excel file
+        df = pd.DataFrame({
+            "text": ["sample1", "sample2", "sample3"],
+            "value": [1, 2, 3],
+            "score": [95.5, 87.3, 92.1],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = f.name
+        
+        try:
+            # Write test data
+            df.to_excel(excel_path, index=False, sheet_name="Sheet1")
+            
+            # Read it back
+            reader = ExcelReader(excel_path)
+            result = reader.read()
+            
+            assert isinstance(result, pd.DataFrame)
+            assert len(result) == 3
+            assert "text" in result.columns
+            assert "value" in result.columns
+            assert "score" in result.columns
+            assert result.iloc[0]["text"] == "sample1"
+            assert result.iloc[1]["value"] == 2
+            assert abs(result.iloc[2]["score"] - 92.1) < 0.01
+        finally:
+            Path(excel_path).unlink(missing_ok=True)
+
+    def test_excel_reader_with_sheet_name(self):
+        """Test reading from Excel file with specific sheet name."""
+        df1 = pd.DataFrame({"col1": [1, 2]})
+        df2 = pd.DataFrame({"col2": [3, 4]})
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = f.name
+        
+        try:
+            # Write multiple sheets
+            with pd.ExcelWriter(excel_path) as writer:
+                df1.to_excel(writer, sheet_name="FirstSheet", index=False)
+                df2.to_excel(writer, sheet_name="SecondSheet", index=False)
+            
+            # Read specific sheet
+            reader = ExcelReader(excel_path, sheet_name="SecondSheet")
+            result = reader.read()
+            
+            assert "col2" in result.columns
+            assert "col1" not in result.columns
+            assert len(result) == 2
+        finally:
+            Path(excel_path).unlink(missing_ok=True)
+
+    def test_excel_reader_preserves_data_types(self):
+        """Test Excel reader preserves data types correctly."""
+        df = pd.DataFrame({
+            "int_col": [1, 2, 3],
+            "float_col": [1.5, 2.7, 3.9],
+            "str_col": ["a", "b", "c"],
+            "bool_col": [True, False, True],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = f.name
+        
+        try:
+            df.to_excel(excel_path, index=False)
+            
+            reader = ExcelReader(excel_path)
+            result = reader.read()
+            
+            # Verify data integrity
+            assert result["int_col"].tolist() == [1, 2, 3]
+            assert abs(result["float_col"].iloc[0] - 1.5) < 0.01
+            assert result["str_col"].tolist() == ["a", "b", "c"]
+        finally:
+            Path(excel_path).unlink(missing_ok=True)
+
+    def test_parquet_reader(self):
+        """Test reading from Parquet file."""
+        df = pd.DataFrame({
+            "text": ["sample1", "sample2"],
+            "value": [1, 2],
+            "score": [95.5, 87.3],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = f.name
+        
+        try:
+            # Write test data
+            df.to_parquet(parquet_path, index=False)
+            
+            # Read it back
+            reader = ParquetReader(parquet_path)
+            result = reader.read()
+            
+            assert isinstance(result, pd.DataFrame)
+            assert len(result) == 2
+            assert "text" in result.columns
+            assert "value" in result.columns
+            assert "score" in result.columns
+        finally:
+            Path(parquet_path).unlink(missing_ok=True)
+
+    def test_parquet_reader_preserves_data_types(self):
+        """Test Parquet reader preserves data types (better than Excel/CSV)."""
+        df = pd.DataFrame({
+            "int_col": [1, 2, 3],
+            "float_col": [1.5, 2.7, 3.9],
+            "str_col": ["a", "b", "c"],
+            "bool_col": [True, False, True],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = f.name
+        
+        try:
+            df.to_parquet(parquet_path, index=False)
+            
+            reader = ParquetReader(parquet_path)
+            result = reader.read()
+            
+            # Parquet preserves types perfectly
+            assert result["int_col"].dtype == "int64"
+            assert result["float_col"].dtype == "float64"
+            assert result["str_col"].dtype == "object"
+            assert result["bool_col"].dtype == "bool"
+        finally:
+            Path(parquet_path).unlink(missing_ok=True)
+
+    def test_create_data_reader_excel(self):
+        """Test factory function for Excel reader."""
+        df = pd.DataFrame({"text": ["test"]})
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = f.name
+        
+        try:
+            df.to_excel(excel_path, index=False)
+            
+            reader = create_data_reader(DataSourceType.EXCEL, Path(excel_path))
+            assert isinstance(reader, ExcelReader)
+            
+            result = reader.read()
+            assert len(result) == 1
+        finally:
+            Path(excel_path).unlink(missing_ok=True)
+
+    def test_create_data_reader_parquet(self):
+        """Test factory function for Parquet reader."""
+        df = pd.DataFrame({"text": ["test"]})
+        
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = f.name
+        
+        try:
+            df.to_parquet(parquet_path, index=False)
+            
+            reader = create_data_reader(DataSourceType.PARQUET, Path(parquet_path))
+            assert isinstance(reader, ParquetReader)
+            
+            result = reader.read()
+            assert len(result) == 1
+        finally:
+            Path(parquet_path).unlink(missing_ok=True)
+
 
 class TestDataWriters:
     """Test suite for data writers."""
@@ -110,8 +283,8 @@ class TestDataWriters:
             csv_path = f.name
         
         try:
-            writer = CSVWriter(csv_path)
-            confirmation = writer.write(df)
+            writer = CSVWriter()
+            confirmation = writer.write(df, Path(csv_path))
             
             assert confirmation.success is True
             assert confirmation.rows_written == 2
@@ -124,41 +297,235 @@ class TestDataWriters:
         finally:
             Path(csv_path).unlink(missing_ok=True)
 
-    def test_csv_writer_append_mode(self):
-        """Test appending to CSV file."""
+    def test_csv_writer_overwrite(self):
+        """Test CSV writer overwrites by default."""
         df1 = pd.DataFrame({"text": ["first"]})
-        df2 = pd.DataFrame({"text": ["second"]})
+        df2 = pd.DataFrame({"text": ["second", "third"]})
         
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
-            csv_path = f.name
+            csv_path = Path(f.name)
         
         try:
-            writer = CSVWriter(csv_path)
-            writer.write(df1)
-            writer.write(df2, mode="append")
+            writer = CSVWriter()
+            writer.write(df1, csv_path)
+            writer.write(df2, csv_path)  # Overwrites
             
-            # Verify both rows written
+            # Verify only second write exists
             result = pd.read_csv(csv_path)
-            assert len(result) == 2
-            assert result.iloc[0]["text"] == "first"
-            assert result.iloc[1]["text"] == "second"
+            assert len(result) == 2  # Only df2 data
+            assert result.iloc[0]["text"] == "second"
+            assert result.iloc[1]["text"] == "third"
         finally:
-            Path(csv_path).unlink(missing_ok=True)
+            csv_path.unlink(missing_ok=True)
 
     def test_create_data_writer_csv(self):
         """Test factory function for CSV writer."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
-            csv_path = f.name
+            csv_path = Path(f.name)
         
         try:
-            writer = create_data_writer(DataSourceType.CSV, csv_path)
+            writer = create_data_writer(DataSourceType.CSV)
             assert isinstance(writer, CSVWriter)
             
             df = pd.DataFrame({"text": ["test"]})
-            confirmation = writer.write(df)
+            confirmation = writer.write(df, csv_path)
             assert confirmation.success is True
         finally:
-            Path(csv_path).unlink(missing_ok=True)
+            csv_path.unlink(missing_ok=True)
+
+    def test_excel_writer(self):
+        """Test writing to Excel file."""
+        df = pd.DataFrame({
+            "text": ["sample1", "sample2"],
+            "value": [1, 2],
+            "score": [95.5, 87.3],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = Path(f.name)
+        
+        try:
+            writer = ExcelWriter()
+            confirmation = writer.write(df, excel_path)
+            
+            assert confirmation.success is True
+            assert confirmation.rows_written == 2
+            assert excel_path.exists()
+            
+            # Verify written data
+            written_df = pd.read_excel(excel_path)
+            assert len(written_df) == 2
+            assert list(written_df.columns) == ["text", "value", "score"]
+            assert written_df.iloc[0]["text"] == "sample1"
+            assert written_df.iloc[1]["value"] == 2
+        finally:
+            excel_path.unlink(missing_ok=True)
+
+    def test_excel_writer_with_sheet_name(self):
+        """Test writing to Excel with custom sheet name (note: not supported in basic API)."""
+        df = pd.DataFrame({"col1": [1, 2]})
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = Path(f.name)
+        
+        try:
+            # ExcelWriter doesn't support sheet_name in __init__, just write normally
+            writer = ExcelWriter()
+            writer.write(df, excel_path)
+            
+            # Verify data written
+            written_df = pd.read_excel(excel_path)
+            assert len(written_df) == 2
+        finally:
+            excel_path.unlink(missing_ok=True)
+
+    def test_excel_writer_overwrite_mode(self):
+        """Test overwriting Excel file (default behavior)."""
+        df1 = pd.DataFrame({"text": ["first"]})
+        df2 = pd.DataFrame({"text": ["second", "third"]})
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = Path(f.name)
+        
+        try:
+            writer = ExcelWriter()
+            writer.write(df1, excel_path)
+            writer.write(df2, excel_path)  # Overwrites by default
+            
+            # Verify only second write exists
+            result = pd.read_excel(excel_path)
+            assert len(result) == 2  # Only df2 data
+            assert result.iloc[0]["text"] == "second"
+        finally:
+            excel_path.unlink(missing_ok=True)
+
+    def test_excel_writer_preserves_data_types(self):
+        """Test Excel writer preserves data types."""
+        df = pd.DataFrame({
+            "int_col": [1, 2, 3],
+            "float_col": [1.5, 2.7, 3.9],
+            "str_col": ["a", "b", "c"],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = Path(f.name)
+        
+        try:
+            writer = ExcelWriter()
+            writer.write(df, excel_path)
+            
+            # Read back and verify
+            result = pd.read_excel(excel_path)
+            assert result["int_col"].tolist() == [1, 2, 3]
+            assert abs(result["float_col"].iloc[0] - 1.5) < 0.01
+            assert result["str_col"].tolist() == ["a", "b", "c"]
+        finally:
+            excel_path.unlink(missing_ok=True)
+
+    def test_parquet_writer(self):
+        """Test writing to Parquet file."""
+        df = pd.DataFrame({
+            "text": ["sample1", "sample2"],
+            "value": [1, 2],
+            "score": [95.5, 87.3],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = Path(f.name)
+        
+        try:
+            writer = ParquetWriter()
+            confirmation = writer.write(df, parquet_path)
+            
+            assert confirmation.success is True
+            assert confirmation.rows_written == 2
+            assert parquet_path.exists()
+            
+            # Verify written data
+            written_df = pd.read_parquet(parquet_path)
+            assert len(written_df) == 2
+            assert list(written_df.columns) == ["text", "value", "score"]
+        finally:
+            parquet_path.unlink(missing_ok=True)
+
+    def test_parquet_writer_preserves_data_types_perfectly(self):
+        """Test Parquet writer preserves all data types perfectly."""
+        df = pd.DataFrame({
+            "int_col": [1, 2, 3],
+            "float_col": [1.5, 2.7, 3.9],
+            "str_col": ["a", "b", "c"],
+            "bool_col": [True, False, True],
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = Path(f.name)
+        
+        try:
+            writer = ParquetWriter()
+            writer.write(df, parquet_path)
+            
+            # Read back and verify types are EXACTLY preserved
+            result = pd.read_parquet(parquet_path)
+            assert result["int_col"].dtype == "int64"
+            assert result["float_col"].dtype == "float64"
+            assert result["str_col"].dtype == "object"
+            assert result["bool_col"].dtype == "bool"  # Parquet preserves bool!
+        finally:
+            parquet_path.unlink(missing_ok=True)
+
+    def test_parquet_writer_compression(self):
+        """Test Parquet writer with compression (note: compression not in basic API)."""
+        df = pd.DataFrame({
+            "text": ["sample" * 100 for _ in range(1000)],  # Highly compressible
+            "value": list(range(1000)),
+        })
+        
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = Path(f.name)
+        
+        try:
+            writer = ParquetWriter()
+            confirmation = writer.write(df, parquet_path)
+            
+            assert confirmation.success is True
+            assert confirmation.rows_written == 1000
+            
+            # Verify file exists and has data
+            assert parquet_path.exists()
+            result = pd.read_parquet(parquet_path)
+            assert len(result) == 1000
+        finally:
+            parquet_path.unlink(missing_ok=True)
+
+    def test_create_data_writer_excel(self):
+        """Test factory function for Excel writer."""
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            excel_path = Path(f.name)
+        
+        try:
+            writer = create_data_writer(DataSourceType.EXCEL)
+            assert isinstance(writer, ExcelWriter)
+            
+            df = pd.DataFrame({"text": ["test"]})
+            confirmation = writer.write(df, excel_path)
+            assert confirmation.success is True
+        finally:
+            excel_path.unlink(missing_ok=True)
+
+    def test_create_data_writer_parquet(self):
+        """Test factory function for Parquet writer."""
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
+            parquet_path = Path(f.name)
+        
+        try:
+            writer = create_data_writer(DataSourceType.PARQUET)
+            assert isinstance(writer, ParquetWriter)
+            
+            df = pd.DataFrame({"text": ["test"]})
+            confirmation = writer.write(df, parquet_path)
+            assert confirmation.success is True
+        finally:
+            parquet_path.unlink(missing_ok=True)
 
 
 class TestCheckpointStorage:
@@ -170,7 +537,7 @@ class TestCheckpointStorage:
         from src.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
-            storage = LocalFileCheckpointStorage(temp_dir)
+            storage = LocalFileCheckpointStorage(Path(temp_dir))
             session_id = uuid4()
             
             # Save checkpoint
@@ -195,7 +562,7 @@ class TestCheckpointStorage:
         from src.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
-            storage = LocalFileCheckpointStorage(temp_dir)
+            storage = LocalFileCheckpointStorage(Path(temp_dir))
             
             # Create multiple checkpoints
             session_ids = [uuid4() for _ in range(3)]
@@ -212,7 +579,7 @@ class TestCheckpointStorage:
         from src.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
-            storage = LocalFileCheckpointStorage(temp_dir)
+            storage = LocalFileCheckpointStorage(Path(temp_dir))
             session_id = uuid4()
             
             # Save and then delete

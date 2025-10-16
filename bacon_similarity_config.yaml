@@ -10,6 +10,7 @@ dataset:
     - portfolio
   output_columns:
     - llm_similarity
+    - Explanation
 
 prompt:
   template: |
@@ -55,7 +56,7 @@ prompt:
 
 llm:
   provider: groq
-  model: openai/gpt-oss-120b  # Changed back - qwen was returning null
+  model: moonshotai/kimi-k2-instruct-0905  # Changed back - qwen was returning null
   temperature: 0.0
   max_tokens: 50  # Only need to return a percentage
   input_cost_per_1k_tokens: 0.00005  # Groq pricing
