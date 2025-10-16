@@ -66,6 +66,32 @@ class PipelineBuilder:
         """
         return PipelineBuilder()
 
+    @staticmethod
+    def from_specifications(specs: PipelineSpecifications) -> "PipelineBuilder":
+        """
+        Create builder from existing specifications.
+        
+        Useful for loading from YAML and modifying programmatically.
+        
+        Args:
+            specs: Complete pipeline specifications
+            
+        Returns:
+            PipelineBuilder pre-configured with specs
+            
+        Example:
+            specs = load_pipeline_config("config.yaml")
+            builder = PipelineBuilder.from_specifications(specs)
+            pipeline = builder.build()
+        """
+        builder = PipelineBuilder()
+        builder._dataset_spec = specs.dataset
+        builder._prompt_spec = specs.prompt
+        builder._llm_spec = specs.llm
+        builder._processing_spec = specs.processing
+        builder._output_spec = specs.output
+        return builder
+
     def from_csv(
         self,
         path: str,

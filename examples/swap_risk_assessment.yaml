@@ -1,0 +1,58 @@
+# Swap Risk Assessment
+# Part 3: Risk evaluation (uses similarity score AND explanation)
+
+dataset:
+  source_type: dataframe  # Injected by composer
+  input_columns:
+    - incumbent
+    - portfolio
+    - llm_similarity  # From pipeline 1
+    - Explanation     # From pipeline 2
+  output_columns:
+    - swap_risk_score
+
+prompt:
+  response_format: raw
+  template: |
+    Assess the operational risk of this product swap.
+    
+    Incumbent: {incumbent}
+    Portfolio: {portfolio}
+    Similarity: {llm_similarity}%
+    Analysis: {Explanation}
+    
+    Risk Factors to Consider:
+    - Similarity score magnitude (<80% = high risk)
+    - Explanation quality (vague = higher risk)
+    - Operational barriers mentioned (storage, prep, form differences)
+    - Safety/compliance concerns (different protein, prep state)
+    - Supply chain viability (scalability concerns)
+    
+    Assign ONE risk level:
+    - "low" = High confidence swap (95%+ similarity, no operational barriers)
+    - "medium" = Moderate risk (80-94% similarity, minor differences)
+    - "high" = Significant risk (<80% similarity, major operational differences)
+    - "critical" = Do not swap (safety concerns, different categories)
+    
+    Return ONLY the risk level (e.g., "low" or "medium" or "high" or "critical").
+
+  system_message: |
+    You are a supply chain risk analyst for large-scale foodservice.
+    Evaluate swap risks objectively based on the provided analysis.
+    Consider operational impact across 100,000+ daily servings.
+    Return only the risk level - no explanations.
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  temperature: 0.0
+  max_tokens: 20
+  input_cost_per_1k_tokens: 0.00005
+  output_cost_per_1k_tokens: 0.00008
+
+processing:
+  batch_size: 100
+  concurrency: 5
+  max_retries: 2
+  error_policy: skip
+

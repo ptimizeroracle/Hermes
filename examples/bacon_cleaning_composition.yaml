@@ -1,0 +1,60 @@
+# Bacon Cleaning Multi-Column Composition
+# Generates 3 columns from original data:
+# 1. cleaned_description (independent)
+# 2. quality_score (depends on cleaned_description)
+# 3. category (depends on cleaned_description)
+
+composition:
+  input: "tmp/ground_truth.xlsx"
+  
+  pipelines:
+    # Pipeline 1: Clean the descriptions (independent)
+    - column: cleaned_description
+      config: examples/bacon_cleaning_only.yaml
+    
+    # Pipeline 2: Rate quality of cleaned descriptions (depends on #1)
+    - column: quality_score
+      depends_on: [cleaned_description]
+      config: examples/bacon_quality_score.yaml
+    
+    # Pipeline 3: Categorize products (depends on #1)
+    - column: category
+      depends_on: [cleaned_description]
+      config: examples/bacon_category.yaml
+
+# Execution flow:
+# ┌─────────────────────┐
+# │ Item_Description_   │
+# │      Long           │
+# └──────────┬──────────┘
+#            │
+#            ▼
+#   ┌─────────────────┐
+#   │ Pipeline 1:     │
+#   │ Clean           │
+#   └───┬─────────────┘
+#       │
+#       ├─────────────┬─────────────┐
+#       ▼             ▼             ▼
+#  ┌─────────┐  ┌──────────┐  ┌─────────┐
+#  │cleaned_ │  │Pipeline 2│  │Pipeline3│
+#  │descrip. │  │Quality   │  │Category │
+#  └─────────┘  └────┬─────┘  └────┬────┘
+#                    ▼             ▼
+#               ┌─────────┐   ┌─────────┐
+#               │quality_ │   │category │
+#               │ score   │   │         │
+#               └─────────┘   └─────────┘
+#
+# Final output: 4 columns
+# - Item_Description_Long (original)
+# - cleaned_description (from pipeline 1)
+# - quality_score (from pipeline 2)
+# - category (from pipeline 3)
+
+# Cost Analysis:
+# - Pipeline 1: 365 rows × ~100 tokens × $0.00008 = ~$0.003
+# - Pipeline 2: 365 rows × ~50 tokens × $0.00008 = ~$0.001
+# - Pipeline 3: 365 rows × ~50 tokens × $0.00008 = ~$0.001
+# Total: ~$0.005 (3x cheaper than running all in one heavy prompt!)
+

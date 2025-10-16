@@ -312,7 +312,7 @@ class PipelineComposer:
             This enables pure YAML workflows without Python code.
         """
         import yaml
-        from src.config.config_loader import load_pipeline_config
+        from src.config import ConfigLoader
         
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
@@ -332,7 +332,7 @@ class PipelineComposer:
             depends_on = pipeline_config.get('depends_on', [])
             
             # Load pipeline from its config
-            pipeline_specs = load_pipeline_config(config_file)
+            pipeline_specs = ConfigLoader.from_yaml(config_file)
             pipeline = Pipeline(pipeline_specs)
             
             composer.add_column(col_name, pipeline, depends_on)

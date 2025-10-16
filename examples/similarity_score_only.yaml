@@ -1,0 +1,46 @@
+# Similarity Score Only (Optimized for Speed)
+# Part 1: Fast percentage calculation
+
+dataset:
+  source_type: dataframe  # Injected by composer
+  input_columns:
+    - incumbent
+    - portfolio
+  output_columns:
+    - llm_similarity
+
+prompt:
+  response_format: raw  # Simple output
+  template: |
+    Rate bacon product substitutability (0-100%).
+    
+    Incumbent: {incumbent}
+    Portfolio: {portfolio}
+    
+    Focus ONLY on operational compatibility:
+    - Slice thickness (count per pound)
+    - Form (layflat vs shingled vs bits)
+    - Prep state (raw vs cooked)
+    - Storage (frozen vs refrigerated)
+    
+    Return ONLY the percentage (e.g., "95%" or "87%").
+
+  system_message: |
+    You are a product substitution expert.
+    Rate functional equivalence based on operational requirements.
+    Be fast and accurate - return only the percentage.
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  temperature: 0.0
+  max_tokens: 10  # Very short - just "XX%"
+  input_cost_per_1k_tokens: 0.00005
+  output_cost_per_1k_tokens: 0.00008
+
+processing:
+  batch_size: 100
+  concurrency: 5
+  max_retries: 2
+  error_policy: skip
+
