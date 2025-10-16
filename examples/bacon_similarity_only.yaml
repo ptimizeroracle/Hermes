@@ -1,0 +1,37 @@
+# Bacon Similarity Scoring (Single Output Column)
+# Used as part of composition pipeline
+
+dataset:
+  source_type: dataframe  # Will be injected by composer
+  input_columns:
+    - incumbent
+    - portfolio
+  output_columns:
+    - llm_similarity
+
+prompt:
+  response_format: raw  # Single output, raw text
+  template: |
+    Rate the technical substitutability of these two bacon products (0-100%):
+    
+    Incumbent: {incumbent}
+    Portfolio: {portfolio}
+    
+    Focus on: slice count, form factor, prep state, handling requirements.
+    
+    Return ONLY the percentage number (e.g., "95%" or "87%").
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  temperature: 0.0
+  max_tokens: 10
+  input_cost_per_1k_tokens: 0.00005
+  output_cost_per_1k_tokens: 0.00008
+
+processing:
+  batch_size: 100
+  concurrency: 5
+  max_retries: 3
+  error_policy: skip
+

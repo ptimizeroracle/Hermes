@@ -1,0 +1,44 @@
+# Bacon Confidence Scorer (Depends on Similarity + Explanation)
+# Used as part of composition pipeline
+
+dataset:
+  source_type: dataframe  # Will be injected by composer
+  input_columns:
+    - incumbent
+    - portfolio
+    - llm_similarity  # From pipeline 1
+    - Explanation     # From pipeline 2
+  output_columns:
+    - confidence_score
+
+prompt:
+  response_format: raw
+  template: |
+    Rate your confidence (0-100%) in this product swap analysis:
+    
+    Incumbent: {incumbent}
+    Portfolio: {portfolio}
+    Similarity Score: {llm_similarity}%
+    Explanation: {Explanation}
+    
+    Consider:
+    - Is the similarity score justified by the explanation?
+    - Are there any ambiguities or missing information?
+    - How reliable is this swap recommendation?
+    
+    Return ONLY the confidence percentage (e.g., "85%" or "95%").
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  temperature: 0.0
+  max_tokens: 10
+  input_cost_per_1k_tokens: 0.00005
+  output_cost_per_1k_tokens: 0.00008
+
+processing:
+  batch_size: 100
+  concurrency: 5
+  max_retries: 2
+  error_policy: skip
+
