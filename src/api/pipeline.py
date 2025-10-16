@@ -44,9 +44,9 @@ from src.stages import (
     DataLoaderStage,
     LLMInvocationStage,
     PromptFormatterStage,
-    RawTextParser,
     ResponseParserStage,
     ResultWriterStage,
+    create_response_parser,
 )
 from src.utils import RateLimiter, RetryHandler, get_logger
 
@@ -353,9 +353,13 @@ class Pipeline:
         if state_manager.should_checkpoint(context.last_processed_row):
             state_manager.save_checkpoint(context)
         
-        # Stage 4: Parse responses
+        # Stage 4: Parse responses (using configured parser)
+        parser = create_response_parser(
+            prompt_spec=specs.prompt,
+            output_columns=specs.dataset.output_columns,
+        )
         parser_stage = ResponseParserStage(
-            parser=RawTextParser(),
+            parser=parser,
             output_columns=specs.dataset.output_columns,
         )
         results_df = self._execute_stage(

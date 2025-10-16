@@ -107,6 +107,18 @@ class PromptSpec(BaseModel):
     template_variables: Optional[List[str]] = Field(
         default=None, description="Expected template variables"
     )
+    response_format: str = Field(
+        default="raw", 
+        description="Response parsing format: 'raw', 'json', or 'regex'"
+    )
+    json_fields: Optional[List[str]] = Field(
+        default=None, 
+        description="Expected JSON field names (for response_format='json')"
+    )
+    regex_patterns: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Regex patterns for field extraction (for response_format='regex')"
+    )
 
     @field_validator("template")
     @classmethod
@@ -115,6 +127,17 @@ class PromptSpec(BaseModel):
         if "{" not in v or "}" not in v:
             raise ValueError(
                 "Template must contain at least one variable in {var} format"
+            )
+        return v
+
+    @field_validator("response_format")
+    @classmethod
+    def validate_response_format(cls, v: str) -> str:
+        """Validate response format is supported."""
+        allowed = ["raw", "json", "regex"]
+        if v not in allowed:
+            raise ValueError(
+                f"response_format must be one of {allowed}, got '{v}'"
             )
         return v
 

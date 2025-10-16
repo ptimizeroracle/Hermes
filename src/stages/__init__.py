@@ -10,6 +10,7 @@ from src.stages.multi_run_stage import (
     FirstSuccessStrategy,
     MultiRunStage,
 )
+from src.stages.parser_factory import create_response_parser
 from src.stages.pipeline_stage import PipelineStage
 from src.stages.prompt_formatter_stage import (
     PromptFormatterStage,
@@ -37,6 +38,7 @@ __all__ = [
     "JSONParser",
     "PydanticParser",
     "RegexParser",
+    "create_response_parser",
     "AggregationStrategy",
     "ConsensusStrategy",
     "FirstSuccessStrategy",

@@ -12,7 +12,10 @@ dataset:
     - llm_similarity
     - Explanation
 
-prompt:
+  response_format: json
+  json_fields:
+    - llm_similarity
+    - Explanation
   template: |
     Given two bacon product descriptions — an **Incumbent** (current standard) and a **Portfolio** candidate — evaluate their **technical substitutability** in a large-scale foodservice environment like Sodexo.
 
@@ -29,7 +32,11 @@ prompt:
     Incumbent: {incumbent}
     Portfolio: {portfolio}
 
-    **Output format**: Return ONLY the percentage as a number (e.g., "95%" or "85%" or "100%")
+    **Output format**: Return ONLY valid JSON with exactly these two fields:
+    {{
+      "llm_similarity": "95%",
+      "Explanation": "Detailed technical justification explaining the similarity score based on the 5 dimensions above"
+    }}
 
   system_message: |
     You are a Senior Culinary Technologist and Product Standards Specialist at Sodexo, with 15+ years of experience in large-scale foodservice procurement, menu engineering, and supply chain innovation.
@@ -52,7 +59,7 @@ prompt:
 
     Your goal: Ensure every approved swap maintains Sodexo's brand promise of consistent, safe, high-quality food experiences across 100,000+ daily servings.
 
-    **CRITICAL**: Return ONLY the similarity percentage number. No explanations, no reasoning, just the percentage (e.g., "95%" or "100%" or "65%").
+    **CRITICAL**: Return ONLY valid JSON. No markdown, no code blocks, no additional text. Just the raw JSON object with "llm_similarity" and "Explanation" fields.
 
 llm:
   provider: groq
