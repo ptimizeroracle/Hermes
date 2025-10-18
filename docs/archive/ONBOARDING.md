@@ -21,10 +21,10 @@ Welcome! This guide will help you understand and use the LLM Dataset Engine effe
 
 **LLM Dataset Engine** is a production-ready SDK for processing tabular datasets (CSV, Excel, Parquet) using Large Language Models with:
 
-✅ **Reliability**: Automatic retries, checkpointing, error handling  
-✅ **Cost Control**: Budget limits, cost estimation, real-time tracking  
-✅ **Observability**: Progress bars, structured logging, metrics  
-✅ **Flexibility**: Multiple LLM providers, custom parsers, plugin architecture  
+✅ **Reliability**: Automatic retries, checkpointing, error handling
+✅ **Cost Control**: Budget limits, cost estimation, real-time tracking
+✅ **Observability**: Progress bars, structured logging, metrics
+✅ **Flexibility**: Multiple LLM providers, custom parsers, plugin architecture
 
 ### Real-World Use Cases
 
@@ -196,8 +196,8 @@ from llm_dataset_engine.stages import JSONParser
 
 pipeline = (
     PipelineBuilder.create()
-    .from_csv("products.csv", 
-              input_columns=["description"], 
+    .from_csv("products.csv",
+              input_columns=["description"],
               output_columns=["brand", "model", "price"])
     .with_prompt("""
 Extract product details as JSON:
@@ -229,7 +229,7 @@ class Product(BaseModel):
 
 pipeline = (
     PipelineBuilder.create()
-    .from_csv("products.csv", 
+    .from_csv("products.csv",
               input_columns=["description"],
               output_columns=["brand", "model", "price"])
     .with_prompt("Extract: {description}\n\nJSON:")
@@ -322,21 +322,21 @@ def my_data_pipeline():
     # Your existing code
     df = load_data()
     df = clean_data(df)
-    
+
     # Add LLM transformation layer
     llm_pipeline = (
         PipelineBuilder.create()
-        .from_dataframe(df, 
-                       input_columns=["text"], 
+        .from_dataframe(df,
+                       input_columns=["text"],
                        output_columns=["enriched"])
         .with_prompt("Enrich: {text}")
         .with_llm(provider="groq", model="openai/gpt-oss-120b")
         .build()
     )
-    
+
     result = llm_pipeline.execute()
     enriched_df = result.data
-    
+
     # Continue your pipeline
     save_data(enriched_df)
 ```
@@ -357,14 +357,14 @@ def llm_transform(
     """Reusable LLM transformation function."""
     pipeline = (
         PipelineBuilder.create()
-        .from_dataframe(df, 
-                       input_columns=input_cols, 
+        .from_dataframe(df,
+                       input_columns=input_cols,
                        output_columns=output_cols)
         .with_prompt(prompt)
         .with_llm(**llm_config)
         .build()
     )
-    
+
     result = pipeline.execute()
     return result.data
 
@@ -390,14 +390,14 @@ def process_with_config(df, config_path):
     """Process DataFrame using external config."""
     # Load config
     specs = ConfigLoader.from_yaml(config_path)
-    
+
     # Override dataset with runtime DataFrame
     specs.dataset.source_type = "dataframe"
-    
+
     # Create pipeline
     pipeline = Pipeline(specs)
     pipeline._dataframe = df  # Inject DataFrame
-    
+
     result = pipeline.execute()
     return result.data
 
@@ -417,7 +417,7 @@ from llm_dataset_engine import PipelineBuilder
 def llm_enrichment_task(**context):
     """Airflow task for LLM enrichment."""
     df = context['task_instance'].xcom_pull(task_ids='load_data')
-    
+
     pipeline = (
         PipelineBuilder.create()
         .from_dataframe(df, input_columns=["text"], output_columns=["result"])
@@ -426,12 +426,12 @@ def llm_enrichment_task(**context):
         .with_max_budget(10.0)  # Cost control
         .build()
     )
-    
+
     result = pipeline.execute()
-    
+
     # Push to next task
     context['task_instance'].xcom_push(key='enriched_data', value=result.data)
-    
+
     # Log metrics
     print(f"Cost: ${result.costs.total_cost}")
     print(f"Duration: {result.duration}s")
@@ -440,7 +440,7 @@ with DAG('data_pipeline', ...) as dag:
     load = PythonOperator(task_id='load_data', ...)
     enrich = PythonOperator(task_id='llm_enrichment', python_callable=llm_enrichment_task)
     save = PythonOperator(task_id='save_data', ...)
-    
+
     load >> enrich >> save
 ```
 
@@ -455,14 +455,14 @@ def llm_enrichment_node(df, params):
     """Kedro node for LLM processing."""
     pipeline = (
         PipelineBuilder.create()
-        .from_dataframe(df, 
+        .from_dataframe(df,
                        input_columns=params["input_cols"],
                        output_columns=params["output_cols"])
         .with_prompt(params["prompt"])
         .with_llm(**params["llm_config"])
         .build()
     )
-    
+
     result = pipeline.execute()
     return result.data
 
@@ -611,7 +611,7 @@ prompt:
     Clean and analyze:
     Description: {description}
     Category: {category}
-    
+
     Return JSON with: cleaned_description, sentiment
   system_message: "You are a data processing assistant."
   few_shot_examples:
@@ -785,4 +785,3 @@ for chunk in pd.read_csv("large.csv", chunksize=1000):
 ---
 
 **Happy Processing! 🚀**
-

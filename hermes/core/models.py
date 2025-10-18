@@ -8,7 +8,7 @@ execution, following clean code principles with type safety.
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -24,7 +24,7 @@ class LLMResponse:
     model: str
     cost: Decimal
     latency_ms: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -36,7 +36,7 @@ class CostEstimate:
     input_tokens: int
     output_tokens: int
     rows: int
-    breakdown_by_stage: Dict[str, Decimal] = field(default_factory=dict)
+    breakdown_by_stage: dict[str, Decimal] = field(default_factory=dict)
     confidence: str = "estimate"  # estimate, sample-based, actual
 
 
@@ -50,7 +50,7 @@ class ProcessingStats:
     skipped_rows: int
     rows_per_second: float
     total_duration_seconds: float
-    stage_durations: Dict[str, float] = field(default_factory=dict)
+    stage_durations: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -62,7 +62,7 @@ class ErrorInfo:
     error_type: str
     error_message: str
     timestamp: datetime
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -72,12 +72,12 @@ class ExecutionResult:
     data: pd.DataFrame
     metrics: ProcessingStats
     costs: CostEstimate
-    errors: List[ErrorInfo] = field(default_factory=list)
+    errors: list[ErrorInfo] = field(default_factory=list)
     execution_id: UUID = field(default_factory=uuid4)
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     success: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def duration(self) -> float:
@@ -91,38 +91,36 @@ class ExecutionResult:
         """Get error rate as percentage."""
         if self.metrics.total_rows == 0:
             return 0.0
-        return (
-            self.metrics.failed_rows / self.metrics.total_rows
-        ) * 100
-    
-    def validate_output_quality(self, output_columns: List[str]) -> "QualityReport":
+        return (self.metrics.failed_rows / self.metrics.total_rows) * 100
+
+    def validate_output_quality(self, output_columns: list[str]) -> "QualityReport":
         """
         Validate the quality of output data by checking for null/empty values.
-        
+
         Args:
             output_columns: List of output column names to check
-            
+
         Returns:
             QualityReport with quality metrics and warnings
         """
         total = len(self.data)
-        
+
         # Count null and empty values across output columns
         null_count = 0
         empty_count = 0
-        
+
         for col in output_columns:
             if col in self.data.columns:
                 # Count nulls (None, NaN, NaT)
                 null_count += self.data[col].isna().sum()
                 # Count empty strings (only for string columns)
-                if self.data[col].dtype == 'object':
-                    empty_count += (self.data[col].astype(str).str.strip() == '').sum()
-        
+                if self.data[col].dtype == "object":
+                    empty_count += (self.data[col].astype(str).str.strip() == "").sum()
+
         # Calculate per-column metrics (exclude both nulls and empties)
         valid_outputs = total - null_count - empty_count
         success_rate = (valid_outputs / total * 100) if total > 0 else 0.0
-        
+
         # Determine quality score
         if success_rate >= 95.0:
             quality_score = "excellent"
@@ -132,36 +130,36 @@ class ExecutionResult:
             quality_score = "poor"
         else:
             quality_score = "critical"
-        
+
         # Generate warnings and issues
         warnings = []
         issues = []
-        
+
         if success_rate < 70.0:
             issues.append(
                 f"⚠️  LOW SUCCESS RATE: Only {success_rate:.1f}% of outputs are valid "
                 f"({valid_outputs}/{total} rows)"
             )
-        
+
         if null_count > total * 0.3:  # > 30% nulls
             issues.append(
                 f"⚠️  HIGH NULL RATE: {null_count} null values found "
-                f"({null_count/total*100:.1f}% of rows)"
+                f"({null_count / total * 100:.1f}% of rows)"
             )
-        
+
         if empty_count > total * 0.1:  # > 10% empty
             warnings.append(
                 f"Empty outputs detected: {empty_count} rows "
-                f"({empty_count/total*100:.1f}%)"
+                f"({empty_count / total * 100:.1f}%)"
             )
-        
+
         # Check if reported metrics match actual data quality
         if self.metrics.failed_rows == 0 and null_count > 0:
             issues.append(
                 f"⚠️  METRICS MISMATCH: Pipeline reported 0 failures but "
                 f"{null_count} rows have null outputs. This may indicate silent errors."
             )
-        
+
         return QualityReport(
             total_rows=total,
             valid_outputs=valid_outputs,
@@ -179,8 +177,8 @@ class ValidationResult:
     """Result from validation checks."""
 
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def add_error(self, error: str) -> None:
         """Add an error message."""
@@ -195,21 +193,21 @@ class ValidationResult:
 @dataclass
 class QualityReport:
     """Quality assessment of pipeline output."""
-    
+
     total_rows: int
     valid_outputs: int
     null_outputs: int
     empty_outputs: int
     success_rate: float
     quality_score: str  # "excellent", "good", "poor", "critical"
-    warnings: List[str] = field(default_factory=list)
-    issues: List[str] = field(default_factory=list)
-    
+    warnings: list[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
+
     @property
     def is_acceptable(self) -> bool:
         """Check if quality is acceptable (>= 70% success)."""
         return self.success_rate >= 70.0
-    
+
     @property
     def has_issues(self) -> bool:
         """Check if there are any issues."""
@@ -224,7 +222,7 @@ class WriteConfirmation:
     rows_written: int
     success: bool
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -244,18 +242,18 @@ class RowMetadata:
     """Metadata for a single row during processing."""
 
     row_index: int
-    row_id: Optional[Any] = None
-    batch_id: Optional[int] = None
+    row_id: Any | None = None
+    batch_id: int | None = None
     attempt: int = 1
-    custom: Dict[str, Any] = field(default_factory=dict)
+    custom: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PromptBatch:
     """Batch of prompts for processing."""
 
-    prompts: List[str]
-    metadata: List[RowMetadata]
+    prompts: list[str]
+    metadata: list[RowMetadata]
     batch_id: int
 
 
@@ -263,10 +261,9 @@ class PromptBatch:
 class ResponseBatch:
     """Batch of responses from LLM."""
 
-    responses: List[str]
-    metadata: List[RowMetadata]
+    responses: list[str]
+    metadata: list[RowMetadata]
     tokens_used: int
     cost: Decimal
     batch_id: int
-    latencies_ms: List[float] = field(default_factory=list)
-
+    latencies_ms: list[float] = field(default_factory=list)

@@ -6,18 +6,17 @@ Enables loading pipeline configurations from declarative files.
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
-from hermes.api.pipeline import Pipeline
 from hermes.core.specifications import PipelineSpecifications
 
 
 class ConfigLoader:
     """
     Loads pipeline configurations from YAML or JSON files.
-    
+
     Follows Single Responsibility: only handles config file loading.
     """
 
@@ -37,13 +36,13 @@ class ConfigLoader:
             ValueError: If invalid YAML or configuration
         """
         path = Path(file_path)
-        
+
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {path}")
-        
-        with open(path, "r") as f:
+
+        with open(path) as f:
             config_dict = yaml.safe_load(f)
-        
+
         return ConfigLoader._dict_to_specifications(config_dict)
 
     @staticmethod
@@ -62,19 +61,17 @@ class ConfigLoader:
             ValueError: If invalid JSON or configuration
         """
         path = Path(file_path)
-        
+
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {path}")
-        
-        with open(path, "r") as f:
+
+        with open(path) as f:
             config_dict = json.load(f)
-        
+
         return ConfigLoader._dict_to_specifications(config_dict)
 
     @staticmethod
-    def _dict_to_specifications(
-        config: Dict[str, Any]
-    ) -> PipelineSpecifications:
+    def _dict_to_specifications(config: dict[str, Any]) -> PipelineSpecifications:
         """
         Convert configuration dictionary to PipelineSpecifications.
 
@@ -87,9 +84,7 @@ class ConfigLoader:
         return PipelineSpecifications(**config)
 
     @staticmethod
-    def to_yaml(
-        specifications: PipelineSpecifications, file_path: str | Path
-    ) -> None:
+    def to_yaml(specifications: PipelineSpecifications, file_path: str | Path) -> None:
         """
         Save specifications to YAML file.
 
@@ -98,17 +93,15 @@ class ConfigLoader:
             file_path: Destination file path
         """
         path = Path(file_path)
-        
+
         # Convert to dict
         config_dict = specifications.model_dump(mode="json")
-        
+
         with open(path, "w") as f:
             yaml.dump(config_dict, f, default_flow_style=False, indent=2)
 
     @staticmethod
-    def to_json(
-        specifications: PipelineSpecifications, file_path: str | Path
-    ) -> None:
+    def to_json(specifications: PipelineSpecifications, file_path: str | Path) -> None:
         """
         Save specifications to JSON file.
 
@@ -117,10 +110,9 @@ class ConfigLoader:
             file_path: Destination file path
         """
         path = Path(file_path)
-        
+
         # Convert to dict
         config_dict = specifications.model_dump(mode="json")
-        
+
         with open(path, "w") as f:
             json.dump(config_dict, f, indent=2, default=str)
-

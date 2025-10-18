@@ -1,7 +1,6 @@
 """Result writing stage for persisting output."""
 
 from decimal import Decimal
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -10,10 +9,8 @@ from hermes.adapters.data_io import create_data_writer
 from hermes.core.models import (
     CostEstimate,
     ValidationResult,
-    WriteConfirmation,
 )
 from hermes.core.specifications import (
-    DataSourceType,
     MergeStrategy,
     OutputSpec,
 )
@@ -21,13 +18,11 @@ from hermes.stages.pipeline_stage import PipelineStage
 
 
 class ResultWriterStage(
-    PipelineStage[
-        tuple[pd.DataFrame, pd.DataFrame, OutputSpec], pd.DataFrame
-    ]
+    PipelineStage[tuple[pd.DataFrame, pd.DataFrame, OutputSpec], pd.DataFrame]
 ):
     """
     Write results to destination with merge support.
-    
+
     Responsibilities:
     - Merge results with original data
     - Write to configured destination
@@ -46,30 +41,27 @@ class ResultWriterStage(
     ) -> pd.DataFrame:
         """Write results to destination and return merged DataFrame."""
         original_df, results_df, output_spec = input_data
-        
+
         # Merge results with original data
         merged_df = self._merge_results(
             original_df, results_df, output_spec.merge_strategy
         )
-        
+
         # Write to destination
         if output_spec.destination_path:
             writer = create_data_writer(output_spec.destination_type)
-            
+
             if output_spec.atomic_write:
                 confirmation = writer.atomic_write(
                     merged_df, output_spec.destination_path
                 )
             else:
-                confirmation = writer.write(
-                    merged_df, output_spec.destination_path
-                )
-            
+                confirmation = writer.write(merged_df, output_spec.destination_path)
+
             self.logger.info(
-                f"Wrote {confirmation.rows_written} rows to "
-                f"{confirmation.path}"
+                f"Wrote {confirmation.rows_written} rows to {confirmation.path}"
             )
-        
+
         # Always return the merged DataFrame (needed for quality validation)
         return merged_df
 
@@ -86,15 +78,15 @@ class ResultWriterStage(
             for col in results.columns:
                 merged[col] = results[col]
             return merged
-        
-        elif strategy == MergeStrategy.APPEND:
+
+        if strategy == MergeStrategy.APPEND:
             # Add as new columns (error if exists)
             for col in results.columns:
                 if col in original.columns:
                     raise ValueError(f"Column {col} already exists")
             return pd.concat([original, results], axis=1)
-        
-        elif strategy == MergeStrategy.UPDATE:
+
+        if strategy == MergeStrategy.UPDATE:
             # Only update rows that changed
             merged = original.copy()
             for col in results.columns:
@@ -105,9 +97,8 @@ class ResultWriterStage(
                 else:
                     merged[col] = results[col]
             return merged
-        
-        else:
-            raise ValueError(f"Unknown merge strategy: {strategy}")
+
+        raise ValueError(f"Unknown merge strategy: {strategy}")
 
     def validate_input(
         self,
@@ -115,23 +106,21 @@ class ResultWriterStage(
     ) -> ValidationResult:
         """Validate input data and output specification."""
         result = ValidationResult(is_valid=True)
-        
+
         original_df, results_df, output_spec = input_data
-        
+
         if original_df.empty:
             result.add_warning("Original DataFrame is empty")
-        
+
         if results_df.empty:
             result.add_error("Results DataFrame is empty")
-        
+
         # Check destination path if specified
         if output_spec.destination_path:
             dest_dir = output_spec.destination_path.parent
             if not dest_dir.exists():
-                result.add_warning(
-                    f"Destination directory does not exist: {dest_dir}"
-                )
-        
+                result.add_warning(f"Destination directory does not exist: {dest_dir}")
+
         return result
 
     def estimate_cost(
@@ -146,4 +135,3 @@ class ResultWriterStage(
             output_tokens=0,
             rows=len(input_data[1]),
         )
-

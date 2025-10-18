@@ -5,9 +5,8 @@ Provides accurate cost tracking with thread safety and detailed breakdowns.
 """
 
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal
-from typing import Dict, Optional
 
 from hermes.core.models import CostEstimate
 
@@ -26,14 +25,14 @@ class CostEntry:
 class CostTracker:
     """
     Thread-safe cost tracker for LLM API usage.
-    
+
     Follows single responsibility principle for cost accounting.
     """
 
     def __init__(
         self,
-        input_cost_per_1k: Optional[Decimal] = None,
-        output_cost_per_1k: Optional[Decimal] = None,
+        input_cost_per_1k: Decimal | None = None,
+        output_cost_per_1k: Decimal | None = None,
     ):
         """
         Initialize cost tracker.
@@ -44,12 +43,12 @@ class CostTracker:
         """
         self.input_cost_per_1k = input_cost_per_1k or Decimal("0.0")
         self.output_cost_per_1k = output_cost_per_1k or Decimal("0.0")
-        
+
         self._total_input_tokens = 0
         self._total_output_tokens = 0
         self._total_cost = Decimal("0.0")
         self._entries: list[CostEntry] = []
-        self._stage_costs: Dict[str, Decimal] = {}
+        self._stage_costs: dict[str, Decimal] = {}
         self._lock = threading.Lock()
 
     def add(
@@ -58,7 +57,7 @@ class CostTracker:
         tokens_out: int,
         model: str,
         timestamp: float,
-        stage: Optional[str] = None,
+        stage: str | None = None,
     ) -> Decimal:
         """
         Add cost entry.
@@ -74,7 +73,7 @@ class CostTracker:
             Cost for this entry
         """
         cost = self.calculate_cost(tokens_in, tokens_out)
-        
+
         with self._lock:
             entry = CostEntry(
                 tokens_in=tokens_in,
@@ -84,11 +83,11 @@ class CostTracker:
                 timestamp=timestamp,
             )
             self._entries.append(entry)
-            
+
             self._total_input_tokens += tokens_in
             self._total_output_tokens += tokens_out
             self._total_cost += cost
-            
+
             if stage:
                 self._stage_costs[stage] = (
                     self._stage_costs.get(stage, Decimal("0.0")) + cost
@@ -166,8 +165,7 @@ class CostTracker:
             self._entries.clear()
             self._stage_costs.clear()
 
-    def get_stage_costs(self) -> Dict[str, Decimal]:
+    def get_stage_costs(self) -> dict[str, Decimal]:
         """Get costs breakdown by stage."""
         with self._lock:
             return dict(self._stage_costs)
-

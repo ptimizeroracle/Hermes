@@ -20,7 +20,6 @@ Example:
 """
 
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -34,10 +33,10 @@ logger = get_logger(__name__)
 class PipelineComposer:
     """
     Composes multiple pipelines to process independent columns.
-    
+
     Each pipeline processes one output column. Pipelines can depend on
     outputs from previous pipelines, enabling sequential processing.
-    
+
     Design Philosophy:
     - Keep individual pipelines simple (single responsibility)
     - Compose complex workflows from simple building blocks
@@ -45,13 +44,13 @@ class PipelineComposer:
     - Fail fast with clear error messages
     """
 
-    def __init__(self, input_data: Union[str, Path, pd.DataFrame]):
+    def __init__(self, input_data: str | Path | pd.DataFrame):
         """
         Initialize pipeline composer.
-        
+
         Args:
             input_data: Either a file path (CSV/Excel) or DataFrame
-            
+
         Design Note:
             We accept both paths and DataFrames to support different workflows:
             - Path: Lazy loading, memory efficient
@@ -67,71 +66,70 @@ class PipelineComposer:
             raise TypeError(
                 f"input_data must be str, Path, or DataFrame, got {type(input_data)}"
             )
-        
+
         # Storage for column pipelines
         # Format: (column_name, pipeline, dependencies)
-        self.column_pipelines: List[Tuple[str, Pipeline, List[str]]] = []
-        
+        self.column_pipelines: list[tuple[str, Pipeline, list[str]]] = []
+
         logger.info("PipelineComposer initialized")
 
     def add_column(
         self,
         column_name: str,
         pipeline: Pipeline,
-        depends_on: Optional[List[str]] = None,
+        depends_on: list[str] | None = None,
     ) -> "PipelineComposer":
         """
         Add a pipeline for processing one output column.
-        
+
         Args:
             column_name: Name of output column
             pipeline: Pipeline to generate this column
             depends_on: List of columns this depends on (optional)
-            
+
         Returns:
             Self for method chaining (fluent API)
-            
+
         Example:
             composer.add_column("score", score_pipeline)
             composer.add_column("explanation", explain_pipeline, depends_on=["score"])
-        
+
         Design Note:
             Fluent API (returns self) enables readable chaining:
             composer.add_column("a", p1).add_column("b", p2).execute()
         """
         dependencies = depends_on or []
-        
+
         # Validate column name unique
         existing_cols = [col for col, _, _ in self.column_pipelines]
         if column_name in existing_cols:
             raise ValueError(f"Column '{column_name}' already added")
-        
+
         self.column_pipelines.append((column_name, pipeline, dependencies))
-        
+
         logger.info(
-            f"Added column '{column_name}' "
-            f"with dependencies: {dependencies or 'none'}"
+            f"Added column '{column_name}' with dependencies: {dependencies or 'none'}"
         )
-        
+
         return self  # Enable chaining
 
-    def _get_execution_order(self) -> List[Tuple[str, Pipeline, List[str]]]:
+    def _get_execution_order(self) -> list[tuple[str, Pipeline, list[str]]]:
         """
         Resolve execution order using topological sort.
-        
+
         Returns:
             List of (column_name, pipeline, dependencies) in execution order
-            
+
         Raises:
             ValueError: If circular dependencies or missing dependencies detected
-            
+
         Algorithm:
             Kahn's algorithm for topological sorting:
             1. Find nodes with no incoming edges
             2. Remove node and its edges
             3. Repeat until graph is empty
             4. If nodes remain, there's a cycle
-        
+
         Design Note:
             We use Kahn's algorithm (not DFS) because:
             - Easier to understand
@@ -141,56 +139,56 @@ class PipelineComposer:
         # Build dependency graph
         nodes = {col: deps for col, _, deps in self.column_pipelines}
         all_columns = set(nodes.keys())
-        
+
         # Validate: All dependencies exist
         for col, deps in nodes.items():
             missing = set(deps) - all_columns
             if missing:
-                raise ValueError(
-                    f"Column '{col}' has missing dependencies: {missing}"
-                )
-        
+                raise ValueError(f"Column '{col}' has missing dependencies: {missing}")
+
         # Kahn's algorithm
         in_degree = {col: len(deps) for col, deps in nodes.items()}
         queue = [col for col, deg in in_degree.items() if deg == 0]
         result = []
         processed = set()  # Track processed nodes
-        
+
         while queue:
             # Process node with no dependencies
             col = queue.pop(0)
             result.append(col)
             processed.add(col)  # Mark as processed
-            
+
             # Reduce in-degree for dependent nodes
             for other_col, deps in nodes.items():
                 if other_col not in processed and col in deps:
                     in_degree[other_col] -= 1
                     if in_degree[other_col] == 0 and other_col not in queue:
                         queue.append(other_col)
-        
+
         # Check for cycles
         if len(result) != len(nodes):
             remaining = set(nodes.keys()) - set(result)
-            raise ValueError(
-                f"Circular dependency detected among columns: {remaining}"
-            )
-        
+            raise ValueError(f"Circular dependency detected among columns: {remaining}")
+
         # Map back to original tuples
-        col_to_tuple = {col: item for col, item in zip(
-            [c for c, _, _ in self.column_pipelines],
-            self.column_pipelines
-        )}
-        
+        col_to_tuple = {
+            col: item
+            for col, item in zip(
+                [c for c, _, _ in self.column_pipelines],
+                self.column_pipelines,
+                strict=False,
+            )
+        }
+
         return [col_to_tuple[col] for col in result]
 
     def execute(self) -> ExecutionResult:
         """
         Execute all column pipelines in dependency order.
-        
+
         Returns:
             ExecutionResult with all columns merged
-            
+
         Algorithm:
             1. Load input data (lazy if needed)
             2. Resolve execution order (topological sort)
@@ -199,7 +197,7 @@ class PipelineComposer:
                b. Execute pipeline
                c. Merge result column into DataFrame
             4. Aggregate metrics and return final result
-        
+
         Design Note:
             Each pipeline operates on the accumulating DataFrame,
             so later pipelines can use earlier outputs as inputs.
@@ -208,40 +206,40 @@ class PipelineComposer:
         if self.input_df is None:
             logger.info(f"Loading input data from {self.input_path}")
             # Detect file type and load
-            if self.input_path.endswith('.xlsx'):
+            if self.input_path.endswith(".xlsx"):
                 self.input_df = pd.read_excel(self.input_path)
-            elif self.input_path.endswith('.csv'):
+            elif self.input_path.endswith(".csv"):
                 self.input_df = pd.read_csv(self.input_path)
-            elif self.input_path.endswith('.parquet'):
+            elif self.input_path.endswith(".parquet"):
                 self.input_df = pd.read_parquet(self.input_path)
             else:
                 raise ValueError(f"Unsupported file type: {self.input_path}")
-        
+
         # Start with input data
         df = self.input_df.copy()
-        
+
         # Resolve execution order
         execution_order = self._get_execution_order()
-        
+
         logger.info(
             f"Executing {len(execution_order)} column pipelines in order: "
             f"{[col for col, _, _ in execution_order]}"
         )
-        
+
         # Track metrics
         total_cost = 0.0
         total_errors = []
-        
+
         # Execute each column pipeline
-        for col_name, pipeline, deps in execution_order:
+        for col_name, pipeline, _deps in execution_order:
             logger.info(f"Processing column '{col_name}'...")
-            
+
             # Inject current DataFrame (includes previous outputs)
             pipeline.dataframe = df
-            
+
             # Execute pipeline
             result = pipeline.execute()
-            
+
             # Merge new column
             if col_name in result.data.columns:
                 df[col_name] = result.data[col_name]
@@ -249,16 +247,16 @@ class PipelineComposer:
                 logger.warning(
                     f"Pipeline for '{col_name}' didn't produce expected column"
                 )
-            
+
             # Accumulate metrics
             total_cost += float(result.costs.total_cost)
             total_errors.extend(result.errors)
-            
+
             logger.info(
                 f"Column '{col_name}' complete: "
                 f"{len(df)} rows, ${result.costs.total_cost:.4f}"
             )
-        
+
         # Create final result
         final_result = ExecutionResult(
             data=df,
@@ -279,25 +277,25 @@ class PipelineComposer:
             ),
             errors=total_errors,
         )
-        
+
         logger.info(
             f"Composition complete: {len(execution_order)} columns, "
             f"${total_cost:.4f} total cost"
         )
-        
+
         return final_result
 
     @classmethod
     def from_yaml(cls, config_path: str) -> "PipelineComposer":
         """
         Load composer configuration from YAML.
-        
+
         Args:
             config_path: Path to composition config file
-            
+
         Returns:
             Configured PipelineComposer
-            
+
         Example YAML:
             composition:
               input: "data.xlsx"
@@ -307,35 +305,35 @@ class PipelineComposer:
                 - column: col2
                   depends_on: [col1]
                   config: pipeline2.yaml
-        
+
         Design Note:
             This enables pure YAML workflows without Python code.
         """
         import yaml
+
         from hermes.config import ConfigLoader
-        
-        with open(config_path, 'r') as f:
+
+        with open(config_path) as f:
             config = yaml.safe_load(f)
-        
-        composition = config.get('composition', {})
-        input_data = composition.get('input')
-        
+
+        composition = config.get("composition", {})
+        input_data = composition.get("input")
+
         if not input_data:
             raise ValueError("composition.input is required")
-        
+
         composer = cls(input_data=input_data)
-        
+
         # Load each pipeline config
-        for pipeline_config in composition.get('pipelines', []):
-            col_name = pipeline_config['column']
-            config_file = pipeline_config['config']
-            depends_on = pipeline_config.get('depends_on', [])
-            
+        for pipeline_config in composition.get("pipelines", []):
+            col_name = pipeline_config["column"]
+            config_file = pipeline_config["config"]
+            depends_on = pipeline_config.get("depends_on", [])
+
             # Load pipeline from its config
             pipeline_specs = ConfigLoader.from_yaml(config_file)
             pipeline = Pipeline(pipeline_specs)
-            
-            composer.add_column(col_name, pipeline, depends_on)
-        
-        return composer
 
+            composer.add_column(col_name, pipeline, depends_on)
+
+        return composer

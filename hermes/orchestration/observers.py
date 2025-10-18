@@ -18,22 +18,18 @@ from hermes.utils import get_logger
 class ExecutionObserver(ABC):
     """
     Abstract base for execution observers.
-    
+
     Observers can monitor pipeline execution without coupling
     to the executor implementation.
     """
 
     @abstractmethod
-    def on_pipeline_start(
-        self, pipeline: Any, context: ExecutionContext
-    ) -> None:
+    def on_pipeline_start(self, pipeline: Any, context: ExecutionContext) -> None:
         """Called before first stage execution."""
         pass
 
     @abstractmethod
-    def on_stage_start(
-        self, stage: PipelineStage, context: ExecutionContext
-    ) -> None:
+    def on_stage_start(self, stage: PipelineStage, context: ExecutionContext) -> None:
         """Called before each stage."""
         pass
 
@@ -59,15 +55,11 @@ class ExecutionObserver(ABC):
         pass
 
     @abstractmethod
-    def on_pipeline_error(
-        self, context: ExecutionContext, error: Exception
-    ) -> None:
+    def on_pipeline_error(self, context: ExecutionContext, error: Exception) -> None:
         """Called on fatal pipeline failure."""
         pass
 
-    def on_progress_update(
-        self, context: ExecutionContext
-    ) -> None:
+    def on_progress_update(self, context: ExecutionContext) -> None:
         """Called periodically during execution for progress updates."""
         pass
 
@@ -79,9 +71,7 @@ class ProgressBarObserver(ExecutionObserver):
         """Initialize progress bar observer."""
         self.progress_bar: tqdm | None = None
 
-    def on_pipeline_start(
-        self, pipeline: Any, context: ExecutionContext
-    ) -> None:
+    def on_pipeline_start(self, pipeline: Any, context: ExecutionContext) -> None:
         """Initialize progress bar."""
         if context.total_rows > 0:
             self.progress_bar = tqdm(
@@ -90,9 +80,7 @@ class ProgressBarObserver(ExecutionObserver):
                 unit="rows",
             )
 
-    def on_stage_start(
-        self, stage: PipelineStage, context: ExecutionContext
-    ) -> None:
+    def on_stage_start(self, stage: PipelineStage, context: ExecutionContext) -> None:
         """Update progress bar description."""
         if self.progress_bar:
             self.progress_bar.set_description(f"Stage: {stage.name}")
@@ -120,9 +108,7 @@ class ProgressBarObserver(ExecutionObserver):
             self.progress_bar.close()
             self.progress_bar = None
 
-    def on_pipeline_error(
-        self, context: ExecutionContext, error: Exception
-    ) -> None:
+    def on_pipeline_error(self, context: ExecutionContext, error: Exception) -> None:
         """Close progress bar on error."""
         if self.progress_bar:
             self.progress_bar.close()
@@ -132,10 +118,12 @@ class ProgressBarObserver(ExecutionObserver):
         """Update progress bar with current row count."""
         if self.progress_bar:
             self.progress_bar.n = context.last_processed_row
-            self.progress_bar.set_postfix({
-                "cost": f"${context.accumulated_cost:.4f}",
-                "progress": f"{context.get_progress():.1f}%"
-            })
+            self.progress_bar.set_postfix(
+                {
+                    "cost": f"${context.accumulated_cost:.4f}",
+                    "progress": f"{context.get_progress():.1f}%",
+                }
+            )
             self.progress_bar.refresh()
 
 
@@ -146,21 +134,14 @@ class LoggingObserver(ExecutionObserver):
         """Initialize logging observer."""
         self.logger = get_logger(__name__)
 
-    def on_pipeline_start(
-        self, pipeline: Any, context: ExecutionContext
-    ) -> None:
+    def on_pipeline_start(self, pipeline: Any, context: ExecutionContext) -> None:
         """Log pipeline start."""
-        self.logger.info(
-            f"Pipeline execution started (session: {context.session_id})"
-        )
+        self.logger.info(f"Pipeline execution started (session: {context.session_id})")
 
-    def on_stage_start(
-        self, stage: PipelineStage, context: ExecutionContext
-    ) -> None:
+    def on_stage_start(self, stage: PipelineStage, context: ExecutionContext) -> None:
         """Log stage start."""
         self.logger.info(
-            f"Starting stage: {stage.name} "
-            f"(progress: {context.get_progress():.1f}%)"
+            f"Starting stage: {stage.name} (progress: {context.get_progress():.1f}%)"
         )
 
     def on_stage_complete(
@@ -168,8 +149,7 @@ class LoggingObserver(ExecutionObserver):
     ) -> None:
         """Log stage completion."""
         self.logger.info(
-            f"Completed stage: {stage.name} "
-            f"(cost: ${context.accumulated_cost:.4f})"
+            f"Completed stage: {stage.name} (cost: ${context.accumulated_cost:.4f})"
         )
 
     def on_stage_error(
@@ -190,9 +170,7 @@ class LoggingObserver(ExecutionObserver):
             f"  Errors: {result.metrics.failed_rows}"
         )
 
-    def on_pipeline_error(
-        self, context: ExecutionContext, error: Exception
-    ) -> None:
+    def on_pipeline_error(self, context: ExecutionContext, error: Exception) -> None:
         """Log pipeline error."""
         self.logger.error(f"Pipeline execution failed: {error}")
 
@@ -219,16 +197,12 @@ class CostTrackingObserver(ExecutionObserver):
         self.warning_threshold = warning_threshold
         self.max_budget: float | None = None
 
-    def on_pipeline_start(
-        self, pipeline: Any, context: ExecutionContext
-    ) -> None:
+    def on_pipeline_start(self, pipeline: Any, context: ExecutionContext) -> None:
         """Set max budget if available."""
         # Could extract from pipeline specs
         pass
 
-    def on_stage_start(
-        self, stage: PipelineStage, context: ExecutionContext
-    ) -> None:
+    def on_stage_start(self, stage: PipelineStage, context: ExecutionContext) -> None:
         """No action on stage start."""
         pass
 
@@ -238,7 +212,7 @@ class CostTrackingObserver(ExecutionObserver):
         """Check cost after stage completion."""
         if self.max_budget:
             usage_ratio = float(context.accumulated_cost) / self.max_budget
-            
+
             if usage_ratio >= self.warning_threshold:
                 self.logger.warning(
                     f"Cost warning: {usage_ratio * 100:.1f}% of budget used "
@@ -263,15 +237,10 @@ class CostTrackingObserver(ExecutionObserver):
             f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}"
         )
 
-    def on_pipeline_error(
-        self, context: ExecutionContext, error: Exception
-    ) -> None:
+    def on_pipeline_error(self, context: ExecutionContext, error: Exception) -> None:
         """Log cost at failure."""
-        self.logger.info(
-            f"Cost at failure: ${context.accumulated_cost:.4f}"
-        )
+        self.logger.info(f"Cost at failure: ${context.accumulated_cost:.4f}")
 
     def on_progress_update(self, context: ExecutionContext) -> None:
         """No action on progress update for cost tracking."""
         pass
-

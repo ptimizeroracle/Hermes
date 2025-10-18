@@ -4,8 +4,9 @@ Streaming data loader for memory-efficient processing of large files.
 Implements streaming pattern for datasets that don't fit in memory.
 """
 
+from collections.abc import Iterator
 from decimal import Decimal
-from typing import Any, Iterator
+from typing import Any
 
 import pandas as pd
 
@@ -18,7 +19,7 @@ from hermes.stages.pipeline_stage import PipelineStage
 class StreamingDataLoaderStage(PipelineStage[DatasetSpec, Iterator[pd.DataFrame]]):
     """
     Load data in chunks for memory-efficient processing.
-    
+
     Use this for very large datasets (100K+ rows) that don't fit in memory.
     """
 
@@ -32,9 +33,7 @@ class StreamingDataLoaderStage(PipelineStage[DatasetSpec, Iterator[pd.DataFrame]
         super().__init__("StreamingDataLoader")
         self.chunk_size = chunk_size
 
-    def process(
-        self, spec: DatasetSpec, context: Any
-    ) -> Iterator[pd.DataFrame]:
+    def process(self, spec: DatasetSpec, context: Any) -> Iterator[pd.DataFrame]:
         """Load data as iterator of chunks."""
         # Create appropriate reader
         reader = create_data_reader(
@@ -44,26 +43,24 @@ class StreamingDataLoaderStage(PipelineStage[DatasetSpec, Iterator[pd.DataFrame]
             encoding=spec.encoding,
             sheet_name=spec.sheet_name,
         )
-        
-        self.logger.info(
-            f"Streaming data in chunks of {self.chunk_size} rows"
-        )
-        
+
+        self.logger.info(f"Streaming data in chunks of {self.chunk_size} rows")
+
         # Return chunked iterator
         return reader.read_chunked(self.chunk_size)
 
     def validate_input(self, spec: DatasetSpec) -> ValidationResult:
         """Validate dataset specification."""
         result = ValidationResult(is_valid=True)
-        
+
         # Check file exists for file sources
         if spec.source_path and not spec.source_path.exists():
             result.add_error(f"Source file not found: {spec.source_path}")
-        
+
         # Check columns specified
         if not spec.input_columns:
             result.add_error("No input columns specified")
-        
+
         return result
 
     def estimate_cost(self, spec: DatasetSpec) -> CostEstimate:
@@ -75,4 +72,3 @@ class StreamingDataLoaderStage(PipelineStage[DatasetSpec, Iterator[pd.DataFrame]
             output_tokens=0,
             rows=0,  # Unknown until streaming starts
         )
-

@@ -1,23 +1,22 @@
 """Tests for input preprocessing functionality."""
 
 import pandas as pd
-import pytest
 
 from hermes.utils.input_preprocessing import (
-    TextPreprocessor,
-    preprocess_dataframe,
-    PreprocessingStats,
-    UnicodeNormalizer,
     ControlCharRemover,
+    PreprocessingStats,
     SpecialCharCleaner,
-    WhitespaceNormalizer,
+    TextPreprocessor,
     TextTruncator,
+    UnicodeNormalizer,
+    WhitespaceNormalizer,
+    preprocess_dataframe,
 )
 
 
 class TestTextPreprocessor:
     """Test the main TextPreprocessor orchestrator."""
-    
+
     def test_removes_special_chars(self):
         """Should remove trademark symbols."""
         preprocessor = TextPreprocessor()
@@ -26,13 +25,13 @@ class TestTextPreprocessor:
         assert "™" not in result
         assert "BACON" in result
         assert "SLICED" in result
-    
+
     def test_normalizes_whitespace(self):
         """Should collapse multiple spaces."""
         preprocessor = TextPreprocessor()
         result = preprocessor.process("BACON    SLICED\n\nAPPLEWOOD")
-        assert "BACON SLICED APPLEWOOD" == result
-    
+        assert result == "BACON SLICED APPLEWOOD"
+
     def test_truncates_long_text(self):
         """Should truncate at word boundaries."""
         preprocessor = TextPreprocessor(max_length=50)
@@ -40,13 +39,13 @@ class TestTextPreprocessor:
         result = preprocessor.process(long_text)
         assert len(result) <= 50
         assert result.endswith("...")
-    
+
     def test_handles_none(self):
         """Should return empty string for None."""
         preprocessor = TextPreprocessor()
         result = preprocessor.process(None)
         assert result == ""
-    
+
     def test_handles_empty_string(self):
         """Should return empty string for empty input."""
         preprocessor = TextPreprocessor()
@@ -56,7 +55,7 @@ class TestTextPreprocessor:
 
 class TestUnicodeNormalizer:
     """Test Unicode normalization."""
-    
+
     def test_normalizes_unicode(self):
         """Should normalize to NFC form."""
         cleaner = UnicodeNormalizer()
@@ -67,7 +66,7 @@ class TestUnicodeNormalizer:
 
 class TestControlCharRemover:
     """Test control character removal."""
-    
+
     def test_removes_control_chars(self):
         """Should remove null bytes and control chars."""
         cleaner = ControlCharRemover()
@@ -80,7 +79,7 @@ class TestControlCharRemover:
 
 class TestSpecialCharCleaner:
     """Test special character cleaning."""
-    
+
     def test_removes_trademark_symbols(self):
         """Should remove ®, ™, ©."""
         cleaner = SpecialCharCleaner()
@@ -88,30 +87,30 @@ class TestSpecialCharCleaner:
         assert "®" not in result
         assert "™" not in result
         assert "©" not in result
-    
+
     def test_normalizes_quotes(self):
         """Should convert curly quotes to straight quotes."""
         cleaner = SpecialCharCleaner()
         # Using escaped curly quotes
-        result = cleaner.clean('\u201cBACON\u201d')
-        assert '"' in result or 'BACON' in result
+        result = cleaner.clean("\u201cBACON\u201d")
+        assert '"' in result or "BACON" in result
 
 
 class TestWhitespaceNormalizer:
     """Test whitespace normalization."""
-    
+
     def test_collapses_multiple_spaces(self):
         """Should collapse multiple spaces to one."""
         cleaner = WhitespaceNormalizer()
         result = cleaner.clean("BACON    SLICED")
-        assert "BACON SLICED" == result
-    
+        assert result == "BACON SLICED"
+
     def test_replaces_tabs_and_newlines(self):
         """Should replace tabs/newlines with spaces."""
         cleaner = WhitespaceNormalizer()
         result = cleaner.clean("BACON\t\nSLICED")
-        assert "BACON SLICED" == result
-    
+        assert result == "BACON SLICED"
+
     def test_strips_leading_trailing(self):
         """Should strip leading/trailing whitespace."""
         cleaner = WhitespaceNormalizer()
@@ -121,7 +120,7 @@ class TestWhitespaceNormalizer:
 
 class TestTextTruncator:
     """Test intelligent text truncation."""
-    
+
     def test_truncates_at_word_boundary(self):
         """Should truncate at last space before limit."""
         truncator = TextTruncator(max_length=20)
@@ -130,7 +129,7 @@ class TestTextTruncator:
         assert len(result) <= 20
         assert result.endswith("...")
         assert not result[:-3].endswith(" ")  # No trailing space before ...
-    
+
     def test_does_not_truncate_short_text(self):
         """Should not modify text under limit."""
         truncator = TextTruncator(max_length=100)
@@ -138,7 +137,7 @@ class TestTextTruncator:
         result = truncator.clean(text)
         assert result == text
         assert "..." not in result
-    
+
     def test_truncates_at_delimiter(self):
         """Should prefer delimiter over space."""
         truncator = TextTruncator(max_length=30)
@@ -149,70 +148,70 @@ class TestTextTruncator:
 
 class TestPreprocessDataframe:
     """Test DataFrame preprocessing."""
-    
+
     def test_preprocesses_all_columns(self):
         """Should preprocess specified columns."""
-        df = pd.DataFrame({
-            'text': ['BACON®  SLICED', 'APPLEWOOD™  SMOKED'],
-            'other': ['keep', 'unchanged']
-        })
-        
-        result_df, stats = preprocess_dataframe(df, input_columns=['text'])
-        
-        assert "®" not in result_df['text'].iloc[0]
-        assert "™" not in result_df['text'].iloc[1]
-        assert result_df['other'].iloc[0] == 'keep'  # Unchanged
-    
+        df = pd.DataFrame(
+            {
+                "text": ["BACON®  SLICED", "APPLEWOOD™  SMOKED"],
+                "other": ["keep", "unchanged"],
+            }
+        )
+
+        result_df, stats = preprocess_dataframe(df, input_columns=["text"])
+
+        assert "®" not in result_df["text"].iloc[0]
+        assert "™" not in result_df["text"].iloc[1]
+        assert result_df["other"].iloc[0] == "keep"  # Unchanged
+
     def test_returns_stats(self):
         """Should return preprocessing statistics."""
-        df = pd.DataFrame({
-            'text': ['BACON    SLICED', 'A' * 1000]  # Second row will truncate
-        })
-        
-        result_df, stats = preprocess_dataframe(
-            df, 
-            input_columns=['text'],
-            max_length=100
+        df = pd.DataFrame(
+            {
+                "text": ["BACON    SLICED", "A" * 1000]  # Second row will truncate
+            }
         )
-        
+
+        result_df, stats = preprocess_dataframe(
+            df, input_columns=["text"], max_length=100
+        )
+
         assert isinstance(stats, PreprocessingStats)
         assert stats.rows_processed == 2
         assert stats.truncated_count == 1
         assert stats.chars_before > stats.chars_after
         assert stats.reduction_pct > 0
-    
+
     def test_handles_nulls(self):
         """Should track null values."""
-        df = pd.DataFrame({
-            'text': ['BACON', None, 'SLICED']
-        })
-        
-        result_df, stats = preprocess_dataframe(df, input_columns=['text'])
-        
+        df = pd.DataFrame({"text": ["BACON", None, "SLICED"]})
+
+        result_df, stats = preprocess_dataframe(df, input_columns=["text"])
+
         assert stats.null_count == 1
         assert stats.rows_processed == 3
-    
+
     def test_does_not_modify_original_by_default(self):
         """Should not modify original DataFrame."""
-        df = pd.DataFrame({'text': ['BACON®']})
-        original_value = df['text'].iloc[0]
-        
-        result_df, _ = preprocess_dataframe(df, input_columns=['text'])
-        
-        assert df['text'].iloc[0] == original_value  # Original unchanged
-        assert "®" not in result_df['text'].iloc[0]  # Result cleaned
+        df = pd.DataFrame({"text": ["BACON®"]})
+        original_value = df["text"].iloc[0]
+
+        result_df, _ = preprocess_dataframe(df, input_columns=["text"])
+
+        assert df["text"].iloc[0] == original_value  # Original unchanged
+        assert "®" not in result_df["text"].iloc[0]  # Result cleaned
 
 
 class TestPreprocessingIntegration:
     """Integration tests for preprocessing."""
-    
+
     def test_full_pipeline_cleans_bacon_description(self):
         """Should clean a realistic bacon description."""
         preprocessor = TextPreprocessor(max_length=200)
-        
+
         dirty = "OLD SMOKEHOUSE®    BACON\n\nSLICED™    APPLEWOOD\x00\x01"
         clean = preprocessor.process(dirty)
-        
+
         # Should remove: ®, ™, \x00, \x01, extra spaces, newlines
         assert "®" not in clean
         assert "™" not in clean
@@ -220,30 +219,29 @@ class TestPreprocessingIntegration:
         assert "\x01" not in clean
         assert "  " not in clean
         assert "\n" not in clean
-        
+
         # Should keep: meaningful text
         assert "OLD SMOKEHOUSE" in clean
         assert "BACON" in clean
         assert "SLICED" in clean
         assert "APPLEWOOD" in clean
-    
+
     def test_dataframe_preprocessing_reduces_size(self):
         """Should reduce overall character count."""
-        df = pd.DataFrame({
-            'desc': [
-                'BACON®    SLICED™',
-                'APPLEWOOD\n\nSMOKED',
-                'A' * 1000  # Long text
-            ]
-        })
-        
-        result_df, stats = preprocess_dataframe(
-            df,
-            input_columns=['desc'],
-            max_length=100
+        df = pd.DataFrame(
+            {
+                "desc": [
+                    "BACON®    SLICED™",
+                    "APPLEWOOD\n\nSMOKED",
+                    "A" * 1000,  # Long text
+                ]
+            }
         )
-        
+
+        result_df, stats = preprocess_dataframe(
+            df, input_columns=["desc"], max_length=100
+        )
+
         assert stats.chars_after < stats.chars_before
         assert stats.reduction_pct > 0
         assert len(result_df) == 3  # Same number of rows
-

@@ -7,7 +7,7 @@ as specified in the design document.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, List
+from typing import Any
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -36,10 +36,10 @@ class ExecutionState(str, Enum):
 class PipelineExecutor:
     """
     Orchestrates pipeline execution with state management.
-    
+
     Implements Command and Mediator patterns for coordinating
     stages, observers, and state management.
-    
+
     State Machine:
         IDLE → INITIALIZING → EXECUTING → [PAUSED ↔ EXECUTING] → COMPLETED
                                  ↓
@@ -48,9 +48,9 @@ class PipelineExecutor:
 
     def __init__(
         self,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         state_manager: StateManager,
-        observers: List[ExecutionObserver] | None = None,
+        observers: list[ExecutionObserver] | None = None,
     ):
         """
         Initialize pipeline executor.
@@ -95,15 +95,13 @@ class PipelineExecutor:
             RuntimeError: If pipeline in invalid state
         """
         if self.state not in [ExecutionState.IDLE, ExecutionState.FAILED]:
-            raise RuntimeError(
-                f"Cannot execute from state: {self.state}"
-            )
+            raise RuntimeError(f"Cannot execute from state: {self.state}")
 
         try:
             # Initialize
             self.state = ExecutionState.INITIALIZING
             self.context = self._initialize_context()
-            
+
             # Check for existing checkpoint
             if self.state_manager.can_resume(self.context.session_id):
                 self.logger.info("Found existing checkpoint, resuming...")
@@ -136,27 +134,25 @@ class PipelineExecutor:
         except Exception as e:
             self.state = ExecutionState.FAILED
             self._notify_pipeline_error(e)
-            
+
             # Save checkpoint on failure
             if self.context:
                 self.state_manager.save_checkpoint(self.context)
-            
+
             raise
 
     def pause(self) -> None:
         """
         Gracefully pause execution.
-        
+
         Finishes current batch and saves checkpoint.
         """
         if self.state != ExecutionState.EXECUTING:
-            raise RuntimeError(
-                f"Cannot pause from state: {self.state}"
-            )
-        
+            raise RuntimeError(f"Cannot pause from state: {self.state}")
+
         self.logger.info("Pausing execution...")
         self.state = ExecutionState.PAUSED
-        
+
         # Save checkpoint
         if self.context:
             self.state_manager.save_checkpoint(self.context)
@@ -181,10 +177,8 @@ class PipelineExecutor:
         if not self.context:
             raise ValueError("Failed to load checkpoint")
 
-        self.logger.info(
-            f"Resuming from row {self.context.last_processed_row}"
-        )
-        
+        self.logger.info(f"Resuming from row {self.context.last_processed_row}")
+
         # Continue execution
         # Note: Would need to reconstruct pipeline and skip processed rows
         raise NotImplementedError("Resume functionality coming soon")
@@ -194,11 +188,11 @@ class PipelineExecutor:
         Immediately stop and save checkpoint.
         """
         self.logger.info("Cancelling execution...")
-        
+
         # Save checkpoint
         if self.context:
             self.state_manager.save_checkpoint(self.context)
-        
+
         self.state = ExecutionState.IDLE
 
     def _initialize_context(self) -> ExecutionContext:
@@ -222,9 +216,7 @@ class PipelineExecutor:
             "Stage orchestration implemented in Pipeline.execute() currently"
         )
 
-    def _create_execution_result(
-        self, data: pd.DataFrame
-    ) -> ExecutionResult:
+    def _create_execution_result(self, data: pd.DataFrame) -> ExecutionResult:
         """
         Create execution result from context and data.
 
@@ -279,4 +271,3 @@ class PipelineExecutor:
                     self.logger.error(
                         f"Observer {observer.__class__.__name__} failed: {e}"
                     )
-

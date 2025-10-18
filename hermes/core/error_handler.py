@@ -4,9 +4,10 @@ Error handling system with configurable policies.
 Implements Strategy pattern for different error handling approaches.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from hermes.core.specifications import ErrorPolicy
 from hermes.utils import get_logger
@@ -36,7 +37,7 @@ class ErrorDecision:
 class ErrorHandler:
     """
     Handles errors according to configured policies.
-    
+
     Follows Strategy pattern for pluggable error handling logic.
     """
 
@@ -45,7 +46,7 @@ class ErrorHandler:
         policy: ErrorPolicy = ErrorPolicy.SKIP,
         max_retries: int = 3,
         default_value: Any = None,
-        default_value_factory: Optional[Callable[[], Any]] = None,
+        default_value_factory: Callable[[], Any] | None = None,
     ):
         """
         Initialize error handler.
@@ -59,7 +60,7 @@ class ErrorHandler:
         self.policy = policy
         self.max_retries = max_retries
         self.default_value = default_value
-        
+
         # If default_value_factory is provided, use it; otherwise use lambda returning default_value
         if default_value_factory is not None:
             self.default_value_factory = default_value_factory
@@ -87,7 +88,7 @@ class ErrorHandler:
         attempt = context.get("attempt", attempt)
         row_index = context.get("row_index", "unknown")
         stage = context.get("stage", "unknown")
-        
+
         # Log the error
         logger.error(
             f"Error in {stage} at row {row_index}: {error}",
@@ -108,59 +109,51 @@ class ErrorHandler:
         # Apply policy
         if self.policy == ErrorPolicy.RETRY:
             if attempt < self.max_retries:
-                logger.info(
-                    f"Retrying (attempt {attempt + 1}/{self.max_retries})"
-                )
+                logger.info(f"Retrying (attempt {attempt + 1}/{self.max_retries})")
                 return ErrorDecision(
                     action=ErrorAction.RETRY,
                     retry_count=attempt + 1,
                     context=context,
                 )
-            else:
-                logger.warning(
-                    f"Max retries ({self.max_retries}) exceeded, skipping"
-                )
-                return ErrorDecision(
-                    action=ErrorAction.SKIP,
-                    context=context,
-                )
+            logger.warning(f"Max retries ({self.max_retries}) exceeded, skipping")
+            return ErrorDecision(
+                action=ErrorAction.SKIP,
+                context=context,
+            )
 
-        elif self.policy == ErrorPolicy.SKIP:
+        if self.policy == ErrorPolicy.SKIP:
             logger.info(f"Skipping row {row_index} due to error")
             return ErrorDecision(
                 action=ErrorAction.SKIP,
                 context=context,
             )
 
-        elif self.policy == ErrorPolicy.USE_DEFAULT:
+        if self.policy == ErrorPolicy.USE_DEFAULT:
             default = self.default_value_factory()
-            logger.info(
-                f"Using default value for row {row_index}: {default}"
-            )
+            logger.info(f"Using default value for row {row_index}: {default}")
             return ErrorDecision(
                 action=ErrorAction.USE_DEFAULT,
                 default_value=default,
                 context=context,
             )
 
-        elif self.policy == ErrorPolicy.FAIL:
+        if self.policy == ErrorPolicy.FAIL:
             logger.error("Failing pipeline due to error")
             return ErrorDecision(
                 action=ErrorAction.FAIL,
                 context=context,
             )
 
-        else:
-            # Unknown policy, default to fail
-            return ErrorDecision(
-                action=ErrorAction.FAIL,
-                context=context,
-            )
+        # Unknown policy, default to fail
+        return ErrorDecision(
+            action=ErrorAction.FAIL,
+            context=context,
+        )
 
     def _is_fatal_error(self, error: Exception) -> bool:
         """
         Determine if error is fatal and should always fail immediately.
-        
+
         Fatal errors are configuration/authentication issues that cannot
         be recovered by retrying or skipping rows.
 
@@ -171,7 +164,7 @@ class ErrorHandler:
             True if error is fatal
         """
         error_str = str(error).lower()
-        
+
         # Fatal error patterns
         fatal_patterns = [
             "invalid api key",
@@ -184,7 +177,7 @@ class ErrorHandler:
             "invalid credentials",
             "permission denied",
         ]
-        
+
         return any(pattern in error_str for pattern in fatal_patterns)
 
     def should_retry(self, error: Exception) -> bool:
@@ -200,7 +193,7 @@ class ErrorHandler:
         # Don't retry fatal errors
         if self._is_fatal_error(error):
             return False
-        
+
         retriable_keywords = [
             "rate limit",
             "timeout",
@@ -210,7 +203,6 @@ class ErrorHandler:
             "502",
             "429",
         ]
-        
+
         error_str = str(error).lower()
         return any(keyword in error_str for keyword in retriable_keywords)
-

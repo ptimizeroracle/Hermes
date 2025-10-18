@@ -229,7 +229,7 @@ test-provider PROVIDER:
 # Cleanup test outputs
 clean-test-outputs:
     @echo "🧹 Cleaning test outputs..."
-    rm -f test_*.csv test_*.xlsx test_output.* 
+    rm -f test_*.csv test_*.xlsx test_output.*
     rm -rf .checkpoints/
     @echo "✅ Test outputs cleaned!"
 
@@ -272,4 +272,3 @@ env-info:
     @echo "Installed packages:"
     @uv pip list
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-

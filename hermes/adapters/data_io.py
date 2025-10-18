@@ -6,8 +6,8 @@ Adapter pattern.
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, Optional, Union
 
 import pandas as pd
 import polars as pl
@@ -19,7 +19,7 @@ from hermes.core.specifications import DataSourceType
 class DataReader(ABC):
     """
     Abstract base class for data readers.
-    
+
     Follows Open/Closed principle: open for extension via new readers,
     closed for modification.
     """
@@ -79,21 +79,18 @@ class CSVReader(DataReader):
 
     def read_chunked(self, chunk_size: int) -> Iterator[pd.DataFrame]:
         """Read CSV in chunks."""
-        for chunk in pd.read_csv(
+        yield from pd.read_csv(
             self.file_path,
             delimiter=self.delimiter,
             encoding=self.encoding,
             chunksize=chunk_size,
-        ):
-            yield chunk
+        )
 
 
 class ExcelReader(DataReader):
     """Excel file reader implementation."""
 
-    def __init__(
-        self, file_path: Path, sheet_name: Union[str, int] = 0
-    ):
+    def __init__(self, file_path: Path, sheet_name: str | int = 0):
         """
         Initialize Excel reader.
 
@@ -111,7 +108,7 @@ class ExcelReader(DataReader):
     def read_chunked(self, chunk_size: int) -> Iterator[pd.DataFrame]:
         """
         Read Excel in chunks.
-        
+
         Note: Excel doesn't support native chunking, so we load all
         and yield chunks.
         """
@@ -142,10 +139,10 @@ class ParquetReader(DataReader):
         """
         # Use Polars for efficient chunked reading
         lf = pl.scan_parquet(self.file_path)
-        
+
         # Read in batches
         total_rows = lf.select(pl.len()).collect().item()
-        
+
         for i in range(0, total_rows, chunk_size):
             chunk = lf.slice(i, chunk_size).collect().to_pandas()
             yield chunk
@@ -176,14 +173,12 @@ class DataFrameReader(DataReader):
 class DataWriter(ABC):
     """
     Abstract base class for data writers.
-    
+
     Follows Single Responsibility: only handles data persistence.
     """
 
     @abstractmethod
-    def write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """
         Write data to destination.
 
@@ -197,9 +192,7 @@ class DataWriter(ABC):
         pass
 
     @abstractmethod
-    def atomic_write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def atomic_write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """
         Write data atomically (with rollback on failure).
 
@@ -227,9 +220,7 @@ class CSVWriter(DataWriter):
         self.delimiter = delimiter
         self.encoding = encoding
 
-    def write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """Write to CSV file."""
         data.to_csv(
             path,
@@ -237,19 +228,17 @@ class CSVWriter(DataWriter):
             encoding=self.encoding,
             index=False,
         )
-        
+
         return WriteConfirmation(
             path=str(path),
             rows_written=len(data),
             success=True,
         )
 
-    def atomic_write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def atomic_write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """Write to CSV atomically."""
         temp_path = path.with_suffix(".tmp")
-        
+
         try:
             # Write to temp file
             data.to_csv(
@@ -258,10 +247,10 @@ class CSVWriter(DataWriter):
                 encoding=self.encoding,
                 index=False,
             )
-            
+
             # Atomic rename
             temp_path.replace(path)
-            
+
             return WriteConfirmation(
                 path=str(path),
                 rows_written=len(data),
@@ -277,28 +266,24 @@ class CSVWriter(DataWriter):
 class ExcelWriter(DataWriter):
     """Excel file writer implementation."""
 
-    def write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """Write to Excel file."""
         data.to_excel(path, index=False)
-        
+
         return WriteConfirmation(
             path=str(path),
             rows_written=len(data),
             success=True,
         )
 
-    def atomic_write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def atomic_write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """Write to Excel atomically."""
         temp_path = path.with_suffix(".tmp")
-        
+
         try:
             data.to_excel(temp_path, index=False)
             temp_path.replace(path)
-            
+
             return WriteConfirmation(
                 path=str(path),
                 rows_written=len(data),
@@ -313,28 +298,24 @@ class ExcelWriter(DataWriter):
 class ParquetWriter(DataWriter):
     """Parquet file writer implementation."""
 
-    def write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """Write to Parquet file."""
         data.to_parquet(path, index=False)
-        
+
         return WriteConfirmation(
             path=str(path),
             rows_written=len(data),
             success=True,
         )
 
-    def atomic_write(
-        self, data: pd.DataFrame, path: Path
-    ) -> WriteConfirmation:
+    def atomic_write(self, data: pd.DataFrame, path: Path) -> WriteConfirmation:
         """Write to Parquet atomically."""
         temp_path = path.with_suffix(".tmp")
-        
+
         try:
             data.to_parquet(temp_path, index=False)
             temp_path.replace(path)
-            
+
             return WriteConfirmation(
                 path=str(path),
                 rows_written=len(data),
@@ -348,8 +329,8 @@ class ParquetWriter(DataWriter):
 
 def create_data_reader(
     source_type: DataSourceType,
-    source_path: Optional[Path] = None,
-    dataframe: Optional[pd.DataFrame] = None,
+    source_path: Path | None = None,
+    dataframe: pd.DataFrame | None = None,
     **kwargs: any,
 ) -> DataReader:
     """
@@ -375,22 +356,19 @@ def create_data_reader(
             delimiter=kwargs.get("delimiter", ","),
             encoding=kwargs.get("encoding", "utf-8"),
         )
-    elif source_type == DataSourceType.EXCEL:
+    if source_type == DataSourceType.EXCEL:
         if not source_path:
             raise ValueError("source_path required for Excel")
-        return ExcelReader(
-            source_path, sheet_name=kwargs.get("sheet_name", 0)
-        )
-    elif source_type == DataSourceType.PARQUET:
+        return ExcelReader(source_path, sheet_name=kwargs.get("sheet_name", 0))
+    if source_type == DataSourceType.PARQUET:
         if not source_path:
             raise ValueError("source_path required for Parquet")
         return ParquetReader(source_path)
-    elif source_type == DataSourceType.DATAFRAME:
+    if source_type == DataSourceType.DATAFRAME:
         if dataframe is None:
             raise ValueError("dataframe required for DataFrame source")
         return DataFrameReader(dataframe)
-    else:
-        raise ValueError(f"Unsupported source type: {source_type}")
+    raise ValueError(f"Unsupported source type: {source_type}")
 
 
 def create_data_writer(destination_type: DataSourceType) -> DataWriter:
@@ -408,10 +386,8 @@ def create_data_writer(destination_type: DataSourceType) -> DataWriter:
     """
     if destination_type == DataSourceType.CSV:
         return CSVWriter()
-    elif destination_type == DataSourceType.EXCEL:
+    if destination_type == DataSourceType.EXCEL:
         return ExcelWriter()
-    elif destination_type == DataSourceType.PARQUET:
+    if destination_type == DataSourceType.PARQUET:
         return ParquetWriter()
-    else:
-        raise ValueError(f"Unsupported destination: {destination_type}")
-
+    raise ValueError(f"Unsupported destination: {destination_type}")

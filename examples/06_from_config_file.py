@@ -45,5 +45,4 @@ print(f"\nConfiguration saved to: {output_config_path}")
 
 # Example: Load from JSON
 specs_from_json = ConfigLoader.from_json(output_config_path)
-print(f"✅ Successfully loaded from JSON")
-
+print("✅ Successfully loaded from JSON")

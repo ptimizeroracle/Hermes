@@ -22,7 +22,7 @@ from hermes import PipelineBuilder
 # Process CSV with LLM transformations
 pipeline = (
     PipelineBuilder.create()
-    .from_csv("data.csv", input_columns=["description"], 
+    .from_csv("data.csv", input_columns=["description"],
               output_columns=["cleaned"])
     .with_prompt("Clean this text: {description}")
     .with_llm(provider="openai", model="gpt-4o-mini")
@@ -111,7 +111,7 @@ pipeline = (
           "price": "...",
           "condition": "new|used|refurbished"
         }
-        
+
         Description: {product_description}
     """)
     .with_llm(provider="openai", model="gpt-4o-mini", temperature=0.0)
@@ -126,8 +126,8 @@ result = pipeline.execute()
 ```python
 pipeline = (
     PipelineBuilder.create()
-    .from_csv("large_dataset.csv", 
-              input_columns=["text"], 
+    .from_csv("large_dataset.csv",
+              input_columns=["text"],
               output_columns=["summary"])
     .with_prompt("Summarize in 10 words: {text}")
     .with_llm(provider="openai", model="gpt-4o-mini")
@@ -159,11 +159,11 @@ pipeline = (
               output_columns=["optimized_title"])
     .with_prompt("""
         Optimize this product title for SEO.
-        
+
         Current Title: {title}
         Description: {description}
         Category: {category}
-        
+
         Optimized Title:
     """)
     .with_llm(provider="openai", model="gpt-4o-mini")
@@ -351,4 +351,3 @@ MIT License - see LICENSE file for details
 ---
 
 **Made with ❤️ using Python, LlamaIndex, and clean code principles**
-

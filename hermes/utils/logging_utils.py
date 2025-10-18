@@ -6,54 +6,51 @@ Provides consistent logging configuration across the SDK using structlog.
 
 import logging
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 import structlog
 from structlog.types import EventDict
-
 
 # Track if logging has been configured
 _logging_configured = False
 
 
-def _compact_console_renderer(
-    _: Any, __: str, event_dict: EventDict
-) -> str:
+def _compact_console_renderer(_: Any, __: str, event_dict: EventDict) -> str:
     """
     Custom console renderer with compact formatting (no padding).
-    
+
     Format: TIMESTAMP [LEVEL] MESSAGE key=value key=value
     """
     # Get timestamp
     timestamp = event_dict.pop("timestamp", "")
-    
+
     # Get log level and apply color
     level = event_dict.pop("level", "info").upper()
     level_colors = {
-        "DEBUG": "\033[36m",     # Cyan
-        "INFO": "\033[32m",      # Green
-        "WARNING": "\033[33m",   # Yellow
-        "ERROR": "\033[31m",     # Red
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
         "CRITICAL": "\033[35m",  # Magenta
     }
     reset = "\033[0m"
     colored_level = f"{level_colors.get(level, '')}{level}{reset}"
-    
+
     # Get event message
     event = event_dict.pop("event", "")
-    
+
     # Build base message
     parts = []
     if timestamp:
         parts.append(timestamp)
     parts.append(f"[{colored_level}]")
     parts.append(event)
-    
+
     # Add remaining key-value pairs
     for key, value in event_dict.items():
         if not key.startswith("_"):  # Skip internal keys
             parts.append(f"{key}={value}")
-    
+
     return " ".join(parts)
 
 
@@ -71,7 +68,7 @@ def configure_logging(
         include_timestamp: Include timestamps in logs
     """
     global _logging_configured
-    
+
     # Set stdlib logging level
     logging.basicConfig(
         format="%(message)s",
@@ -104,14 +101,14 @@ def configure_logging(
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     _logging_configured = True
 
 
 def get_logger(name: str) -> structlog.BoundLogger:
     """
     Get a structured logger instance.
-    
+
     Auto-configures logging on first use if not already configured.
 
     Args:
@@ -121,15 +118,15 @@ def get_logger(name: str) -> structlog.BoundLogger:
         Configured structlog logger
     """
     global _logging_configured
-    
+
     # Auto-configure logging on first use
     if not _logging_configured:
         configure_logging()
-    
+
     return structlog.get_logger(name)
 
 
-def sanitize_for_logging(data: Dict[str, Any]) -> Dict[str, Any]:
+def sanitize_for_logging(data: dict[str, Any]) -> dict[str, Any]:
     """
     Sanitize sensitive data for logging.
 
@@ -147,7 +144,7 @@ def sanitize_for_logging(data: Dict[str, Any]) -> Dict[str, Any]:
         "authorization",
         "credential",
     }
-    
+
     sanitized = {}
     for key, value in data.items():
         key_lower = key.lower()
@@ -157,6 +154,5 @@ def sanitize_for_logging(data: Dict[str, Any]) -> Dict[str, Any]:
             sanitized[key] = sanitize_for_logging(value)
         else:
             sanitized[key] = value
-    
-    return sanitized
 
+    return sanitized

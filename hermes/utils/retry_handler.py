@@ -5,8 +5,8 @@ Provides robust retry logic for transient failures following clean code
 principles with single responsibility.
 """
 
-import time
-from typing import Callable, Optional, Type, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from tenacity import (
     Retrying,
@@ -39,7 +39,7 @@ class NetworkError(RetryableError):
 class RetryHandler:
     """
     Handles retry logic with exponential backoff.
-    
+
     Follows SOLID principles with single responsibility for retry logic.
     """
 
@@ -49,7 +49,7 @@ class RetryHandler:
         initial_delay: float = 1.0,
         max_delay: float = 60.0,
         exponential_base: int = 2,
-        retryable_exceptions: Optional[tuple[Type[Exception], ...]] = None,
+        retryable_exceptions: tuple[type[Exception], ...] | None = None,
     ):
         """
         Initialize retry handler.
@@ -65,7 +65,7 @@ class RetryHandler:
         self.initial_delay = initial_delay
         self.max_delay = max_delay
         self.exponential_base = exponential_base
-        
+
         if retryable_exceptions is None:
             self.retryable_exceptions = (
                 RetryableError,
@@ -113,4 +113,3 @@ class RetryHandler:
         """
         delay = self.initial_delay * (self.exponential_base ** (attempt - 1))
         return min(delay, self.max_delay)
-

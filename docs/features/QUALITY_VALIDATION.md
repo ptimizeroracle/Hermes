@@ -7,7 +7,7 @@ Hermes now includes **automatic quality validation** that checks output complete
 ## Problem Solved
 
 Previously, when using `error_policy: skip`, failed LLM requests would:
-- ✅ Be counted as "processed" 
+- ✅ Be counted as "processed"
 - ❌ Produce `null` outputs silently
 - ❌ Show 0 failures in metrics
 - ❌ Report 100% success when actual success was much lower
@@ -132,7 +132,7 @@ class QualityReport:
     quality_score: str   # "excellent", "good", "poor", "critical"
     warnings: List[str]
     issues: List[str]
-    
+
     @property
     def is_acceptable(self) -> bool:
         """Returns True if success_rate >= 70%"""
@@ -142,15 +142,15 @@ class QualityReport:
 
 ```python
 def validate_output_quality(
-    self, 
+    self,
     output_columns: List[str]
 ) -> QualityReport:
     """
     Validate the quality of output data.
-    
+
     Args:
         output_columns: List of output column names to check
-        
+
     Returns:
         QualityReport with metrics, warnings, and issues
     """
@@ -182,7 +182,7 @@ Quality Score: CRITICAL
 
 🚨 Issues Detected:
   • ⚠️  METRICS MISMATCH: Pipeline reported 0 failures but 335 rows have null outputs
-  
+
 → User immediately knows there's a problem! 🎯
 ```
 
@@ -203,4 +203,3 @@ Potential additions:
 - Export quality reports to JSON/CSV
 - Historical quality tracking
 - Per-column quality metrics
-

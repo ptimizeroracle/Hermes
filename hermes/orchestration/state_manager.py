@@ -1,7 +1,5 @@
 """State management for checkpointing and recovery."""
 
-from pathlib import Path
-from typing import List, Optional
 from uuid import UUID
 
 from hermes.adapters.checkpoint_storage import CheckpointStorage
@@ -15,14 +13,12 @@ logger = get_logger(__name__)
 class StateManager:
     """
     Manages execution state persistence and recovery.
-    
+
     Follows Single Responsibility: only handles state management.
     Uses Strategy pattern for pluggable storage backends.
     """
 
-    def __init__(
-        self, storage: CheckpointStorage, checkpoint_interval: int = 500
-    ):
+    def __init__(self, storage: CheckpointStorage, checkpoint_interval: int = 500):
         """
         Initialize state manager.
 
@@ -44,9 +40,7 @@ class StateManager:
         Returns:
             True if checkpoint due
         """
-        return (
-            current_row - self._last_checkpoint_row
-        ) >= self.checkpoint_interval
+        return (current_row - self._last_checkpoint_row) >= self.checkpoint_interval
 
     def save_checkpoint(self, context: ExecutionContext) -> bool:
         """
@@ -61,21 +55,17 @@ class StateManager:
         try:
             checkpoint_data = context.to_checkpoint()
             success = self.storage.save(context.session_id, checkpoint_data)
-            
+
             if success:
                 self._last_checkpoint_row = context.last_processed_row
-                logger.info(
-                    f"Checkpoint saved at row {context.last_processed_row}"
-                )
-            
+                logger.info(f"Checkpoint saved at row {context.last_processed_row}")
+
             return success
         except Exception as e:
             logger.error(f"Failed to save checkpoint: {e}")
             return False
 
-    def load_checkpoint(
-        self, session_id: UUID
-    ) -> Optional[ExecutionContext]:
+    def load_checkpoint(self, session_id: UUID) -> ExecutionContext | None:
         """
         Load checkpoint for session.
 
@@ -87,15 +77,13 @@ class StateManager:
         """
         try:
             checkpoint_data = self.storage.load(session_id)
-            
+
             if checkpoint_data is None:
                 return None
-            
+
             context = ExecutionContext.from_checkpoint(checkpoint_data)
-            logger.info(
-                f"Checkpoint loaded from row {context.last_processed_row}"
-            )
-            
+            logger.info(f"Checkpoint loaded from row {context.last_processed_row}")
+
             return context
         except Exception as e:
             logger.error(f"Failed to load checkpoint: {e}")
@@ -132,7 +120,7 @@ class StateManager:
             logger.error(f"Failed to cleanup checkpoints: {e}")
             return False
 
-    def list_checkpoints(self) -> List[CheckpointInfo]:
+    def list_checkpoints(self) -> list[CheckpointInfo]:
         """
         List all available checkpoints.
 
@@ -140,4 +128,3 @@ class StateManager:
             List of checkpoint information
         """
         return self.storage.list_checkpoints()
-

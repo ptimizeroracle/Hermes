@@ -8,23 +8,26 @@ with FastAPI, aiohttp, and other async frameworks.
 import asyncio
 
 import pandas as pd
+
 from hermes import PipelineBuilder
 
 # Sample data
-data = pd.DataFrame({
-    "question": [
-        "What is Python?",
-        "What is async/await?",
-        "What is FastAPI?",
-    ]
-})
+data = pd.DataFrame(
+    {
+        "question": [
+            "What is Python?",
+            "What is async/await?",
+            "What is FastAPI?",
+        ]
+    }
+)
 
 
 async def main():
     """Async main function."""
-    
+
     print("Building async pipeline...")
-    
+
     # Build pipeline with async execution
     pipeline = (
         PipelineBuilder.create()
@@ -42,17 +45,17 @@ async def main():
         .with_async_execution(max_concurrency=3)  # Async executor
         .build()
     )
-    
+
     print("Executing asynchronously...")
-    
+
     # Execute with async/await (non-blocking)
     result = await pipeline.execute_async()
-    
+
     print("\n✅ Async execution complete!")
     print(f"Rows: {result.metrics.total_rows}")
     print(f"Duration: {result.duration:.2f}s")
     print(f"Cost: ${result.costs.total_cost}")
-    
+
     print("\nResults:")
     for idx, row in result.data.iterrows():
         print(f"Q: {row['question']}")
@@ -63,17 +66,17 @@ async def main():
 async def fastapi_example():
     """
     Example of using async pipeline in FastAPI.
-    
+
     Usage:
         from fastapi import FastAPI
         from hermes import PipelineBuilder
-        
+
         app = FastAPI()
-        
+
         @app.post("/process")
         async def process_data(data: dict):
             df = pd.DataFrame([data])
-            
+
             pipeline = (
                 PipelineBuilder.create()
                 .from_dataframe(df, ...)
@@ -81,7 +84,7 @@ async def fastapi_example():
                 .with_async_execution()  # Non-blocking!
                 .build()
             )
-            
+
             result = await pipeline.execute_async()
             return result.data.to_dict()
     """
@@ -91,7 +94,6 @@ async def fastapi_example():
 if __name__ == "__main__":
     # Run async main
     asyncio.run(main())
-    
+
     # Show FastAPI example
     asyncio.run(fastapi_example())
-

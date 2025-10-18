@@ -5,7 +5,6 @@ Implements cost monitoring with threshold warnings and hard limits.
 """
 
 from decimal import Decimal
-from typing import Optional
 
 import structlog
 
@@ -21,13 +20,13 @@ class BudgetExceededError(Exception):
 class BudgetController:
     """
     Controls and enforces budget limits during execution.
-    
+
     Follows Single Responsibility: only handles budget management.
     """
 
     def __init__(
         self,
-        max_budget: Optional[Decimal] = None,
+        max_budget: Decimal | None = None,
         warn_at_75: bool = True,
         warn_at_90: bool = True,
         fail_on_exceed: bool = True,
@@ -45,7 +44,7 @@ class BudgetController:
         self.warn_at_75 = warn_at_75
         self.warn_at_90 = warn_at_90
         self.fail_on_exceed = fail_on_exceed
-        
+
         self._warned_75 = False
         self._warned_90 = False
 
@@ -65,11 +64,7 @@ class BudgetController:
         usage_ratio = float(current_cost / self.max_budget)
 
         # 75% warning
-        if (
-            self.warn_at_75
-            and not self._warned_75
-            and usage_ratio >= 0.75
-        ):
+        if self.warn_at_75 and not self._warned_75 and usage_ratio >= 0.75:
             logger.warning(
                 f"Budget warning: 75% used "
                 f"(${current_cost:.4f} / ${self.max_budget:.2f})"
@@ -77,11 +72,7 @@ class BudgetController:
             self._warned_75 = True
 
         # 90% warning
-        if (
-            self.warn_at_90
-            and not self._warned_90
-            and usage_ratio >= 0.90
-        ):
+        if self.warn_at_90 and not self._warned_90 and usage_ratio >= 0.90:
             logger.warning(
                 f"Budget warning: 90% used "
                 f"(${current_cost:.4f} / ${self.max_budget:.2f})"
@@ -90,15 +81,13 @@ class BudgetController:
 
         # Budget exceeded
         if current_cost > self.max_budget:
-            error_msg = (
-                f"Budget exceeded: ${current_cost:.4f} > ${self.max_budget:.2f}"
-            )
+            error_msg = f"Budget exceeded: ${current_cost:.4f} > ${self.max_budget:.2f}"
             logger.error(error_msg)
-            
+
             if self.fail_on_exceed:
                 raise BudgetExceededError(error_msg)
 
-    def get_remaining(self, current_cost: Decimal) -> Optional[Decimal]:
+    def get_remaining(self, current_cost: Decimal) -> Decimal | None:
         """
         Get remaining budget.
 
@@ -112,7 +101,7 @@ class BudgetController:
             return None
         return self.max_budget - current_cost
 
-    def get_usage_percentage(self, current_cost: Decimal) -> Optional[float]:
+    def get_usage_percentage(self, current_cost: Decimal) -> float | None:
         """
         Get budget usage as percentage.
 
@@ -126,9 +115,7 @@ class BudgetController:
             return None
         return float(current_cost / self.max_budget) * 100
 
-    def can_afford(
-        self, estimated_cost: Decimal, current_cost: Decimal
-    ) -> bool:
+    def can_afford(self, estimated_cost: Decimal, current_cost: Decimal) -> bool:
         """
         Check if estimated additional cost is within budget.
 
@@ -142,4 +129,3 @@ class BudgetController:
         if self.max_budget is None:
             return True
         return (current_cost + estimated_cost) <= self.max_budget
-

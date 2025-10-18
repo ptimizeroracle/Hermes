@@ -7,19 +7,16 @@ testable design.
 
 import threading
 import time
-from typing import Optional
 
 
 class RateLimiter:
     """
     Token bucket rate limiter for controlling API request rates.
-    
+
     Thread-safe implementation following KISS principle.
     """
 
-    def __init__(
-        self, requests_per_minute: int, burst_size: Optional[int] = None
-    ):
+    def __init__(self, requests_per_minute: int, burst_size: int | None = None):
         """
         Initialize rate limiter.
 
@@ -32,11 +29,11 @@ class RateLimiter:
         self.tokens = float(self.capacity)
         self.last_update = time.time()
         self.lock = threading.Lock()
-        
+
         # Calculate refill rate (tokens per second)
         self.refill_rate = requests_per_minute / 60.0
 
-    def acquire(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
+    def acquire(self, tokens: int = 1, timeout: float | None = None) -> bool:
         """
         Acquire tokens for making requests.
 
@@ -60,7 +57,7 @@ class RateLimiter:
         while True:
             with self.lock:
                 self._refill()
-                
+
                 if self.tokens >= tokens:
                     self.tokens -= tokens
                     return True
@@ -76,11 +73,11 @@ class RateLimiter:
         """Refill tokens based on elapsed time."""
         now = time.time()
         elapsed = now - self.last_update
-        
+
         # Add tokens based on refill rate
         tokens_to_add = elapsed * self.refill_rate
         self.tokens = min(self.capacity, self.tokens + tokens_to_add)
-        
+
         self.last_update = now
 
     @property
@@ -95,4 +92,3 @@ class RateLimiter:
         with self.lock:
             self.tokens = float(self.capacity)
             self.last_update = time.time()
-

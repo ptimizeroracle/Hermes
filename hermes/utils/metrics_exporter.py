@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class PrometheusMetrics:
     """
     Prometheus metrics exporter.
-    
+
     Follows Single Responsibility: only handles metrics export.
     """
 
@@ -27,38 +27,38 @@ class PrometheusMetrics:
         """
         self.port = port
         self._server_started = False
-        
+
         # Define metrics
         self.requests_total = Counter(
             "llm_requests_total",
             "Total LLM requests",
             ["provider", "model", "stage"],
         )
-        
+
         self.request_duration = Histogram(
             "llm_request_duration_seconds",
             "LLM request duration in seconds",
             ["provider", "stage"],
         )
-        
+
         self.cost_total = Gauge(
             "llm_cost_total_usd",
             "Total cost in USD",
             ["provider"],
         )
-        
+
         self.errors_total = Counter(
             "llm_errors_total",
             "Total errors",
             ["stage", "error_type"],
         )
-        
+
         self.rows_processed = Gauge(
             "llm_rows_processed_total",
             "Total rows processed",
             ["stage"],
         )
-        
+
         self.rows_per_second = Gauge(
             "llm_rows_per_second",
             "Processing throughput",
@@ -70,9 +70,7 @@ class PrometheusMetrics:
             try:
                 start_http_server(self.port)
                 self._server_started = True
-                logger.info(
-                    f"Prometheus metrics server started on port {self.port}"
-                )
+                logger.info(f"Prometheus metrics server started on port {self.port}")
             except Exception as e:
                 logger.error(f"Failed to start metrics server: {e}")
 
@@ -88,13 +86,9 @@ class PrometheusMetrics:
             stage: Stage name
             duration: Request duration in seconds
         """
-        self.requests_total.labels(
-            provider=provider, model=model, stage=stage
-        ).inc()
-        
-        self.request_duration.labels(provider=provider, stage=stage).observe(
-            duration
-        )
+        self.requests_total.labels(provider=provider, model=model, stage=stage).inc()
+
+        self.request_duration.labels(provider=provider, stage=stage).observe(duration)
 
     def record_cost(self, provider: str, cost: float) -> None:
         """
@@ -134,4 +128,3 @@ class PrometheusMetrics:
             rows_per_second: Throughput metric
         """
         self.rows_per_second.set(rows_per_second)
-

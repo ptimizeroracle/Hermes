@@ -96,7 +96,7 @@ Historical documents and merged content (for reference only):
 When adding documentation:
 
 1. **Feature guides** → `features/` directory
-2. **Examples** → `examples/` directory  
+2. **Examples** → `examples/` directory
 3. **Historical/reference** → `archive/` directory
 4. **Core architecture** → Root `docs/` directory
 
@@ -111,4 +111,3 @@ When adding documentation:
 ---
 
 **Happy documenting! 🚀**
-

@@ -10,22 +10,14 @@ Zen of Code:
 - Readability counts
 """
 
-import pandas as pd
-import pytest
 from unittest.mock import MagicMock, patch
 
-from hermes.api.pipeline_composer import PipelineComposer
+import pandas as pd
+import pytest
+
 from hermes.api.pipeline import Pipeline
+from hermes.api.pipeline_composer import PipelineComposer
 from hermes.core.models import CostEstimate, ExecutionResult
-from hermes.core.specifications import (
-    DatasetSpec,
-    DataSourceType,
-    LLMProvider,
-    LLMSpec,
-    PipelineSpecifications,
-    ProcessingSpec,
-    PromptSpec,
-)
 
 
 class TestPipelineComposerBasics:
@@ -33,13 +25,15 @@ class TestPipelineComposerBasics:
 
     def test_composer_creation_from_dataframe(self):
         """Test creating composer with DataFrame."""
-        df = pd.DataFrame({
-            "text": ["sample1", "sample2"],
-            "value": [1, 2],
-        })
-        
+        df = pd.DataFrame(
+            {
+                "text": ["sample1", "sample2"],
+                "value": [1, 2],
+            }
+        )
+
         composer = PipelineComposer(input_data=df)
-        
+
         assert composer is not None
         assert isinstance(composer.input_df, pd.DataFrame)
         assert len(composer.input_df) == 2
@@ -47,7 +41,7 @@ class TestPipelineComposerBasics:
     def test_composer_creation_from_file_path(self):
         """Test creating composer with file path (lazy load)."""
         composer = PipelineComposer(input_data="dummy.csv")
-        
+
         assert composer is not None
         assert composer.input_path == "dummy.csv"
 
@@ -55,15 +49,12 @@ class TestPipelineComposerBasics:
         """Test adding a single column pipeline."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         # Create mock pipeline
         mock_pipeline = MagicMock(spec=Pipeline)
-        
-        result = composer.add_column(
-            column_name="output1",
-            pipeline=mock_pipeline
-        )
-        
+
+        result = composer.add_column(column_name="output1", pipeline=mock_pipeline)
+
         # Should return self for chaining
         assert result is composer
         assert len(composer.column_pipelines) == 1
@@ -72,16 +63,12 @@ class TestPipelineComposerBasics:
         """Test adding multiple column pipelines (chainable API)."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         pipeline1 = MagicMock(spec=Pipeline)
         pipeline2 = MagicMock(spec=Pipeline)
-        
-        result = (
-            composer
-            .add_column("col1", pipeline1)
-            .add_column("col2", pipeline2)
-        )
-        
+
+        result = composer.add_column("col1", pipeline1).add_column("col2", pipeline2)
+
         assert result is composer
         assert len(composer.column_pipelines) == 2
 
@@ -93,35 +80,35 @@ class TestDependencyResolution:
         """Test columns without dependencies execute in order added."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         p1 = MagicMock(spec=Pipeline)
         p2 = MagicMock(spec=Pipeline)
         p3 = MagicMock(spec=Pipeline)
-        
+
         composer.add_column("col1", p1)
         composer.add_column("col2", p2)
         composer.add_column("col3", p3)
-        
+
         order = composer._get_execution_order()
-        
+
         assert [item[0] for item in order] == ["col1", "col2", "col3"]
 
     def test_dependencies_determine_order(self):
         """Test dependency resolution via topological sort."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         p1 = MagicMock(spec=Pipeline)
         p2 = MagicMock(spec=Pipeline)
         p3 = MagicMock(spec=Pipeline)
-        
+
         # Add out of order
         composer.add_column("col3", p3, depends_on=["col1", "col2"])
         composer.add_column("col1", p1)
         composer.add_column("col2", p2, depends_on=["col1"])
-        
+
         order = composer._get_execution_order()
-        
+
         # Should resolve to: col1 -> col2 -> col3
         assert [item[0] for item in order] == ["col1", "col2", "col3"]
 
@@ -129,13 +116,13 @@ class TestDependencyResolution:
         """Test circular dependencies are detected."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         p1 = MagicMock(spec=Pipeline)
         p2 = MagicMock(spec=Pipeline)
-        
+
         composer.add_column("col1", p1, depends_on=["col2"])
         composer.add_column("col2", p2, depends_on=["col1"])
-        
+
         with pytest.raises(ValueError, match="Circular dependency"):
             composer._get_execution_order()
 
@@ -143,11 +130,11 @@ class TestDependencyResolution:
         """Test missing dependencies are detected."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         p1 = MagicMock(spec=Pipeline)
-        
+
         composer.add_column("col1", p1, depends_on=["nonexistent"])
-        
+
         with pytest.raises(ValueError, match="missing dependencies"):
             composer._get_execution_order()
 
@@ -155,20 +142,24 @@ class TestDependencyResolution:
 class TestComposerExecution:
     """Test actual execution of composed pipelines."""
 
-    @patch('hermes.api.pipeline.Pipeline.execute')
+    @patch("hermes.api.pipeline.Pipeline.execute")
     def test_execute_single_column(self, mock_execute):
         """Test executing single column pipeline."""
         # Setup
-        df = pd.DataFrame({
-            "text": ["sample1", "sample2"],
-        })
-        
+        df = pd.DataFrame(
+            {
+                "text": ["sample1", "sample2"],
+            }
+        )
+
         # Mock pipeline returns result with new column
         mock_execute.return_value = ExecutionResult(
-            data=pd.DataFrame({
-                "text": ["sample1", "sample2"],
-                "output1": ["result1", "result2"],
-            }),
+            data=pd.DataFrame(
+                {
+                    "text": ["sample1", "sample2"],
+                    "output1": ["result1", "result2"],
+                }
+            ),
             metrics=MagicMock(),
             costs=CostEstimate(
                 total_cost=0.01,
@@ -179,28 +170,28 @@ class TestComposerExecution:
             ),
             errors=[],
         )
-        
+
         # Create composer
         composer = PipelineComposer(input_data=df)
-        
+
         # Create mock pipeline
         mock_pipeline = MagicMock(spec=Pipeline)
         mock_pipeline.execute = mock_execute
-        
+
         composer.add_column("output1", mock_pipeline)
-        
+
         # Execute
         result = composer.execute()
-        
+
         assert isinstance(result, ExecutionResult)
         assert "output1" in result.data.columns
         assert len(result.data) == 2
 
-    @patch('hermes.api.pipeline.Pipeline.execute')
+    @patch("hermes.api.pipeline.Pipeline.execute")
     def test_execute_multiple_independent_columns(self, mock_execute):
         """Test executing multiple independent columns."""
         df = pd.DataFrame({"text": ["sample"]})
-        
+
         # Mock pipeline executions
         def execute_side_effect(*args, **kwargs):
             # Each pipeline adds its column
@@ -216,39 +207,41 @@ class TestComposerExecution:
                 ),
                 errors=[],
             )
-        
+
         mock_execute.side_effect = execute_side_effect
-        
+
         composer = PipelineComposer(input_data=df)
-        
+
         p1 = MagicMock(spec=Pipeline)
         p1.execute = mock_execute
         p2 = MagicMock(spec=Pipeline)
         p2.execute = mock_execute
-        
+
         composer.add_column("col1", p1)
         composer.add_column("col2", p2)
-        
-        result = composer.execute()
-        
+
+        composer.execute()
+
         # Should have called execute twice
         assert mock_execute.call_count == 2
 
     def test_execute_with_dependencies(self):
         """Test execution respects dependencies."""
-        df = pd.DataFrame({
-            "incumbent": ["bacon1"],
-            "portfolio": ["bacon2"],
-        })
-        
+        df = pd.DataFrame(
+            {
+                "incumbent": ["bacon1"],
+                "portfolio": ["bacon2"],
+            }
+        )
+
         composer = PipelineComposer(input_data=df)
-        
+
         # Track execution order
         execution_log = []
-        
+
         def create_mock_pipeline(name, output_col, output_value):
             mock = MagicMock(spec=Pipeline)
-            
+
             def execute(*args, **kwargs):
                 execution_log.append(name)
                 return ExecutionResult(
@@ -263,19 +256,19 @@ class TestComposerExecution:
                     ),
                     errors=[],
                 )
-            
+
             mock.execute = execute
             return mock
-        
+
         p1 = create_mock_pipeline("similarity", "llm_similarity", "95%")
         p2 = create_mock_pipeline("explanation", "Explanation", "Both similar")
-        
+
         # Add with dependency
         composer.add_column("llm_similarity", p1)
         composer.add_column("Explanation", p2, depends_on=["llm_similarity"])
-        
+
         result = composer.execute()
-        
+
         # Should execute in order: similarity -> explanation
         assert execution_log == ["similarity", "explanation"]
         assert "llm_similarity" in result.data.columns
@@ -288,21 +281,9 @@ class TestComposerConfiguration:
     def test_from_yaml_config(self):
         """Test loading composer from YAML."""
         # This test defines the YAML API we want
-        yaml_content = """
-composition:
-  input: "ground_truth.xlsx"
-  
-  pipelines:
-    - column: llm_similarity
-      config: bacon_similarity.yaml
-    
-    - column: Explanation
-      depends_on: [llm_similarity]
-      config: bacon_explanation.yaml
-"""
         # This test will initially fail - that's TDD!
         # Implementation will make it pass
-        
+
         # For now, just test the concept exists
         assert True  # Placeholder
 
@@ -313,14 +294,14 @@ class TestZenPrinciples:
     def test_simple_is_better_than_complex(self):
         """Test the API is simple for common cases."""
         df = pd.DataFrame({"text": ["test"]})
-        
+
         # Should be ONE line to create composer
         composer = PipelineComposer(input_data=df)
-        
+
         # Should be ONE line to add column
         mock_pipeline = MagicMock(spec=Pipeline)
         composer.add_column("output", mock_pipeline)
-        
+
         # Simple! ✅
         assert True
 
@@ -328,28 +309,27 @@ class TestZenPrinciples:
         """Test dependencies are explicit, not magic."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
-        
+
         p1 = MagicMock(spec=Pipeline)
         p2 = MagicMock(spec=Pipeline)
-        
+
         # Dependencies are EXPLICIT in the API
         composer.add_column("col1", p1)
         composer.add_column("col2", p2, depends_on=["col1"])  # ← Clear!
-        
+
         # No hidden magic ✅
         assert True
 
     def test_readability_counts(self):
         """Test the code reads like prose."""
         df = pd.DataFrame({"text": ["test"]})
-        
+
         # This should read naturally
         composer = (
             PipelineComposer(input_data=df)
             .add_column("similarity", MagicMock())
             .add_column("explanation", MagicMock(), depends_on=["similarity"])
         )
-        
+
         # Readable! ✅
         assert composer is not None
-

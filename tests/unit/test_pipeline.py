@@ -1,8 +1,8 @@
 """Unit tests for Pipeline class."""
 
-import pandas as pd
-import pytest
 from decimal import Decimal
+
+import pandas as pd
 
 from hermes.api.pipeline import Pipeline
 from hermes.core.specifications import (
@@ -11,10 +11,8 @@ from hermes.core.specifications import (
     LLMProvider,
     LLMSpec,
     PipelineSpecifications,
-    ProcessingSpec,
     PromptSpec,
 )
-from tests.conftest import MockLLMClient
 
 
 class TestPipeline:
@@ -31,9 +29,9 @@ class TestPipeline:
             prompt=PromptSpec(template="Process: {text}"),
             llm=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
         )
-        
+
         pipeline = Pipeline(specs)
-        
+
         assert pipeline.id is not None
         assert pipeline.specifications == specs
         assert pipeline.observers == []
@@ -50,9 +48,9 @@ class TestPipeline:
             prompt=PromptSpec(template="{text}"),
             llm=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
         )
-        
+
         pipeline = Pipeline(specs, dataframe=df)
-        
+
         assert pipeline.dataframe is not None
         assert len(pipeline.dataframe) == 1
 
@@ -67,10 +65,10 @@ class TestPipeline:
             prompt=PromptSpec(template="{text}"),
             llm=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
         )
-        
+
         pipeline = Pipeline(specs)
         validation = pipeline.validate()
-        
+
         assert validation.is_valid is True
         assert len(validation.errors) == 0
 
@@ -85,23 +83,22 @@ class TestPipeline:
             prompt=PromptSpec(template="{missing_var}"),  # Variable not in input
             llm=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
         )
-        
+
         pipeline = Pipeline(specs)
         validation = pipeline.validate()
-        
+
         assert validation.is_valid is False
         assert len(validation.errors) > 0
 
     def test_estimate_cost_with_sample(self):
         """Test cost estimation with sample data."""
         import os
-        df = pd.DataFrame({
-            "text": [f"Sample {i}" for i in range(100)]
-        })
-        
+
+        df = pd.DataFrame({"text": [f"Sample {i}" for i in range(100)]})
+
         # Set a dummy API key for cost estimation (doesn't need to be real)
         os.environ["OPENAI_API_KEY"] = "sk-test-dummy-key-for-estimation"
-        
+
         specs = PipelineSpecifications(
             dataset=DatasetSpec(
                 source_type=DataSourceType.DATAFRAME,
@@ -116,11 +113,11 @@ class TestPipeline:
                 output_cost_per_1k_tokens=Decimal("0.0006"),
             ),
         )
-        
+
         try:
             pipeline = Pipeline(specs, dataframe=df)
             estimate = pipeline.estimate_cost()
-            
+
             assert estimate.total_cost >= 0
             assert estimate.rows == 100
         finally:
@@ -131,7 +128,7 @@ class TestPipeline:
     def test_add_observer(self):
         """Test adding observers to pipeline."""
         from hermes.orchestration import LoggingObserver
-        
+
         specs = PipelineSpecifications(
             dataset=DatasetSpec(
                 source_type=DataSourceType.DATAFRAME,
@@ -141,18 +138,18 @@ class TestPipeline:
             prompt=PromptSpec(template="{text}"),
             llm=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
         )
-        
+
         pipeline = Pipeline(specs)
         observer = LoggingObserver()
         pipeline.add_observer(observer)
-        
+
         assert len(pipeline.observers) == 1
         assert pipeline.observers[0] == observer
 
     def test_pipeline_with_executor(self):
         """Test pipeline with custom executor."""
         from hermes.orchestration import SyncExecutor
-        
+
         specs = PipelineSpecifications(
             dataset=DatasetSpec(
                 source_type=DataSourceType.DATAFRAME,
@@ -162,9 +159,8 @@ class TestPipeline:
             prompt=PromptSpec(template="{text}"),
             llm=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
         )
-        
+
         executor = SyncExecutor()
         pipeline = Pipeline(specs, executor=executor)
-        
-        assert pipeline.executor == executor
 
+        assert pipeline.executor == executor

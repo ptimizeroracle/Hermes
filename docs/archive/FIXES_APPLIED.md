@@ -12,13 +12,13 @@
 def parse(self, response: str) -> Dict[str, Any]:
     """Return response as-is, after cleaning chat format artifacts."""
     cleaned = response.strip()
-    
+
     # Strip common chat format prefixes
     for prefix in ["assistant:", "user:", "system:"]:
         if cleaned.lower().startswith(prefix):
             cleaned = cleaned[len(prefix):].strip()
             break
-    
+
     return {"output": cleaned}
 ```
 
@@ -27,7 +27,7 @@ def parse(self, response: str) -> Dict[str, Any]:
 ### 2. **86% of Rows Returned "None"** ✅ FIXED
 **Problem**: 315 out of 365 rows (86%) returned `"None"` due to overly strict prompt rules.
 
-**Fix**: 
+**Fix**:
 - Added explicit instruction: **"CRITICAL: Always return a valid description. Never return 'None' or empty text."**
 - Added rule: **"If unsure, make best effort - extract what you can identify"**
 - Added example for heavily abbreviated input
@@ -130,4 +130,3 @@ Based on research:
    - If still seeing "None": increase `MAX_TOKENS` to 600
    - If hitting rate limits: reduce `CONCURRENCY` to 2
    - If outputs too verbose: reduce `MAX_TOKENS` to 300
-

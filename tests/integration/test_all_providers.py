@@ -15,32 +15,28 @@ from hermes import PipelineBuilder
 def get_provider_configs():
     """Get available provider configurations."""
     configs = []
-    
+
     if os.getenv("GROQ_API_KEY"):
-        configs.append(
-            ("groq", "llama-3.1-70b-versatile", "GROQ_API_KEY")
-        )
-    
+        configs.append(("groq", "llama-3.1-70b-versatile", "GROQ_API_KEY"))
+
     if os.getenv("OPENAI_API_KEY"):
         configs.append(("openai", "gpt-4o-mini", "OPENAI_API_KEY"))
-    
+
     if os.getenv("ANTHROPIC_API_KEY"):
-        configs.append(
-            ("anthropic", "claude-3-haiku-20240307", "ANTHROPIC_API_KEY")
-        )
-    
+        configs.append(("anthropic", "claude-3-haiku-20240307", "ANTHROPIC_API_KEY"))
+
     return configs
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("provider,model,key_name", get_provider_configs())
+@pytest.mark.parametrize(("provider", "model", "key_name"), get_provider_configs())
 class TestAllProviders:
     """Test all providers with same interface."""
 
     def test_provider_execution(self, provider, model, key_name):
         """Test that provider can execute pipeline."""
         df = pd.DataFrame({"text": ["Say hello"]})
-        
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -52,9 +48,9 @@ class TestAllProviders:
             .with_llm(provider=provider, model=model, temperature=0.0)
             .build()
         )
-        
+
         result = pipeline.execute()
-        
+
         # Verify result
         assert len(result.data) == 1
         assert "response" in result.data.columns
@@ -64,7 +60,7 @@ class TestAllProviders:
     def test_provider_cost_estimation(self, provider, model, key_name):
         """Test cost estimation for provider."""
         df = pd.DataFrame({"text": ["Test"]})
-        
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -76,10 +72,9 @@ class TestAllProviders:
             .with_llm(provider=provider, model=model)
             .build()
         )
-        
+
         estimate = pipeline.estimate_cost()
-        
+
         assert estimate.total_cost >= 0
         assert estimate.total_tokens > 0
         assert estimate.rows == 1
-

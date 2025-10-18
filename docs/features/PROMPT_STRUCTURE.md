@@ -157,8 +157,7 @@ Look for **STEP 3** output which shows:
 
 ## 🎉 **You Now Have BOTH Prompts!**
 
-✅ **System Message** (line 102-133) - Overall guidance  
+✅ **System Message** (line 102-133) - Overall guidance
 ✅ **Transformation Prompt** (line 15-100) - Detailed processing logic with all your rules!
 
 **Ready to run!** 🚀
-

@@ -9,7 +9,7 @@ components, following the principle of separation between configuration
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -53,17 +53,17 @@ class DatasetSpec(BaseModel):
     """Specification for data source configuration."""
 
     source_type: DataSourceType
-    source_path: Optional[Union[str, Path]] = None
-    input_columns: List[str] = Field(
+    source_path: str | Path | None = None
+    input_columns: list[str] = Field(
         ..., min_length=1, description="Columns to use as input"
     )
-    output_columns: List[str] = Field(
+    output_columns: list[str] = Field(
         ..., min_length=1, description="Columns to store results"
     )
-    filters: Optional[Dict[str, Any]] = Field(
+    filters: dict[str, Any] | None = Field(
         default=None, description="Optional data filters"
     )
-    sheet_name: Optional[Union[str, int]] = Field(
+    sheet_name: str | int | None = Field(
         default=0, description="Sheet name for Excel files"
     )
     delimiter: str = Field(default=",", description="CSV delimiter")
@@ -71,9 +71,7 @@ class DatasetSpec(BaseModel):
 
     @field_validator("source_path")
     @classmethod
-    def validate_source_path(
-        cls, v: Optional[Union[str, Path]]
-    ) -> Optional[Path]:
+    def validate_source_path(cls, v: str | Path | None) -> Path | None:
         """Convert string paths to Path objects."""
         if v is None:
             return None
@@ -81,16 +79,14 @@ class DatasetSpec(BaseModel):
 
     @field_validator("output_columns")
     @classmethod
-    def validate_no_overlap(cls, v: List[str], info: Any) -> List[str]:
+    def validate_no_overlap(cls, v: list[str], info: Any) -> list[str]:
         """Ensure output columns don't overlap with input columns."""
         if "input_columns" in info.data:
             input_cols = set(info.data["input_columns"])
             output_cols = set(v)
             overlap = input_cols & output_cols
             if overlap:
-                raise ValueError(
-                    f"Output columns overlap with input: {overlap}"
-                )
+                raise ValueError(f"Output columns overlap with input: {overlap}")
         return v
 
 
@@ -98,26 +94,25 @@ class PromptSpec(BaseModel):
     """Specification for prompt template configuration."""
 
     template: str = Field(..., min_length=1, description="Prompt template")
-    system_message: Optional[str] = Field(
+    system_message: str | None = Field(
         default=None, description="System message for LLM"
     )
-    few_shot_examples: Optional[List[Dict[str, str]]] = Field(
+    few_shot_examples: list[dict[str, str]] | None = Field(
         default=None, description="Few-shot learning examples"
     )
-    template_variables: Optional[List[str]] = Field(
+    template_variables: list[str] | None = Field(
         default=None, description="Expected template variables"
     )
     response_format: str = Field(
-        default="raw", 
-        description="Response parsing format: 'raw', 'json', or 'regex'"
+        default="raw", description="Response parsing format: 'raw', 'json', or 'regex'"
     )
-    json_fields: Optional[List[str]] = Field(
-        default=None, 
-        description="Expected JSON field names (for response_format='json')"
-    )
-    regex_patterns: Optional[Dict[str, str]] = Field(
+    json_fields: list[str] | None = Field(
         default=None,
-        description="Regex patterns for field extraction (for response_format='regex')"
+        description="Expected JSON field names (for response_format='json')",
+    )
+    regex_patterns: dict[str, str] | None = Field(
+        default=None,
+        description="Regex patterns for field extraction (for response_format='regex')",
     )
 
     @field_validator("template")
@@ -136,9 +131,7 @@ class PromptSpec(BaseModel):
         """Validate response format is supported."""
         allowed = ["raw", "json", "regex"]
         if v not in allowed:
-            raise ValueError(
-                f"response_format must be one of {allowed}, got '{v}'"
-            )
+            raise ValueError(f"response_format must be one of {allowed}, got '{v}'")
         return v
 
 
@@ -147,84 +140,67 @@ class LLMSpec(BaseModel):
 
     provider: LLMProvider
     model: str = Field(..., min_length=1, description="Model identifier")
-    api_key: Optional[str] = Field(
-        default=None, description="API key (or from env)"
-    )
+    api_key: str | None = Field(default=None, description="API key (or from env)")
     temperature: float = Field(
         default=0.0, ge=0.0, le=2.0, description="Sampling temperature"
     )
-    max_tokens: Optional[int] = Field(
-        default=None, gt=0, description="Max output tokens"
-    )
-    top_p: float = Field(
-        default=1.0, ge=0.0, le=1.0, description="Nucleus sampling"
-    )
-    
+    max_tokens: int | None = Field(default=None, gt=0, description="Max output tokens")
+    top_p: float = Field(default=1.0, ge=0.0, le=1.0, description="Nucleus sampling")
+
     # Azure-specific
-    azure_endpoint: Optional[str] = Field(
+    azure_endpoint: str | None = Field(
         default=None, description="Azure OpenAI endpoint"
     )
-    azure_deployment: Optional[str] = Field(
+    azure_deployment: str | None = Field(
         default=None, description="Azure deployment name"
     )
-    api_version: Optional[str] = Field(
+    api_version: str | None = Field(
         default="2024-02-15-preview", description="Azure API version"
     )
-    
+
     # Cost tracking
-    input_cost_per_1k_tokens: Optional[Decimal] = Field(
+    input_cost_per_1k_tokens: Decimal | None = Field(
         default=None, description="Input token cost"
     )
-    output_cost_per_1k_tokens: Optional[Decimal] = Field(
+    output_cost_per_1k_tokens: Decimal | None = Field(
         default=None, description="Output token cost"
     )
 
     @field_validator("azure_endpoint", "azure_deployment")
     @classmethod
-    def validate_azure_config(
-        cls, v: Optional[str], info: Any
-    ) -> Optional[str]:
+    def validate_azure_config(cls, v: str | None, info: Any) -> str | None:
         """Validate Azure-specific configuration."""
-        if info.data.get("provider") == LLMProvider.AZURE_OPENAI:
-            if v is None:
-                field_name = info.field_name
-                raise ValueError(
-                    f"{field_name} required for Azure OpenAI provider"
-                )
+        if info.data.get("provider") == LLMProvider.AZURE_OPENAI and v is None:
+            field_name = info.field_name
+            raise ValueError(f"{field_name} required for Azure OpenAI provider")
         return v
 
 
 class ProcessingSpec(BaseModel):
     """Specification for processing parameters."""
 
-    batch_size: int = Field(
-        default=100, gt=0, le=1000, description="Rows per batch"
-    )
-    concurrency: int = Field(
-        default=5, gt=0, le=20, description="Parallel requests"
-    )
+    batch_size: int = Field(default=100, gt=0, le=1000, description="Rows per batch")
+    concurrency: int = Field(default=5, gt=0, le=20, description="Parallel requests")
     checkpoint_interval: int = Field(
         default=500, gt=0, description="Checkpoint frequency"
     )
-    max_retries: int = Field(
-        default=3, ge=0, description="Max retry attempts"
-    )
+    max_retries: int = Field(default=3, ge=0, description="Max retry attempts")
     retry_delay: float = Field(
         default=1.0, ge=0.0, description="Initial retry delay (seconds)"
     )
     error_policy: ErrorPolicy = Field(
         default=ErrorPolicy.SKIP, description="Error handling policy"
     )
-    rate_limit_rpm: Optional[int] = Field(
+    rate_limit_rpm: int | None = Field(
         default=None, gt=0, description="Requests per minute limit"
     )
-    max_budget: Optional[Decimal] = Field(
+    max_budget: Decimal | None = Field(
         default=None, gt=0, description="Maximum budget in USD"
     )
     checkpoint_dir: Path = Field(
         default=Path(".checkpoints"), description="Checkpoint directory"
     )
-    
+
     # Input preprocessing
     enable_preprocessing: bool = Field(
         default=False, description="Enable input preprocessing"
@@ -232,7 +208,7 @@ class ProcessingSpec(BaseModel):
     preprocessing_max_length: int = Field(
         default=500, gt=0, description="Max chars after preprocessing"
     )
-    
+
     # Auto-retry failed rows
     auto_retry_failed: bool = Field(
         default=False, description="Auto-retry rows with null outputs"
@@ -243,7 +219,7 @@ class ProcessingSpec(BaseModel):
 
     @field_validator("checkpoint_dir")
     @classmethod
-    def validate_checkpoint_dir(cls, v: Union[str, Path]) -> Path:
+    def validate_checkpoint_dir(cls, v: str | Path) -> Path:
         """Convert string paths to Path objects."""
         return Path(v) if isinstance(v, str) else v
 
@@ -252,19 +228,15 @@ class OutputSpec(BaseModel):
     """Specification for output configuration."""
 
     destination_type: DataSourceType
-    destination_path: Optional[Path] = None
+    destination_path: Path | None = None
     merge_strategy: MergeStrategy = Field(
         default=MergeStrategy.REPLACE, description="Output merge strategy"
     )
-    atomic_write: bool = Field(
-        default=True, description="Use atomic writes"
-    )
+    atomic_write: bool = Field(default=True, description="Use atomic writes")
 
     @field_validator("destination_path")
     @classmethod
-    def validate_destination_path(
-        cls, v: Optional[Union[str, Path]]
-    ) -> Optional[Path]:
+    def validate_destination_path(cls, v: str | Path | None) -> Path | None:
         """Convert string paths to Path objects."""
         if v is None:
             return None
@@ -283,8 +255,7 @@ class PipelineSpecifications(BaseModel):
     prompt: PromptSpec
     llm: LLMSpec
     processing: ProcessingSpec = Field(default_factory=ProcessingSpec)
-    output: Optional[OutputSpec] = None
-    metadata: Dict[str, Any] = Field(
+    output: OutputSpec | None = None
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Custom metadata"
     )
-

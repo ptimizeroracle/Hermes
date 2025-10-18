@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 import pandas as pd
-import pytest
 from click.testing import CliRunner
 
 from hermes.cli.main import cli
@@ -62,15 +61,17 @@ class TestCLI:
         """Test inspect command with CSV file."""
         # Create test CSV
         test_csv = Path(self.temp_dir) / "test.csv"
-        df = pd.DataFrame({
-            "text": ["Hello", "World"],
-            "value": [1, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "text": ["Hello", "World"],
+                "value": [1, 2],
+            }
+        )
         df.to_csv(test_csv, index=False)
-        
+
         # Run inspect
         result = self.runner.invoke(cli, ["inspect", "-i", str(test_csv)])
-        
+
         assert result.exit_code == 0
         assert "File Information" in result.output
         assert "Total Rows" in result.output
@@ -80,9 +81,7 @@ class TestCLI:
 
     def test_validate_missing_config(self):
         """Test validate with missing config file."""
-        result = self.runner.invoke(
-            cli, ["validate", "-c", "nonexistent.yaml"]
-        )
+        result = self.runner.invoke(cli, ["validate", "-c", "nonexistent.yaml"])
         assert result.exit_code != 0
 
     def test_process_missing_required_args(self):
@@ -100,20 +99,17 @@ class TestCLI:
         """Test list-checkpoints with no checkpoints."""
         empty_dir = Path(self.temp_dir) / "empty_checkpoints"
         empty_dir.mkdir()
-        
+
         result = self.runner.invoke(
             cli, ["list-checkpoints", "--checkpoint-dir", str(empty_dir)]
         )
-        
+
         assert result.exit_code == 0
         assert "No checkpoints found" in result.output
 
     def test_resume_invalid_session_id(self):
         """Test resume with invalid session ID."""
-        result = self.runner.invoke(
-            cli, ["resume", "-s", "invalid-uuid"]
-        )
-        
+        result = self.runner.invoke(cli, ["resume", "-s", "invalid-uuid"])
+
         assert result.exit_code != 0
         assert "Invalid session ID" in result.output or "Error" in result.output
-

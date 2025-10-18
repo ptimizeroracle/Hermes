@@ -1,12 +1,10 @@
 """Unit tests for execution strategies."""
 
-import asyncio
 from decimal import Decimal
 
 import pandas as pd
 import pytest
 
-from hermes.core.models import ProcessingStats
 from hermes.orchestration import (
     AsyncExecutor,
     ExecutionContext,
@@ -26,6 +24,7 @@ class MockStage(PipelineStage):
     def validate_input(self, input_data, context):
         """Validate input."""
         from hermes.core.models import ValidationResult
+
         return ValidationResult(is_valid=True, errors=[])
 
     def process(self, input_data, context):
@@ -38,6 +37,7 @@ class MockStage(PipelineStage):
     def estimate_cost(self, input_data, context):
         """Estimate cost."""
         from hermes.core.models import CostEstimate
+
         return CostEstimate(
             total_cost=Decimal("0.0"),
             total_tokens=0,
@@ -60,10 +60,10 @@ class TestSyncExecutor:
         executor = SyncExecutor()
         context = ExecutionContext()
         stages = [MockStage("Stage1"), MockStage("Stage2")]
-        
+
         # Execute stages
         result = executor.execute(stages, context)
-        
+
         assert result is not None
         # Both stages should have been executed
         assert stages[0].processed_count == 1
@@ -84,10 +84,10 @@ class TestAsyncExecutor:
         executor = AsyncExecutor()
         context = ExecutionContext()
         stages = [MockStage("AsyncStage1"), MockStage("AsyncStage2")]
-        
+
         # Execute stages asynchronously
         result = await executor.execute_async(stages, context)
-        
+
         assert result is not None
         # Both stages should have been executed
         assert stages[0].processed_count == 1
@@ -98,12 +98,12 @@ class TestAsyncExecutor:
         """Test async executor with DataFrame input."""
         executor = AsyncExecutor()
         context = ExecutionContext()
-        
-        df = pd.DataFrame({"text": ["test1", "test2", "test3"]})
+
+        pd.DataFrame({"text": ["test1", "test2", "test3"]})
         stage = MockStage("DataStage")
-        
-        result = await executor.execute_async([stage], context)
-        
+
+        await executor.execute_async([stage], context)
+
         assert stage.processed_count == 1
 
 
@@ -117,38 +117,36 @@ class TestStreamingExecutor:
 
     def test_streaming_executor_execute(self):
         """Test streaming executor execution."""
-        from hermes.stages.data_loader_stage import DataLoaderStage
         from hermes.core.specifications import DatasetSpec, DataSourceType
-        
-        executor = StreamingExecutor(chunk_size=2)
+        from hermes.stages.data_loader_stage import DataLoaderStage
+
+        StreamingExecutor(chunk_size=2)
         context = ExecutionContext()
-        
+
         # Create sample data
-        df = pd.DataFrame({
-            "text": [f"Sample {i}" for i in range(10)]
-        })
-        
+        df = pd.DataFrame({"text": [f"Sample {i}" for i in range(10)]})
+
         # Create a data loader stage with the dataframe
         data_loader = DataLoaderStage(dataframe=df)
         processing_stage = MockStage("StreamStage")
-        
+
         # Execute with streaming - need a spec for data loader
         spec = DatasetSpec(
             source_type=DataSourceType.DATAFRAME,
             input_columns=["text"],
             output_columns=["result"],
         )
-        
+
         # Process data through loader first
         loaded_data = data_loader.process(spec, context)
-        
+
         # Mock the stage to accept chunks
         chunks_processed = 0
         for i in range(0, len(loaded_data), 2):
-            chunk = loaded_data.iloc[i:i+2]
-            result = processing_stage.process(chunk, context)
+            chunk = loaded_data.iloc[i : i + 2]
+            processing_stage.process(chunk, context)
             chunks_processed += 1
-        
+
         # Should process multiple chunks
         assert chunks_processed > 1
         # Stage should be called multiple times
@@ -156,27 +154,27 @@ class TestStreamingExecutor:
 
     def test_streaming_executor_with_single_chunk(self):
         """Test streaming with data smaller than chunk size."""
-        from hermes.stages.data_loader_stage import DataLoaderStage
         from hermes.core.specifications import DatasetSpec, DataSourceType
-        
-        executor = StreamingExecutor(chunk_size=100)
+        from hermes.stages.data_loader_stage import DataLoaderStage
+
+        StreamingExecutor(chunk_size=100)
         context = ExecutionContext()
-        
+
         df = pd.DataFrame({"text": ["small", "data"]})
-        
+
         data_loader = DataLoaderStage(dataframe=df)
         processing_stage = MockStage("SmallStage")
-        
+
         spec = DatasetSpec(
             source_type=DataSourceType.DATAFRAME,
             input_columns=["text"],
             output_columns=["result"],
         )
-        
+
         # Process data
         loaded_data = data_loader.process(spec, context)
-        result = processing_stage.process(loaded_data, context)
-        
+        processing_stage.process(loaded_data, context)
+
         # Should process as single chunk
         assert processing_stage.processed_count == 1
 
@@ -187,7 +185,7 @@ class TestExecutionContext:
     def test_context_initialization(self):
         """Test execution context initialization."""
         context = ExecutionContext()
-        
+
         assert context.session_id is not None
         assert context.pipeline_id is not None
         assert context.start_time is not None
@@ -196,17 +194,17 @@ class TestExecutionContext:
     def test_context_update_stage(self):
         """Test updating context stage."""
         context = ExecutionContext()
-        
+
         context.update_stage(2)
-        
+
         assert context.current_stage_index == 2
 
     def test_context_add_cost(self):
         """Test adding cost to context."""
         context = ExecutionContext()
-        
+
         context.add_cost(cost=Decimal("0.01"), tokens=100)
-        
+
         assert context.accumulated_tokens == 100
         assert context.accumulated_cost == Decimal("0.01")
 
@@ -214,9 +212,9 @@ class TestExecutionContext:
         """Test context serialization."""
         context = ExecutionContext()
         context.add_cost(cost=Decimal("0.01"), tokens=50)
-        
+
         state = context.to_dict()
-        
+
         assert isinstance(state, dict)
         assert "session_id" in state
         assert "accumulated_cost" in state
@@ -225,10 +223,9 @@ class TestExecutionContext:
         """Test context deserialization."""
         original = ExecutionContext()
         original.add_cost(cost=Decimal("0.02"), tokens=100)
-        
+
         state = original.to_dict()
         restored = ExecutionContext.from_dict(state)
-        
+
         assert restored.accumulated_tokens == 100
         assert restored.session_id == original.session_id
-

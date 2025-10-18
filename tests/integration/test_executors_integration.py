@@ -1,13 +1,11 @@
 """Integration tests for executors with real data flow."""
 
-import asyncio
 import os
 
 import pandas as pd
 import pytest
 
 from hermes import PipelineBuilder
-from hermes.orchestration import AsyncExecutor, StreamingExecutor
 
 
 @pytest.mark.integration
@@ -20,10 +18,12 @@ class TestExecutorIntegration:
 
     def test_sync_executor_full_pipeline(self):
         """Test sync executor with full pipeline execution."""
-        df = pd.DataFrame({
-            "question": ["What is 1+1?", "What is 2+2?"],
-        })
-        
+        df = pd.DataFrame(
+            {
+                "question": ["What is 1+1?", "What is 2+2?"],
+            }
+        )
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -39,9 +39,9 @@ class TestExecutorIntegration:
             )
             .build()
         )
-        
+
         result = pipeline.execute()
-        
+
         assert result.success is True
         assert len(result.data) == 2
         assert "answer" in result.data.columns
@@ -49,10 +49,12 @@ class TestExecutorIntegration:
     @pytest.mark.asyncio
     async def test_async_executor_full_pipeline(self):
         """Test async executor with full pipeline execution."""
-        df = pd.DataFrame({
-            "question": ["What is async?"],
-        })
-        
+        df = pd.DataFrame(
+            {
+                "question": ["What is async?"],
+            }
+        )
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -69,18 +71,20 @@ class TestExecutorIntegration:
             .with_async_execution(max_concurrency=2)
             .build()
         )
-        
+
         result = await pipeline.execute_async()
-        
+
         assert result.success is True
         assert len(result.data) == 1
 
     def test_streaming_executor_full_pipeline(self):
         """Test streaming executor with full pipeline execution."""
-        df = pd.DataFrame({
-            "number": [str(i) for i in range(10)],
-        })
-        
+        df = pd.DataFrame(
+            {
+                "number": [str(i) for i in range(10)],
+            }
+        )
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -97,12 +101,11 @@ class TestExecutorIntegration:
             .with_streaming(chunk_size=3)
             .build()
         )
-        
+
         chunks = []
         for chunk_result in pipeline.execute_stream():
             chunks.append(chunk_result)
             assert chunk_result.success is True
-        
+
         # Should have multiple chunks
         assert len(chunks) > 1
-

@@ -3,4 +3,3 @@
 from hermes.cli.main import cli
 
 __all__ = ["cli"]
-

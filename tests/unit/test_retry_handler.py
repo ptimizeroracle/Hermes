@@ -15,7 +15,7 @@ class TestRetryHandler:
     def test_successful_execution(self):
         """Test successful execution without retries."""
         handler = RetryHandler(max_attempts=3)
-        
+
         call_count = 0
 
         def successful_func():
@@ -24,14 +24,14 @@ class TestRetryHandler:
             return "success"
 
         result = handler.execute(successful_func)
-        
+
         assert result == "success"
         assert call_count == 1
 
     def test_retry_on_transient_error(self):
         """Test retry on retriable errors."""
         handler = RetryHandler(max_attempts=3, initial_delay=0.01)
-        
+
         call_count = 0
 
         def flaky_func():
@@ -42,7 +42,7 @@ class TestRetryHandler:
             return "success"
 
         result = handler.execute(flaky_func)
-        
+
         assert result == "success"
         assert call_count == 3
 
@@ -74,7 +74,7 @@ class TestRetryHandler:
             exponential_base=2,
             max_delay=32.0,
         )
-        
+
         assert handler.calculate_delay(1) == 1.0
         assert handler.calculate_delay(2) == 2.0
         assert handler.calculate_delay(3) == 4.0
@@ -82,4 +82,3 @@ class TestRetryHandler:
         assert handler.calculate_delay(5) == 16.0
         assert handler.calculate_delay(6) == 32.0  # Max delay
         assert handler.calculate_delay(7) == 32.0  # Capped at max
-

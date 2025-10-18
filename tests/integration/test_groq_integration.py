@@ -23,7 +23,7 @@ class TestGroqIntegration:
     def test_simple_completion(self):
         """Test basic completion with Groq."""
         df = pd.DataFrame({"text": ["What is 2+2?"]})
-        
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -39,9 +39,9 @@ class TestGroqIntegration:
             )
             .build()
         )
-        
+
         result = pipeline.execute()
-        
+
         assert len(result.data) == 1
         assert result.metrics.processed_rows == 1
         # Groq API returns $0 cost but does track tokens
@@ -53,14 +53,16 @@ class TestGroqIntegration:
 
     def test_batch_processing(self):
         """Test batch processing with Groq."""
-        df = pd.DataFrame({
-            "question": [
-                "What is the capital of France?",
-                "What is 5+3?",
-                "Name a color",
-            ]
-        })
-        
+        df = pd.DataFrame(
+            {
+                "question": [
+                    "What is the capital of France?",
+                    "What is 5+3?",
+                    "Name a color",
+                ]
+            }
+        )
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -78,9 +80,9 @@ class TestGroqIntegration:
             .with_concurrency(2)
             .build()
         )
-        
+
         result = pipeline.execute()
-        
+
         assert len(result.data) == 3
         assert result.metrics.processed_rows == 3
         assert "answer" in result.data.columns
@@ -88,7 +90,7 @@ class TestGroqIntegration:
     def test_cost_tracking(self):
         """Test cost tracking with Groq."""
         df = pd.DataFrame({"text": ["Hello world"]})
-        
+
         pipeline = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -97,20 +99,21 @@ class TestGroqIntegration:
                 output_columns=["response"],
             )
             .with_prompt("Echo: {text}")
-            .with_llm(provider="groq", model="llama-3.3-70b-versatile")  # Updated to current Groq model
+            .with_llm(
+                provider="groq", model="llama-3.3-70b-versatile"
+            )  # Updated to current Groq model
             .build()
         )
-        
+
         # Get estimate
         estimate = pipeline.estimate_cost()
         assert estimate.total_cost >= 0
-        
+
         # Execute
         result = pipeline.execute()
-        
+
         # Groq API returns $0 cost but does track tokens
         assert result.costs.total_cost >= 0
         assert result.costs.total_tokens > 0
         # Verify we got valid output
         assert result.data["response"].iloc[0] != "[SKIPPED]"
-

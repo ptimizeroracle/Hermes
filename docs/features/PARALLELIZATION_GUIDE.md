@@ -96,7 +96,7 @@ If you see these, **reduce `CONCURRENCY` by 2**.
 - **Cost**: ~$0.013
 
 ### Aggressive Config (CONCURRENCY=10)
-- **365 rows** → ~1-2 minutes  
+- **365 rows** → ~1-2 minutes
 - **Cost**: Same (~$0.013)
 - **Risk**: May hit rate limits on free tier
 
@@ -146,10 +146,9 @@ So you can safely experiment with higher concurrency - worst case, it'll just sl
 
 ## TL;DR
 
-**Your laptop**: Can handle 10+ parallel requests easily ✅  
-**Groq free tier**: Limited to ~30 RPM ⚠️  
-**Current config (3 concurrent)**: Perfect for free tier ✅  
+**Your laptop**: Can handle 10+ parallel requests easily ✅
+**Groq free tier**: Limited to ~30 RPM ⚠️
+**Current config (3 concurrent)**: Perfect for free tier ✅
 **To go faster**: Upgrade to paid tier, then increase to 7-10 concurrent
 
 **Bottom line: Your laptop isn't the bottleneck - Groq's API limits are.**
-

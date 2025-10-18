@@ -6,17 +6,19 @@ responses using JSON output.
 """
 
 import pandas as pd
+
 from hermes import PipelineBuilder
-from hermes.stages import JSONParser, ResponseParserStage
 
 # Sample product descriptions
-data = pd.DataFrame({
-    "description": [
-        "Apple iPhone 13 Pro 256GB Graphite - Brand new, unlocked, with warranty",
-        "Used Samsung Galaxy S21 128GB in good condition, minor scratches",
-        "MacBook Air M1 8GB 256GB SSD - Like new, barely used, original box",
-    ]
-})
+data = pd.DataFrame(
+    {
+        "description": [
+            "Apple iPhone 13 Pro 256GB Graphite - Brand new, unlocked, with warranty",
+            "Used Samsung Galaxy S21 128GB in good condition, minor scratches",
+            "MacBook Air M1 8GB 256GB SSD - Like new, barely used, original box",
+        ]
+    }
+)
 
 # Build pipeline with JSON output
 pipeline = (
@@ -33,9 +35,9 @@ pipeline = (
         - model: product model
         - storage: storage capacity (e.g., "256GB")
         - condition: "new", "used", or "refurbished"
-        
+
         Description: {description}
-        
+
         JSON:"""
     )
     .with_llm(
@@ -58,4 +60,3 @@ print(result.data)
 output_file = "/tmp/extracted_products.csv"
 result.data.to_csv(output_file, index=False)
 print(f"\nResults saved to: {output_file}")
-

@@ -3,8 +3,6 @@
 import time
 from decimal import Decimal
 
-import pytest
-
 from hermes.utils import CostTracker
 
 
@@ -17,7 +15,7 @@ class TestCostTracker:
             input_cost_per_1k=Decimal("0.01"),
             output_cost_per_1k=Decimal("0.02"),
         )
-        
+
         assert tracker.total_cost == Decimal("0.0")
         assert tracker.total_tokens == 0
         assert tracker.input_tokens == 0
@@ -29,9 +27,9 @@ class TestCostTracker:
             input_cost_per_1k=Decimal("0.01"),
             output_cost_per_1k=Decimal("0.02"),
         )
-        
+
         cost = tracker.calculate_cost(1000, 500)
-        
+
         # 1000 tokens * $0.01/1k = $0.01
         # 500 tokens * $0.02/1k = $0.01
         # Total = $0.02
@@ -43,15 +41,15 @@ class TestCostTracker:
             input_cost_per_1k=Decimal("0.01"),
             output_cost_per_1k=Decimal("0.02"),
         )
-        
+
         # Add first entry
         cost1 = tracker.add(100, 50, "gpt-4o-mini", time.time())
         assert cost1 == Decimal("0.002")
-        
+
         # Add second entry
         cost2 = tracker.add(200, 100, "gpt-4o-mini", time.time())
         assert cost2 == Decimal("0.004")
-        
+
         # Check totals
         assert tracker.total_cost == Decimal("0.006")
         assert tracker.input_tokens == 300
@@ -63,14 +61,14 @@ class TestCostTracker:
             input_cost_per_1k=Decimal("0.01"),
             output_cost_per_1k=Decimal("0.02"),
         )
-        
+
         # Add costs for different stages
         tracker.add(100, 50, "gpt-4o", time.time(), stage="stage1")
         tracker.add(200, 100, "gpt-4o", time.time(), stage="stage1")
         tracker.add(150, 75, "gpt-4o", time.time(), stage="stage2")
-        
+
         stage_costs = tracker.get_stage_costs()
-        
+
         assert "stage1" in stage_costs
         assert "stage2" in stage_costs
         assert stage_costs["stage1"] > stage_costs["stage2"]
@@ -81,11 +79,11 @@ class TestCostTracker:
             input_cost_per_1k=Decimal("0.01"),
             output_cost_per_1k=Decimal("0.02"),
         )
-        
+
         tracker.add(1000, 500, "gpt-4o", time.time())
-        
+
         estimate = tracker.get_estimate(rows=10)
-        
+
         assert estimate.total_cost == Decimal("0.02")
         assert estimate.total_tokens == 1500
         assert estimate.rows == 10
@@ -97,12 +95,11 @@ class TestCostTracker:
             input_cost_per_1k=Decimal("0.01"),
             output_cost_per_1k=Decimal("0.02"),
         )
-        
+
         tracker.add(1000, 500, "gpt-4o", time.time())
         assert tracker.total_cost > 0
-        
+
         tracker.reset()
-        
+
         assert tracker.total_cost == Decimal("0.0")
         assert tracker.total_tokens == 0
-

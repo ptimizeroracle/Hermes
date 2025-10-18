@@ -6,12 +6,9 @@ for concurrent LLM calls.
 """
 
 from datetime import datetime
-from decimal import Decimal
-from typing import List
 
 import pandas as pd
 
-from hermes.adapters import create_llm_client
 from hermes.core.models import (
     CostEstimate,
     ExecutionResult,
@@ -19,15 +16,8 @@ from hermes.core.models import (
 )
 from hermes.orchestration.execution_context import ExecutionContext
 from hermes.orchestration.execution_strategy import ExecutionStrategy
-from hermes.stages import (
-    DataLoaderStage,
-    LLMInvocationStage,
-    PromptFormatterStage,
-    ResponseParserStage,
-    ResultWriterStage,
-)
 from hermes.stages.pipeline_stage import PipelineStage
-from hermes.utils import RateLimiter, RetryHandler, get_logger
+from hermes.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -35,7 +25,7 @@ logger = get_logger(__name__)
 class SyncExecutor(ExecutionStrategy):
     """
     Synchronous execution strategy.
-    
+
     Uses ThreadPoolExecutor for concurrent LLM calls while maintaining
     sequential stage execution. This is the default strategy that preserves
     current behavior.
@@ -47,7 +37,7 @@ class SyncExecutor(ExecutionStrategy):
 
     def execute(
         self,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         context: ExecutionContext,
     ) -> ExecutionResult:
         """
@@ -61,14 +51,14 @@ class SyncExecutor(ExecutionStrategy):
             ExecutionResult with data and metrics
         """
         start_time = datetime.now()
-        
+
         try:
             # Execute stages sequentially
             result_data = self._execute_stages(stages, context)
-            
+
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
-            
+
             # Calculate stats
             stats = ProcessingStats(
                 total_rows=context.total_rows,
@@ -78,7 +68,7 @@ class SyncExecutor(ExecutionStrategy):
                 rows_per_second=context.total_rows / duration if duration > 0 else 0,
                 total_duration_seconds=duration,
             )
-            
+
             # Get cost estimate
             cost_estimate = CostEstimate(
                 total_cost=context.accumulated_cost,
@@ -88,7 +78,7 @@ class SyncExecutor(ExecutionStrategy):
                 rows=context.total_rows,
                 confidence="actual",
             )
-            
+
             return ExecutionResult(
                 data=result_data,
                 metrics=stats,
@@ -98,26 +88,26 @@ class SyncExecutor(ExecutionStrategy):
                 end_time=end_time,
                 success=True,
             )
-            
+
         except Exception as e:
             self.logger.error(f"Pipeline execution failed: {e}")
             raise
 
     def _execute_stages(
         self,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         context: ExecutionContext,
     ) -> pd.DataFrame:
         """Execute all stages sequentially."""
         data = None
-        
+
         for stage in stages:
             self.logger.info(f"Executing stage: {stage.name}")
             context.current_stage = stage.name
-            
+
             # Process data through stage
             data = stage.process(data, context)
-            
+
         return data if isinstance(data, pd.DataFrame) else pd.DataFrame()
 
     def supports_async(self) -> bool:
@@ -132,4 +122,3 @@ class SyncExecutor(ExecutionStrategy):
     def name(self) -> str:
         """Strategy name."""
         return "SyncExecutor"
-

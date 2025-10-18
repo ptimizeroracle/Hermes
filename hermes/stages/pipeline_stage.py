@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class PipelineStage(ABC, Generic[TInput, TOutput]):
     """
     Abstract base class for all pipeline stages.
-    
+
     Implements Template Method pattern with hooks for extensibility.
     All stages follow Single Responsibility and are composable.
     """
@@ -81,29 +81,29 @@ class PipelineStage(ABC, Generic[TInput, TOutput]):
             ValueError: If input validation fails
         """
         self.logger.info(f"Starting stage: {self.name}")
-        
+
         # Pre-processing hook
         self.before_process(context)
-        
+
         # Validate input
         validation = self.validate_input(input_data)
         if not validation.is_valid:
             error_msg = f"Input validation failed: {validation.errors}"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
         if validation.warnings:
             for warning in validation.warnings:
                 self.logger.warning(warning)
-        
+
         # Core processing
         try:
             result = self.process(input_data, context)
             self.logger.info(f"Completed stage: {self.name}")
-            
+
             # Post-processing hook
             self.after_process(result, context)
-            
+
             return result
         except Exception as e:
             self.logger.error(f"Stage {self.name} failed: {e}")
@@ -154,4 +154,3 @@ class PipelineStage(ABC, Generic[TInput, TOutput]):
             Cost estimate
         """
         pass
-

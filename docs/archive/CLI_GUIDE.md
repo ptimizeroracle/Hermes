@@ -1,7 +1,7 @@
 # 🖥️ CLI User Guide - LLM Dataset Engine
 
-**Command**: `llm-dataset`  
-**Version**: 1.0.0  
+**Command**: `llm-dataset`
+**Version**: 1.0.0
 **Status**: ✅ Fully Functional
 
 ---
@@ -269,7 +269,7 @@ llm-dataset inspect -i large_dataset.parquet
 ```
 Inspecting data.csv...
 
-      File Information       
+      File Information
 ┏━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
 ┃ Property      ┃ Value    ┃
 ┡━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
@@ -321,7 +321,7 @@ llm-dataset list-checkpoints --checkpoint-dir /tmp/checkpoints
 ```
 Scanning .checkpoints for checkpoints...
 
-        Checkpoints in .checkpoints         
+        Checkpoints in .checkpoints
 ┏━━━━━━━━━━━━┳━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
 ┃ Session ID ┃ Row ┃ Stage ┃ Timestamp           ┃ Size     ┃
 ┡━━━━━━━━━━━━╇━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
@@ -368,7 +368,7 @@ llm-dataset resume -s abc-123 -o new_output.csv
 Looking for checkpoint in .checkpoints...
 ✅ Found checkpoint at row 5,000
 
-        Checkpoint Information         
+        Checkpoint Information
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Property       ┃ Value                ┃
 ┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
@@ -443,7 +443,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     llm-dataset process -c $CONFIG -i $INPUT -o $OUTPUT \
         --max-budget 50.0 \
         --verbose
-    
+
     if [ $? -eq 0 ]; then
         echo "✅ Processing successful"
         # Trigger downstream jobs
@@ -485,7 +485,7 @@ prompt:
     Clean and analyze this product:
     Description: {description}
     Category: {category}
-    
+
     Return JSON: {{"cleaned_description": "...", "sentiment": "..."}}
   system_message: "You are a data processing assistant."
 
@@ -701,14 +701,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
+
       - name: Install CLI
         run: pip install llm-dataset-engine
-      
+
       - name: Process data
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -718,7 +718,7 @@ jobs:
             -i data/input.csv \
             -o data/output.csv \
             --max-budget 10.0
-      
+
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:
@@ -755,13 +755,13 @@ llm-dataset process \
 for file in data/*.csv; do
     basename=$(basename "$file" .csv)
     echo "Processing $basename..."
-    
+
     llm-dataset process \
         -c config.yaml \
         -i "$file" \
         -o "results/${basename}_processed.csv" \
         --max-budget 5.0
-    
+
     if [ $? -ne 0 ]; then
         echo "Failed: $basename"
         exit 1
@@ -839,4 +839,3 @@ llm-dataset resume -s <session-id>
 ---
 
 **Happy Processing! 🚀**
-

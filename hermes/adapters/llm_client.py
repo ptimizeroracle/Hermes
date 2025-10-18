@@ -10,7 +10,7 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Suppress dependency warnings before importing llama_index
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -33,7 +33,7 @@ from hermes.core.specifications import LLMProvider, LLMSpec
 class LLMClient(ABC):
     """
     Abstract base class for LLM clients.
-    
+
     Defines the contract that all LLM provider implementations must follow,
     enabling easy swapping of providers (Strategy pattern).
     """
@@ -77,9 +77,7 @@ class LLMClient(ABC):
         """
         pass
 
-    def batch_invoke(
-        self, prompts: List[str], **kwargs: Any
-    ) -> List[LLMResponse]:
+    def batch_invoke(self, prompts: list[str], **kwargs: Any) -> list[LLMResponse]:
         """
         Invoke LLM with multiple prompts.
 
@@ -95,9 +93,7 @@ class LLMClient(ABC):
         """
         return [self.invoke(prompt, **kwargs) for prompt in prompts]
 
-    def calculate_cost(
-        self, tokens_in: int, tokens_out: int
-    ) -> Decimal:
+    def calculate_cost(self, tokens_in: int, tokens_out: int) -> Decimal:
         """
         Calculate cost for token usage.
 
@@ -108,12 +104,12 @@ class LLMClient(ABC):
         Returns:
             Total cost in USD
         """
-        input_cost = (
-            Decimal(tokens_in) / 1000
-        ) * (self.spec.input_cost_per_1k_tokens or Decimal("0.0"))
-        output_cost = (
-            Decimal(tokens_out) / 1000
-        ) * (self.spec.output_cost_per_1k_tokens or Decimal("0.0"))
+        input_cost = (Decimal(tokens_in) / 1000) * (
+            self.spec.input_cost_per_1k_tokens or Decimal("0.0")
+        )
+        output_cost = (Decimal(tokens_out) / 1000) * (
+            self.spec.output_cost_per_1k_tokens or Decimal("0.0")
+        )
         return input_cost + output_cost
 
 
@@ -123,18 +119,18 @@ class OpenAIClient(LLMClient):
     def __init__(self, spec: LLMSpec):
         """Initialize OpenAI client."""
         super().__init__(spec)
-        
+
         api_key = spec.api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in spec or environment")
-        
+
         self.client = OpenAI(
             model=spec.model,
             api_key=api_key,
             temperature=spec.temperature,
             max_tokens=spec.max_tokens,
         )
-        
+
         # Initialize tokenizer
         try:
             self.tokenizer = tiktoken.encoding_for_model(spec.model)
@@ -144,18 +140,18 @@ class OpenAIClient(LLMClient):
     def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Invoke OpenAI API."""
         start_time = time.time()
-        
+
         message = ChatMessage(role="user", content=prompt)
         response = self.client.chat([message])
-        
+
         latency_ms = (time.time() - start_time) * 1000
-        
+
         # Extract token usage
         tokens_in = len(self.tokenizer.encode(prompt))
         tokens_out = len(self.tokenizer.encode(str(response)))
-        
+
         cost = self.calculate_cost(tokens_in, tokens_out)
-        
+
         return LLMResponse(
             text=str(response),
             tokens_in=tokens_in,
@@ -176,19 +172,17 @@ class AzureOpenAIClient(LLMClient):
     def __init__(self, spec: LLMSpec):
         """Initialize Azure OpenAI client."""
         super().__init__(spec)
-        
+
         api_key = spec.api_key or os.getenv("AZURE_OPENAI_API_KEY")
         if not api_key:
-            raise ValueError(
-                "AZURE_OPENAI_API_KEY not found in spec or environment"
-            )
-        
+            raise ValueError("AZURE_OPENAI_API_KEY not found in spec or environment")
+
         if not spec.azure_endpoint:
             raise ValueError("azure_endpoint required for Azure OpenAI")
-        
+
         if not spec.azure_deployment:
             raise ValueError("azure_deployment required for Azure OpenAI")
-        
+
         self.client = AzureOpenAI(
             model=spec.model,
             deployment_name=spec.azure_deployment,
@@ -198,7 +192,7 @@ class AzureOpenAIClient(LLMClient):
             temperature=spec.temperature,
             max_tokens=spec.max_tokens,
         )
-        
+
         # Initialize tokenizer
         try:
             self.tokenizer = tiktoken.encoding_for_model(spec.model)
@@ -208,18 +202,18 @@ class AzureOpenAIClient(LLMClient):
     def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Invoke Azure OpenAI API."""
         start_time = time.time()
-        
+
         message = ChatMessage(role="user", content=prompt)
         response = self.client.chat([message])
-        
+
         latency_ms = (time.time() - start_time) * 1000
-        
+
         # Extract token usage
         tokens_in = len(self.tokenizer.encode(prompt))
         tokens_out = len(self.tokenizer.encode(str(response)))
-        
+
         cost = self.calculate_cost(tokens_in, tokens_out)
-        
+
         return LLMResponse(
             text=str(response),
             tokens_in=tokens_in,
@@ -240,38 +234,36 @@ class AnthropicClient(LLMClient):
     def __init__(self, spec: LLMSpec):
         """Initialize Anthropic client."""
         super().__init__(spec)
-        
+
         api_key = spec.api_key or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
-            raise ValueError(
-                "ANTHROPIC_API_KEY not found in spec or environment"
-            )
-        
+            raise ValueError("ANTHROPIC_API_KEY not found in spec or environment")
+
         self.client = Anthropic(
             model=spec.model,
             api_key=api_key,
             temperature=spec.temperature,
             max_tokens=spec.max_tokens or 1024,
         )
-        
+
         # Anthropic uses approximate token counting
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
     def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Invoke Anthropic API."""
         start_time = time.time()
-        
+
         message = ChatMessage(role="user", content=prompt)
         response = self.client.chat([message])
-        
+
         latency_ms = (time.time() - start_time) * 1000
-        
+
         # Approximate token usage
         tokens_in = len(self.tokenizer.encode(prompt))
         tokens_out = len(self.tokenizer.encode(str(response)))
-        
+
         cost = self.calculate_cost(tokens_in, tokens_out)
-        
+
         return LLMResponse(
             text=str(response),
             tokens_in=tokens_in,
@@ -292,46 +284,44 @@ class GroqClient(LLMClient):
     def __init__(self, spec: LLMSpec):
         """Initialize Groq client."""
         super().__init__(spec)
-        
+
         api_key = spec.api_key or os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise ValueError(
-                "GROQ_API_KEY not found in spec or environment"
-            )
-        
+            raise ValueError("GROQ_API_KEY not found in spec or environment")
+
         self.client = Groq(
             model=spec.model,
             api_key=api_key,
             temperature=spec.temperature,
             max_tokens=spec.max_tokens,
         )
-        
+
         # Use tiktoken for token estimation
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
     def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Invoke Groq API."""
         start_time = time.time()
-        
+
         message = ChatMessage(role="user", content=prompt)
         response = self.client.chat([message])
-        
+
         latency_ms = (time.time() - start_time) * 1000
-        
+
         # Extract text from response - handle both string and object responses
-        if hasattr(response, 'message') and hasattr(response.message, 'content'):
+        if hasattr(response, "message") and hasattr(response.message, "content"):
             response_text = response.message.content or ""
-        elif hasattr(response, 'content'):
+        elif hasattr(response, "content"):
             response_text = response.content or ""
         else:
             response_text = str(response) if response else ""
-        
+
         # Extract token usage
         tokens_in = len(self.tokenizer.encode(prompt))
         tokens_out = len(self.tokenizer.encode(response_text))
-        
+
         cost = self.calculate_cost(tokens_in, tokens_out)
-        
+
         return LLMResponse(
             text=response_text,
             tokens_in=tokens_in,
@@ -361,12 +351,10 @@ def create_llm_client(spec: LLMSpec) -> LLMClient:
     """
     if spec.provider == LLMProvider.OPENAI:
         return OpenAIClient(spec)
-    elif spec.provider == LLMProvider.AZURE_OPENAI:
+    if spec.provider == LLMProvider.AZURE_OPENAI:
         return AzureOpenAIClient(spec)
-    elif spec.provider == LLMProvider.ANTHROPIC:
+    if spec.provider == LLMProvider.ANTHROPIC:
         return AnthropicClient(spec)
-    elif spec.provider == LLMProvider.GROQ:
+    if spec.provider == LLMProvider.GROQ:
         return GroqClient(spec)
-    else:
-        raise ValueError(f"Unsupported provider: {spec.provider}")
-
+    raise ValueError(f"Unsupported provider: {spec.provider}")

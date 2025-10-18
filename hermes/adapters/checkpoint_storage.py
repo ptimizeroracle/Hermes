@@ -10,7 +10,7 @@ import pickle
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from hermes.core.models import CheckpointInfo
@@ -19,12 +19,12 @@ from hermes.core.models import CheckpointInfo
 class CheckpointStorage(ABC):
     """
     Abstract base for checkpoint storage implementations.
-    
+
     Follows Strategy pattern for pluggable storage backends.
     """
 
     @abstractmethod
-    def save(self, session_id: UUID, data: Dict[str, Any]) -> bool:
+    def save(self, session_id: UUID, data: dict[str, Any]) -> bool:
         """
         Save checkpoint data.
 
@@ -38,7 +38,7 @@ class CheckpointStorage(ABC):
         pass
 
     @abstractmethod
-    def load(self, session_id: UUID) -> Optional[Dict[str, Any]]:
+    def load(self, session_id: UUID) -> dict[str, Any] | None:
         """
         Load latest checkpoint data.
 
@@ -51,7 +51,7 @@ class CheckpointStorage(ABC):
         pass
 
     @abstractmethod
-    def list_checkpoints(self) -> List[CheckpointInfo]:
+    def list_checkpoints(self) -> list[CheckpointInfo]:
         """
         List all available checkpoints.
 
@@ -90,7 +90,7 @@ class CheckpointStorage(ABC):
 class LocalFileCheckpointStorage(CheckpointStorage):
     """
     Local filesystem checkpoint storage implementation.
-    
+
     Stores checkpoints as JSON files for human readability and debugging.
     """
 
@@ -108,7 +108,7 @@ class LocalFileCheckpointStorage(CheckpointStorage):
         """
         self.checkpoint_dir = checkpoint_dir
         self.use_json = use_json
-        
+
         # Create directory if doesn't exist
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
@@ -117,10 +117,10 @@ class LocalFileCheckpointStorage(CheckpointStorage):
         ext = ".json" if self.use_json else ".pkl"
         return self.checkpoint_dir / f"checkpoint_{session_id}{ext}"
 
-    def save(self, session_id: UUID, data: Dict[str, Any]) -> bool:
+    def save(self, session_id: UUID, data: dict[str, Any]) -> bool:
         """Save checkpoint to local file."""
         checkpoint_path = self._get_checkpoint_path(session_id)
-        
+
         # Add metadata
         checkpoint_data = {
             "version": "1.0",
@@ -128,7 +128,7 @@ class LocalFileCheckpointStorage(CheckpointStorage):
             "timestamp": datetime.now().isoformat(),
             "data": data,
         }
-        
+
         try:
             if self.use_json:
                 with open(checkpoint_path, "w") as f:
@@ -141,51 +141,49 @@ class LocalFileCheckpointStorage(CheckpointStorage):
             else:
                 with open(checkpoint_path, "wb") as f:
                     pickle.dump(checkpoint_data, f)
-            
+
             return True
         except Exception:
             return False
 
-    def load(self, session_id: UUID) -> Optional[Dict[str, Any]]:
+    def load(self, session_id: UUID) -> dict[str, Any] | None:
         """Load checkpoint from local file."""
         checkpoint_path = self._get_checkpoint_path(session_id)
-        
+
         if not checkpoint_path.exists():
             return None
-        
+
         try:
             if self.use_json:
-                with open(checkpoint_path, "r") as f:
+                with open(checkpoint_path) as f:
                     checkpoint_data = json.load(f)
             else:
                 with open(checkpoint_path, "rb") as f:
                     checkpoint_data = pickle.load(f)
-            
+
             return checkpoint_data.get("data")
         except Exception:
             return None
 
-    def list_checkpoints(self) -> List[CheckpointInfo]:
+    def list_checkpoints(self) -> list[CheckpointInfo]:
         """List all checkpoints in directory."""
         checkpoints = []
-        
+
         pattern = "*.json" if self.use_json else "*.pkl"
         for checkpoint_file in self.checkpoint_dir.glob(pattern):
             try:
                 # Extract session ID from filename
-                session_id_str = checkpoint_file.stem.replace(
-                    "checkpoint_", ""
-                )
+                session_id_str = checkpoint_file.stem.replace("checkpoint_", "")
                 session_id = UUID(session_id_str)
-                
+
                 # Get file stats
                 stat = checkpoint_file.stat()
-                
+
                 # Try to load checkpoint for additional info
                 data = self.load(session_id)
                 row_index = data.get("last_processed_row", 0) if data else 0
                 stage_index = data.get("current_stage_index", 0) if data else 0
-                
+
                 checkpoints.append(
                     CheckpointInfo(
                         session_id=session_id,
@@ -199,13 +197,13 @@ class LocalFileCheckpointStorage(CheckpointStorage):
             except Exception:
                 # Skip invalid checkpoint files
                 continue
-        
+
         return sorted(checkpoints, key=lambda x: x.timestamp, reverse=True)
 
     def delete(self, session_id: UUID) -> bool:
         """Delete checkpoint file."""
         checkpoint_path = self._get_checkpoint_path(session_id)
-        
+
         if checkpoint_path.exists():
             try:
                 checkpoint_path.unlink()
@@ -230,7 +228,7 @@ class LocalFileCheckpointStorage(CheckpointStorage):
         """
         deleted = 0
         cutoff = datetime.now().timestamp() - (days * 86400)
-        
+
         pattern = "*.json" if self.use_json else "*.pkl"
         for checkpoint_file in self.checkpoint_dir.glob(pattern):
             if checkpoint_file.stat().st_mtime < cutoff:
@@ -239,6 +237,5 @@ class LocalFileCheckpointStorage(CheckpointStorage):
                     deleted += 1
                 except Exception:
                     continue
-        
-        return deleted
 
+        return deleted

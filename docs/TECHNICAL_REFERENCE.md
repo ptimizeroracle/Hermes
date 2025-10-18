@@ -1,7 +1,7 @@
 # 🔬 Hermes - Complete Technical Reference
 
-**Version**: 1.0.0  
-**Last Updated**: October 18, 2025  
+**Version**: 1.0.0
+**Last Updated**: October 18, 2025
 **Purpose**: Comprehensive technical documentation of every component, class, design decision, and relationship in the Hermes LLM Dataset Engine.
 
 ---
@@ -39,7 +39,7 @@ graph TB
         Composer[PipelineComposer]
         Processor[DatasetProcessor]
     end
-    
+
     subgraph "Layer 3: Orchestration"
         Executor[PipelineExecutor]
         Strategy[ExecutionStrategy]
@@ -50,7 +50,7 @@ graph TB
         StateManager[StateManager]
         Observers[Observers]
     end
-    
+
     subgraph "Layer 2: Processing Stages"
         DataLoader[DataLoaderStage]
         PromptFormatter[PromptFormatterStage]
@@ -58,13 +58,13 @@ graph TB
         ResponseParser[ResponseParserStage]
         ResultWriter[ResultWriterStage]
     end
-    
+
     subgraph "Layer 1: Infrastructure Adapters"
         LLMClient[LLM Client]
         DataIO[Data I/O]
         Checkpoint[Checkpoint Storage]
     end
-    
+
     subgraph "Layer 0: Utilities"
         Retry[RetryHandler]
         RateLimit[RateLimiter]
@@ -72,7 +72,7 @@ graph TB
         Budget[BudgetController]
         Logging[Logging Utils]
     end
-    
+
     API --> Executor
     Builder --> API
     Executor --> Strategy
@@ -200,29 +200,29 @@ graph TB
 ```mermaid
 graph TD
     Hermes[Hermes Core]
-    
+
     Hermes --> LI[llama-index]
     Hermes --> Pandas
     Hermes --> Pydantic
     Hermes --> Structlog
     Hermes --> Click
     Hermes --> Rich
-    
+
     LI --> LIOAI[llama-index-llms-openai]
     LI --> LIAZ[llama-index-llms-azure]
     LI --> LIANT[llama-index-llms-anthropic]
     LI --> LIGR[llama-index-llms-groq]
-    
+
     Pandas --> Openpyxl[openpyxl]
     Pandas --> Polars
-    
+
     Hermes --> Tiktoken[tiktoken]
     Hermes --> Tenacity[tenacity]
     Hermes --> Tqdm[tqdm]
     Hermes --> Jinja2[jinja2]
     Hermes --> Prometheus[prometheus-client]
     Hermes --> Dotenv[python-dotenv]
-    
+
     Polars --> PyArrow[pyarrow]
 ```
 
@@ -661,17 +661,17 @@ limiter = RateLimiter(requests_per_minute=60, burst_size=180)
 ```python
 def test_rate_limiter():
     limiter = RateLimiter(requests_per_minute=60)
-    
+
     # Should acquire immediately
     assert limiter.acquire(timeout=0.1)
-    
+
     # Deplete tokens
     for _ in range(59):
         limiter.acquire()
-    
+
     # Should timeout (no tokens left)
     assert not limiter.acquire(timeout=0.1)
-    
+
     # Wait for refill
     time.sleep(2.0)
     assert limiter.acquire()  # Should have ~2 tokens refilled
@@ -937,15 +937,15 @@ def test_cost_tracker():
         input_cost_per_1k=Decimal("0.00005"),
         output_cost_per_1k=Decimal("0.00008"),
     )
-    
+
     # Add cost
     cost1 = tracker.add(tokens_in=1000, tokens_out=500, model="test", timestamp=0.0)
     assert cost1 == Decimal("0.00009")
-    
+
     # Check accumulation
     assert tracker.total_cost == Decimal("0.00009")
     assert tracker.total_tokens == 1500
-    
+
     # Add more
     cost2 = tracker.add(tokens_in=2000, tokens_out=1000, model="test", timestamp=1.0)
     assert tracker.total_cost == Decimal("0.00027")  # 0.00009 + 0.00018
@@ -1150,10 +1150,10 @@ budget_controller = BudgetController(max_budget=Decimal("10.0"))
 for row in data:
     # Make LLM call
     response = llm.invoke(prompt)
-    
+
     # Track cost
     cost = cost_tracker.add(tokens_in=..., tokens_out=...)
-    
+
     # Check budget
     budget_controller.check_budget(cost_tracker.total_cost)
 ```
@@ -1163,16 +1163,16 @@ for row in data:
 ```python
 def test_budget_warnings():
     controller = BudgetController(max_budget=Decimal("10.0"))
-    
+
     # Should not warn
     controller.check_budget(Decimal("5.0"))
-    
+
     # Should warn at 75%
     controller.check_budget(Decimal("7.5"))
-    
+
     # Should warn at 90%
     controller.check_budget(Decimal("9.0"))
-    
+
     # Should raise error
     with pytest.raises(BudgetExceededError):
         controller.check_budget(Decimal("10.1"))
@@ -1218,5 +1218,3 @@ def test_budget_warnings():
 - 3.8 `utils/input_preprocessing.py`
 - Part 4: Core Models & Specifications
 - Part 5+: Remaining layers...
-
-

@@ -6,7 +6,7 @@ without modifying core pipeline logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Iterator, List, Union
+from collections.abc import AsyncIterator, Iterator
 
 import pandas as pd
 
@@ -18,7 +18,7 @@ from hermes.stages.pipeline_stage import PipelineStage
 class ExecutionStrategy(ABC):
     """
     Abstract base for execution strategies.
-    
+
     Follows Strategy pattern: defines interface for executing pipeline stages
     in different modes (sync, async, streaming).
     """
@@ -26,9 +26,9 @@ class ExecutionStrategy(ABC):
     @abstractmethod
     def execute(
         self,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         context: ExecutionContext,
-    ) -> Union[ExecutionResult, Iterator[pd.DataFrame], AsyncIterator[pd.DataFrame]]:
+    ) -> ExecutionResult | Iterator[pd.DataFrame] | AsyncIterator[pd.DataFrame]:
         """
         Execute pipeline stages.
 
@@ -56,4 +56,3 @@ class ExecutionStrategy(ABC):
     def name(self) -> str:
         """Strategy name for logging."""
         pass
-

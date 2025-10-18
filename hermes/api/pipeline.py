@@ -4,9 +4,10 @@ Main Pipeline class - the Facade for the entire system.
 This is the primary entry point that users interact with.
 """
 
+from collections.abc import Iterator
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Iterator, List
+from typing import Any
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -22,15 +23,9 @@ from hermes.core.models import (
     ValidationResult,
 )
 from hermes.core.specifications import (
-    DatasetSpec,
-    LLMSpec,
-    OutputSpec,
     PipelineSpecifications,
-    ProcessingSpec,
-    PromptSpec,
 )
 from hermes.orchestration import (
-    AsyncExecutor,
     CostTrackingObserver,
     ExecutionContext,
     ExecutionObserver,
@@ -57,10 +52,10 @@ logger = get_logger(__name__)
 class Pipeline:
     """
     Main pipeline class - Facade for dataset processing.
-    
+
     Provides high-level interface for building and executing
     LLM-powered data transformations.
-    
+
     Example:
         pipeline = Pipeline(specifications)
         result = pipeline.execute()
@@ -84,7 +79,7 @@ class Pipeline:
         self.specifications = specifications
         self.dataframe = dataframe
         self.executor = executor or SyncExecutor()
-        self.observers: List[ExecutionObserver] = []
+        self.observers: list[ExecutionObserver] = []
         self.logger = get_logger(f"{__name__}.{self.id}")
 
     def add_observer(self, observer: ExecutionObserver) -> "Pipeline":
@@ -108,38 +103,45 @@ class Pipeline:
             ValidationResult with any errors/warnings
         """
         result = ValidationResult(is_valid=True)
-        
+
         # Validate dataset spec
         if not self.specifications.dataset.input_columns:
             result.add_error("No input columns specified")
-        
+
         if not self.specifications.dataset.output_columns:
             result.add_error("No output columns specified")
-        
+
         # Validate that input columns exist in dataframe (if dataframe is provided)
         if self.dataframe is not None and self.specifications.dataset.input_columns:
             df_cols = set(self.dataframe.columns)
             input_cols = set(self.specifications.dataset.input_columns)
             missing_cols = input_cols - df_cols
             if missing_cols:
-                result.add_error(f"Input columns not found in dataframe: {missing_cols}")
-        
+                result.add_error(
+                    f"Input columns not found in dataframe: {missing_cols}"
+                )
+
         # Validate prompt spec
         if not self.specifications.prompt.template:
             result.add_error("No prompt template specified")
         else:
             # Check that template variables match input columns
             import re
-            template_vars = set(re.findall(r'\{(\w+)\}', self.specifications.prompt.template))
+
+            template_vars = set(
+                re.findall(r"\{(\w+)\}", self.specifications.prompt.template)
+            )
             input_cols = set(self.specifications.dataset.input_columns)
             missing_vars = template_vars - input_cols
             if missing_vars:
-                result.add_error(f"Template variables not in input columns: {missing_vars}")
-        
+                result.add_error(
+                    f"Template variables not in input columns: {missing_vars}"
+                )
+
         # Validate LLM spec
         if not self.specifications.llm.model:
             result.add_error("No LLM model specified")
-        
+
         return result
 
     def estimate_cost(self) -> CostEstimate:
@@ -151,29 +153,27 @@ class Pipeline:
         """
         # Create stages
         loader = DataLoaderStage(self.dataframe)
-        
+
         # Load first few rows for estimation
         df = loader.process(self.specifications.dataset, ExecutionContext())
         sample_size = min(10, len(df))
         sample_df = df.head(sample_size)
-        
+
         # Create formatter and get prompts
-        formatter = PromptFormatterStage(
-            self.specifications.processing.batch_size
-        )
+        formatter = PromptFormatterStage(self.specifications.processing.batch_size)
         batches = formatter.process(
             (sample_df, self.specifications.prompt), ExecutionContext()
         )
-        
+
         # Create LLM client and estimate
         llm_client = create_llm_client(self.specifications.llm)
         llm_stage = LLMInvocationStage(llm_client)
-        
+
         sample_estimate = llm_stage.estimate_cost(batches)
-        
+
         # Scale to full dataset
         scale_factor = Decimal(len(df)) / Decimal(sample_size)
-        
+
         return CostEstimate(
             total_cost=sample_estimate.total_cost * scale_factor,
             total_tokens=int(sample_estimate.total_tokens * float(scale_factor)),
@@ -183,9 +183,7 @@ class Pipeline:
             confidence="sample-based",
         )
 
-    def execute(
-        self, resume_from: UUID | None = None
-    ) -> ExecutionResult:
+    def execute(self, resume_from: UUID | None = None) -> ExecutionResult:
         """
         Execute pipeline end-to-end.
 
@@ -199,7 +197,7 @@ class Pipeline:
         validation = self.validate()
         if not validation.is_valid:
             raise ValueError(f"Pipeline validation failed: {validation.errors}")
-        
+
         # Create or restore execution context
         state_manager = StateManager(
             storage=LocalFileCheckpointStorage(
@@ -207,21 +205,19 @@ class Pipeline:
             ),
             checkpoint_interval=self.specifications.processing.checkpoint_interval,
         )
-        
+
         if resume_from:
             # Resume from checkpoint
             context = state_manager.load_checkpoint(resume_from)
             if not context:
-                raise ValueError(
-                    f"No checkpoint found for session {resume_from}"
-                )
+                raise ValueError(f"No checkpoint found for session {resume_from}")
             self.logger.info(
                 f"Resuming from checkpoint at row {context.last_processed_row}"
             )
         else:
             # Create new context
             context = ExecutionContext(pipeline_id=self.id)
-        
+
         # Add default observers if none specified
         if not self.observers:
             self.observers = [
@@ -229,21 +225,21 @@ class Pipeline:
                 LoggingObserver(),
                 CostTrackingObserver(),
             ]
-        
+
         # Attach observers to context for progress notifications
         context.observers = self.observers
-        
+
         # Notify observers of start
         for observer in self.observers:
             observer.on_pipeline_start(self, context)
-        
+
         try:
             # Execute stages (preprocessing happens inside if enabled)
             result_df = self._execute_stages(context, state_manager)
-            
+
             # Mark completion
             context.end_time = datetime.now()
-            
+
             # Create execution result
             result = ExecutionResult(
                 data=result_df,
@@ -261,7 +257,7 @@ class Pipeline:
                 end_time=context.end_time,
                 success=True,
             )
-            
+
             # Optional: Auto-retry failed rows
             if self.specifications.processing.auto_retry_failed:
                 # Get preprocessed data from context (or loaded data if no preprocessing)
@@ -269,16 +265,16 @@ class Pipeline:
                 if retry_source_df is None:
                     retry_source_df = context.intermediate_data.get("loaded_data")
                 result = self._auto_retry_failed_rows(result, retry_source_df)
-            
+
             # Cleanup checkpoints on success
             state_manager.cleanup_checkpoints(context.session_id)
-            
+
             # Notify observers of completion
             for observer in self.observers:
                 observer.on_pipeline_complete(context, result)
-            
+
             return result
-            
+
         except Exception as e:
             # Save checkpoint on error
             state_manager.save_checkpoint(context)
@@ -286,7 +282,7 @@ class Pipeline:
                 f"Pipeline failed. Checkpoint saved. "
                 f"Resume with: pipeline.execute(resume_from=UUID('{context.session_id}'))"
             )
-            
+
             # Notify observers of error
             for observer in self.observers:
                 observer.on_pipeline_error(context, e)
@@ -297,28 +293,28 @@ class Pipeline:
     ) -> pd.DataFrame:
         """Execute all pipeline stages with checkpointing."""
         specs = self.specifications
-        
+
         # Create budget controller if max_budget specified
         budget_controller = None
         if specs.processing.max_budget:
             from hermes.utils import BudgetController
-            
+
             budget_controller = BudgetController(
                 max_budget=specs.processing.max_budget,
                 warn_at_75=True,
                 warn_at_90=True,
                 fail_on_exceed=True,
             )
-        
+
         # Stage 1: Load data
         loader = DataLoaderStage(self.dataframe)
         df = self._execute_stage(loader, specs.dataset, context)
         context.intermediate_data["loaded_data"] = df
-        
+
         # Optional: Preprocess loaded data
         if specs.processing.enable_preprocessing:
             from hermes.utils.input_preprocessing import preprocess_dataframe
-            
+
             self.logger.info("Preprocessing loaded data...")
             df, stats = preprocess_dataframe(
                 df,
@@ -332,12 +328,12 @@ class Pipeline:
             )
             # Store preprocessed data for retry
             context.intermediate_data["preprocessed_data"] = df
-        
+
         # Stage 2: Format prompts
         formatter = PromptFormatterStage(specs.processing.batch_size)
         batches = self._execute_stage(formatter, (df, specs.prompt), context)
         context.intermediate_data["prompt_batches"] = batches
-        
+
         # Stage 3: Invoke LLM
         llm_client = create_llm_client(specs.llm)
         rate_limiter = (
@@ -349,7 +345,7 @@ class Pipeline:
             max_attempts=specs.processing.max_retries,
             initial_delay=specs.processing.retry_delay,
         )
-        
+
         llm_stage = LLMInvocationStage(
             llm_client,
             concurrency=specs.processing.concurrency,
@@ -361,18 +357,18 @@ class Pipeline:
         # Stage 3: Execute LLM invocation
         response_batches = self._execute_stage(llm_stage, batches, context)
         context.intermediate_data["response_batches"] = response_batches
-        
+
         # Check budget after LLM invocation
         if budget_controller:
             budget_controller.check_budget(context.accumulated_cost)
-        
+
         # Save checkpoint after expensive LLM stage
         if state_manager.should_checkpoint(context.last_processed_row):
             state_manager.save_checkpoint(context)
-        
+
         # Stage 4: Parse responses (using configured parser)
         # Check if custom parser provided in metadata
-        custom_parser = specs.metadata.get('custom_parser') if specs.metadata else None
+        custom_parser = specs.metadata.get("custom_parser") if specs.metadata else None
         if custom_parser:
             parser = custom_parser
         else:
@@ -389,26 +385,20 @@ class Pipeline:
             (response_batches, specs.dataset.output_columns),
             context,
         )
-        
+
         # Stage 5: Write results (if output spec provided)
         if specs.output:
             writer = ResultWriterStage()
-            final_df = self._execute_stage(
-                writer, (df, results_df, specs.output), context
-            )
-            return final_df
-        else:
-            # Merge results with original
-            for col in results_df.columns:
-                df[col] = results_df[col]
-            return df
+            return self._execute_stage(writer, (df, results_df, specs.output), context)
+        # Merge results with original
+        for col in results_df.columns:
+            df[col] = results_df[col]
+        return df
 
-    async def execute_async(
-        self, resume_from: UUID | None = None
-    ) -> ExecutionResult:
+    async def execute_async(self, resume_from: UUID | None = None) -> ExecutionResult:
         """
         Execute pipeline asynchronously.
-        
+
         Uses AsyncExecutor for non-blocking execution. Ideal for integration
         with FastAPI, aiohttp, and other async frameworks.
 
@@ -417,7 +407,7 @@ class Pipeline:
 
         Returns:
             ExecutionResult with data and metrics
-            
+
         Raises:
             ValueError: If executor doesn't support async
         """
@@ -426,10 +416,11 @@ class Pipeline:
                 "Current executor doesn't support async. "
                 "Use AsyncExecutor: Pipeline(specs, executor=AsyncExecutor())"
             )
-        
+
         # For now, wrap synchronous execution in async
         # TODO: Implement fully async execution pipeline
         import asyncio
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.execute, resume_from)
 
@@ -438,7 +429,7 @@ class Pipeline:
     ) -> Iterator[ExecutionResult]:
         """
         Execute pipeline in streaming mode.
-        
+
         Processes data in chunks for memory-efficient handling of large datasets.
         Ideal for datasets that don't fit in memory.
 
@@ -447,32 +438,32 @@ class Pipeline:
 
         Yields:
             ExecutionResult objects for each processed chunk
-            
+
         Raises:
             ValueError: If executor doesn't support streaming
         """
         if not self.executor.supports_streaming():
             raise ValueError(
                 "Current executor doesn't support streaming. "
-                f"Use StreamingExecutor: Pipeline(specs, executor=StreamingExecutor())"
+                "Use StreamingExecutor: Pipeline(specs, executor=StreamingExecutor())"
             )
-        
+
         # Use executor's chunk_size if not provided
         if chunk_size is None and isinstance(self.executor, StreamingExecutor):
             chunk_size = self.executor.chunk_size
         elif chunk_size is None:
             chunk_size = 1000  # Default fallback
-        
+
         # For now, execute the full pipeline and split result into chunks
         # TODO: Implement proper streaming execution that processes chunks independently
         result = self.execute()
-        
+
         # Split the result data into chunks and yield as separate ExecutionResults
         total_rows = len(result.data)
         for start_idx in range(0, total_rows, chunk_size):
             end_idx = min(start_idx + chunk_size, total_rows)
             chunk_data = result.data.iloc[start_idx:end_idx].copy()
-            
+
             # Create a chunk result with proportional metrics
             chunk_rows = len(chunk_data)
             chunk_result = ExecutionResult(
@@ -483,14 +474,22 @@ class Pipeline:
                     failed_rows=0,
                     skipped_rows=0,
                     rows_per_second=result.metrics.rows_per_second,
-                    total_duration_seconds=result.metrics.total_duration_seconds * (chunk_rows / total_rows),
+                    total_duration_seconds=result.metrics.total_duration_seconds
+                    * (chunk_rows / total_rows),
                     stage_durations=result.metrics.stage_durations,
                 ),
                 costs=CostEstimate(
-                    total_cost=result.costs.total_cost * Decimal(chunk_rows / total_rows),
-                    total_tokens=int(result.costs.total_tokens * (chunk_rows / total_rows)),
-                    input_tokens=int(result.costs.input_tokens * (chunk_rows / total_rows)),
-                    output_tokens=int(result.costs.output_tokens * (chunk_rows / total_rows)),
+                    total_cost=result.costs.total_cost
+                    * Decimal(chunk_rows / total_rows),
+                    total_tokens=int(
+                        result.costs.total_tokens * (chunk_rows / total_rows)
+                    ),
+                    input_tokens=int(
+                        result.costs.input_tokens * (chunk_rows / total_rows)
+                    ),
+                    output_tokens=int(
+                        result.costs.output_tokens * (chunk_rows / total_rows)
+                    ),
                     rows=chunk_rows,
                     confidence=result.costs.confidence,
                 ),
@@ -508,51 +507,49 @@ class Pipeline:
         # Notify observers of stage start
         for observer in self.observers:
             observer.on_stage_start(stage, context)
-        
+
         try:
             # Execute stage
             result = stage.execute(input_data, context)
-            
+
             # Notify observers of completion
             for observer in self.observers:
                 observer.on_stage_complete(stage, context, result)
-            
+
             return result
-                
+
         except Exception as e:
             # Notify observers of error
             for observer in self.observers:
                 observer.on_stage_error(stage, context, e)
             raise
-    
+
     def _auto_retry_failed_rows(
-        self, 
-        result: ExecutionResult,
-        original_df: pd.DataFrame
+        self, result: ExecutionResult, original_df: pd.DataFrame
     ) -> ExecutionResult:
         """Auto-retry rows with null OR empty outputs."""
         if original_df is None:
             self.logger.warning("Cannot retry: original dataframe is None")
             return result
-        
+
         specs = self.specifications
         output_cols = specs.dataset.output_columns
-        
+
         # Check quality
         quality = result.validate_output_quality(output_cols)
-        
+
         # Count both nulls and empties as failures
         total_failed = quality.null_outputs + quality.empty_outputs
-        
+
         if total_failed == 0:
             self.logger.info("No failed rows to retry")
             return result
-        
+
         self.logger.info(
             f"Auto-retry enabled: {quality.null_outputs} null + "
             f"{quality.empty_outputs} empty = {total_failed} failed outputs"
         )
-        
+
         # Try up to max_retry_attempts
         for attempt in range(1, specs.processing.max_retry_attempts + 1):
             # Find null OR empty rows
@@ -561,50 +558,54 @@ class Pipeline:
             empty_mask = output_col.astype(str).str.strip() == ""
             failed_mask = null_mask | empty_mask
             failed_indices = result.data[failed_mask].index.tolist()
-            
+
             if not failed_indices:
                 break
-            
+
             self.logger.info(
                 f"Retry attempt {attempt}/{specs.processing.max_retry_attempts}: "
                 f"{len(failed_indices)} rows"
             )
-            
+
             # Extract failed rows from original (preprocessed) data
             retry_df = original_df.loc[failed_indices].copy()
-            
+
             # Store original indices for mapping back
             original_indices = retry_df.index.tolist()
             retry_df = retry_df.reset_index(drop=True)
-            
+
             # Create modified specs for retry (use dataframe, not file)
             from hermes.core.specifications import DataSourceType
-            
+
             retry_specs = self.specifications.model_copy(deep=True)
             retry_specs.dataset.source_type = DataSourceType.DATAFRAME
             retry_specs.dataset.source_path = None  # Force use of dataframe
             retry_specs.processing.enable_preprocessing = False  # Already preprocessed
-            retry_specs.processing.auto_retry_failed = False  # Prevent infinite retry loop
+            retry_specs.processing.auto_retry_failed = (
+                False  # Prevent infinite retry loop
+            )
             retry_specs.output = None  # Don't write to file during retry
-            
+
             # Create new pipeline for retry
             retry_pipeline = Pipeline(
                 retry_specs,
                 dataframe=retry_df,
             )
-            
+
             # Execute retry
             retry_result = retry_pipeline.execute()
-            
+
             # Merge retry results back (map reset indices to original indices)
             for col in output_cols:
                 for new_idx, original_idx in enumerate(original_indices):
-                    result.data.loc[original_idx, col] = retry_result.data.loc[new_idx, col]
-            
+                    result.data.loc[original_idx, col] = retry_result.data.loc[
+                        new_idx, col
+                    ]
+
             # Update costs
             result.costs.total_cost += retry_result.costs.total_cost
             result.costs.total_tokens += retry_result.costs.total_tokens
-            
+
             # Check quality again
             quality = result.validate_output_quality(output_cols)
             self.logger.info(
@@ -613,9 +614,8 @@ class Pipeline:
                 f"({quality.success_rate:.1f}%), "
                 f"{quality.null_outputs + quality.empty_outputs} still failed"
             )
-            
+
             # Continue to next attempt to maximize completeness
             # (Don't stop early - use all attempts to get closest to 100%)
-        
-        return result
 
+        return result

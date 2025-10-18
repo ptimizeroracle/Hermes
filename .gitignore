@@ -31,3 +31,7 @@ process_all_*.py
 
 # Checkpoints directory
 .checkpoints/
+.env
+test_*.csv
+test_*.yaml
+test_output.*

@@ -247,7 +247,7 @@ graph TB
     Stages[Layer 2: Stages]
     Adapters[Layer 1: Adapters]
     Utils[Layer 0: Utils]
-    
+
     User --> API
     API --> Orch
     Orch --> Stages
@@ -278,7 +278,7 @@ sequenceDiagram
     participant Executor
     participant Stages
     participant LLMClient
-    
+
     User->>Pipeline: execute()
     Pipeline->>Executor: execute(stages)
     Executor->>Stages: process(data)
@@ -600,7 +600,7 @@ classDiagram
         +__init__(param1, param2)
         +method1(arg) ReturnType
     }
-    
+
     ClassName1 --> Dependency1
     ClassName1 ..> Interface1: implements
 ```
@@ -612,7 +612,7 @@ sequenceDiagram
     participant Caller
     participant ClassName1
     participant Dependency1
-    
+
     Caller->>ClassName1: method1(arg)
     ClassName1->>Dependency1: call_something()
     Dependency1-->>ClassName1: result
@@ -782,4 +782,3 @@ How to extend or customize this component.
 ---
 
 **Ready to start? Let's begin with Layer 0! 🚀**
-

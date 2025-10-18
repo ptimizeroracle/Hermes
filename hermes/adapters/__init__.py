@@ -50,4 +50,3 @@ __all__ = [
     "CheckpointStorage",
     "LocalFileCheckpointStorage",
 ]
-

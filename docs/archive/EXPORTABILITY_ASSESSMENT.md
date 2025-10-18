@@ -135,7 +135,7 @@ from llm_dataset_engine import (
     Pipeline,
     PipelineBuilder,
     DatasetProcessor,
-    
+
     # Configuration
     DatasetSpec,
     PromptSpec,
@@ -171,7 +171,7 @@ uv add llm-dataset-engine --path /Users/atikpro/PycharmProjects/Hermes
 
 **Status**: ✅ **WORKS NOW**
 
-**Use Case**: 
+**Use Case**:
 - Local development
 - Testing before publishing
 - Private internal projects
@@ -277,7 +277,7 @@ def enrich_products(input_file: str, output_file: str):
     """Enrich product data using LLM."""
     pipeline = (
         PipelineBuilder.create()
-        .from_csv(input_file, 
+        .from_csv(input_file,
                   input_columns=["description"],
                   output_columns=["cleaned"])
         .with_prompt("Clean: {description}")
@@ -285,7 +285,7 @@ def enrich_products(input_file: str, output_file: str):
         .to_csv(output_file)
         .build()
     )
-    
+
     result = pipeline.execute()
     return result
 
@@ -354,21 +354,21 @@ from llm_dataset_engine import PipelineBuilder
 class DataPipeline:
     def __init__(self):
         self.llm_pipeline = None
-    
+
     def run(self):
         # Step 1: Extract
         df = self.extract_data()
-        
+
         # Step 2: Transform (traditional)
         df = self.clean_data(df)
         df = self.normalize_data(df)
-        
+
         # Step 3: Transform (LLM) ← Your SDK here!
         df = self.llm_enrich(df)
-        
+
         # Step 4: Load
         self.load_data(df)
-    
+
     def llm_enrich(self, df: pd.DataFrame) -> pd.DataFrame:
         """Use LLM Dataset Engine for enrichment."""
         pipeline = (
@@ -384,7 +384,7 @@ class DataPipeline:
             .with_max_budget(10.0)  # Cost control
             .build()
         )
-        
+
         result = pipeline.execute()
         return result.data  # Returns enriched DataFrame
 ```
@@ -413,7 +413,7 @@ def llm_enrichment_task(**context):
     """Airflow task using LLM Dataset Engine."""
     # Get data from previous task
     df = context['ti'].xcom_pull(task_ids='load_data')
-    
+
     # Process with LLM
     pipeline = (
         PipelineBuilder.create()
@@ -422,12 +422,12 @@ def llm_enrichment_task(**context):
         .with_max_budget(50.0)
         .build()
     )
-    
+
     result = pipeline.execute()
-    
+
     # Pass to next task
     context['ti'].xcom_push(key='enriched_data', value=result.data)
-    
+
     # Log metrics
     print(f"Cost: ${result.costs.total_cost}")
     print(f"Duration: {result.duration}s")
@@ -439,7 +439,7 @@ with DAG('data_pipeline', start_date=datetime(2025, 1, 1)) as dag:
         python_callable=llm_enrichment_task
     )
     save = PythonOperator(task_id='save_data', ...)
-    
+
     load >> enrich >> save
 ```
 
@@ -507,7 +507,7 @@ def cli():
 def process(config, input, output, provider, model, max_budget):
     """Process dataset using configuration."""
     specs = ConfigLoader.from_yaml(config)
-    
+
     # Override with CLI args
     if provider:
         specs.llm.provider = provider
@@ -515,15 +515,15 @@ def process(config, input, output, provider, model, max_budget):
         specs.llm.model = model
     if max_budget:
         specs.processing.max_budget = max_budget
-    
+
     # Override I/O paths
     specs.dataset.source_path = input
     specs.output.destination_path = output
-    
+
     # Execute
     pipeline = Pipeline(specs)
     result = pipeline.execute()
-    
+
     click.echo(f"✅ Processed {result.metrics.total_rows} rows")
     click.echo(f"💰 Cost: ${result.costs.total_cost}")
     click.echo(f"⏱️  Duration: {result.duration:.2f}s")
@@ -535,10 +535,10 @@ def estimate(config, input):
     """Estimate processing cost."""
     specs = ConfigLoader.from_yaml(config)
     specs.dataset.source_path = input
-    
+
     pipeline = Pipeline(specs)
     estimate = pipeline.estimate_cost()
-    
+
     click.echo(f"💰 Estimated cost: ${estimate.total_cost}")
     click.echo(f"🔢 Estimated tokens: {estimate.total_tokens:,}")
     click.echo(f"📊 Rows: {estimate.rows:,}")

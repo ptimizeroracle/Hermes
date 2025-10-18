@@ -4,8 +4,6 @@ DatasetProcessor - Simplified convenience wrapper.
 For users who just want to process data with minimal configuration.
 """
 
-from typing import Dict, Optional
-
 import pandas as pd
 
 from hermes.api.pipeline_builder import PipelineBuilder
@@ -14,10 +12,10 @@ from hermes.api.pipeline_builder import PipelineBuilder
 class DatasetProcessor:
     """
     Simplified API for single-prompt, single-column use cases.
-    
+
     This is a convenience wrapper around PipelineBuilder for users
     who don't need fine-grained control.
-    
+
     Example:
         processor = DatasetProcessor(
             data="data.csv",
@@ -35,7 +33,7 @@ class DatasetProcessor:
         input_column: str,
         output_column: str,
         prompt: str,
-        llm_config: Dict[str, any],
+        llm_config: dict[str, any],
     ):
         """
         Initialize dataset processor.
@@ -52,10 +50,10 @@ class DatasetProcessor:
         self.output_column = output_column
         self.prompt = prompt
         self.llm_config = llm_config
-        
+
         # Build pipeline internally
         builder = PipelineBuilder.create()
-        
+
         # Configure data source
         if isinstance(data, str):
             builder.from_csv(
@@ -71,17 +69,17 @@ class DatasetProcessor:
             )
         else:
             raise ValueError("data must be file path or DataFrame")
-        
+
         # Configure prompt
         builder.with_prompt(prompt)
-        
+
         # Configure LLM
         provider = llm_config.get("provider", "openai")
         model = llm_config.get("model", "gpt-4o-mini")
         api_key = llm_config.get("api_key")
         temperature = llm_config.get("temperature", 0.0)
         max_tokens = llm_config.get("max_tokens")
-        
+
         builder.with_llm(
             provider=provider,
             model=model,
@@ -89,7 +87,7 @@ class DatasetProcessor:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        
+
         # Build pipeline
         self.pipeline = builder.build()
 
@@ -118,7 +116,7 @@ class DatasetProcessor:
             df = pd.read_csv(self.data).head(n)
         else:
             df = self.data.head(n)
-        
+
         builder = (
             PipelineBuilder.create()
             .from_dataframe(
@@ -134,7 +132,7 @@ class DatasetProcessor:
                 temperature=self.llm_config.get("temperature", 0.0),
             )
         )
-        
+
         sample_pipeline = builder.build()
         result = sample_pipeline.execute()
         return result.data
@@ -148,4 +146,3 @@ class DatasetProcessor:
         """
         estimate = self.pipeline.estimate_cost()
         return float(estimate.total_cost)
-

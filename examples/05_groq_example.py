@@ -6,18 +6,21 @@ Groq offers very fast inference speeds.
 """
 
 import pandas as pd
+
 from hermes import PipelineBuilder
 
 # Create sample data
-data = pd.DataFrame({
-    "question": [
-        "What is the capital of France?",
-        "What is 2 + 2?",
-        "Who wrote Romeo and Juliet?",
-        "What is the largest planet in our solar system?",
-        "What year did World War II end?",
-    ]
-})
+data = pd.DataFrame(
+    {
+        "question": [
+            "What is the capital of France?",
+            "What is 2 + 2?",
+            "Who wrote Romeo and Juliet?",
+            "What is the largest planet in our solar system?",
+            "What year did World War II end?",
+        ]
+    }
+)
 
 # Build pipeline with Groq
 pipeline = (
@@ -56,10 +59,11 @@ for idx, row in result.data.iterrows():
     print(f"A: {row['answer']}\n")
 
 # Show metrics
-print(f"Metrics:")
+print("Metrics:")
 print(f"  Processed: {result.metrics.processed_rows} rows")
 print(f"  Duration: {result.metrics.total_duration_seconds:.2f}s")
 print(f"  Throughput: {result.metrics.rows_per_second:.2f} rows/sec")
 print(f"  Total cost: ${result.costs.total_cost:.4f}")
-print(f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}")
-
+print(
+    f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}"
+)

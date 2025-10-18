@@ -60,10 +60,10 @@ The engine is **usable NOW** as a transformation layer in existing pipelines, bu
 def my_data_pipeline():
     df = load_data()
     df = clean_data(df)
-    
+
     # ✅ Add LLM transformation
     from llm_dataset_engine import PipelineBuilder
-    
+
     llm_pipeline = (
         PipelineBuilder.create()
         .from_dataframe(df, input_columns=["text"], output_columns=["result"])
@@ -71,10 +71,10 @@ def my_data_pipeline():
         .with_llm(provider="groq", model="openai/gpt-oss-120b")
         .build()
     )
-    
+
     result = llm_pipeline.execute()
     enriched_df = result.data
-    
+
     save_data(enriched_df)
 ```
 
@@ -93,14 +93,14 @@ from llm_dataset_engine import PipelineBuilder
 
 def llm_task(**context):
     df = context['ti'].xcom_pull(task_ids='previous_task')
-    
+
     pipeline = (
         PipelineBuilder.create()
         .from_dataframe(df, ...)
         .with_llm(...)
         .build()
     )
-    
+
     result = pipeline.execute()
     context['ti'].xcom_push(key='result', value=result.data)
 
@@ -356,7 +356,7 @@ class Pipeline:
 class StreamProcessor:
     def __init__(self, prompt: str, llm_config: dict):
         pass
-    
+
     async def process_one(self, record: dict) -> dict:
         """Process single record."""
         pass
@@ -374,15 +374,15 @@ class Pipeline:
     def on_start(self, callback: Callable):
         """Register start callback."""
         pass
-    
+
     def on_batch_complete(self, callback: Callable):
         """Register batch completion callback."""
         pass
-    
+
     def on_error(self, callback: Callable):
         """Register error callback."""
         pass
-    
+
     def on_complete(self, callback: Callable):
         """Register completion callback."""
         pass
@@ -474,7 +474,7 @@ class LLMTransformOperator(BaseOperator):
         self.config_path = config_path
         self.input_xcom = input_xcom
         self.output_xcom = output_xcom
-    
+
     def execute(self, context):
         df = context['ti'].xcom_pull(key=self.input_xcom)
         # Process with LLM engine
@@ -487,7 +487,7 @@ from kedro.io import AbstractDataSet
 class LLMConfigDataset(AbstractDataSet):
     def _load(self):
         return ConfigLoader.from_yaml(self._filepath)
-    
+
     def _save(self, data):
         pass
 ```
@@ -509,14 +509,14 @@ class LLMConfigDataset(AbstractDataSet):
 # Create stage registry
 class StageRegistry:
     _stages = {}
-    
+
     @classmethod
     def register(cls, name: str):
         def decorator(stage_class):
             cls._stages[name] = stage_class
             return stage_class
         return decorator
-    
+
     @classmethod
     def get(cls, name: str):
         return cls._stages[name]
@@ -684,4 +684,3 @@ async def test_api():
 ---
 
 **Questions? Open an issue on GitHub!**
-

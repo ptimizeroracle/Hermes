@@ -6,7 +6,6 @@ Implements Builder pattern for intuitive pipeline creation.
 
 from decimal import Decimal
 from pathlib import Path
-from typing import List, Optional
 
 import pandas as pd
 
@@ -26,16 +25,15 @@ from hermes.orchestration import (
     AsyncExecutor,
     ExecutionStrategy,
     StreamingExecutor,
-    SyncExecutor,
 )
 
 
 class PipelineBuilder:
     """
     Fluent builder for constructing pipelines.
-    
+
     Provides an intuitive, chainable API for common use cases.
-    
+
     Example:
         pipeline = (
             PipelineBuilder.create()
@@ -48,14 +46,14 @@ class PipelineBuilder:
 
     def __init__(self):
         """Initialize builder with None values."""
-        self._dataset_spec: Optional[DatasetSpec] = None
-        self._prompt_spec: Optional[PromptSpec] = None
-        self._llm_spec: Optional[LLMSpec] = None
+        self._dataset_spec: DatasetSpec | None = None
+        self._prompt_spec: PromptSpec | None = None
+        self._llm_spec: LLMSpec | None = None
         self._processing_spec: ProcessingSpec = ProcessingSpec()
-        self._output_spec: Optional[OutputSpec] = None
-        self._dataframe: Optional[pd.DataFrame] = None
-        self._executor: Optional[ExecutionStrategy] = None
-        self._custom_parser: Optional[any] = None
+        self._output_spec: OutputSpec | None = None
+        self._dataframe: pd.DataFrame | None = None
+        self._executor: ExecutionStrategy | None = None
+        self._custom_parser: any | None = None
 
     @staticmethod
     def create() -> "PipelineBuilder":
@@ -71,15 +69,15 @@ class PipelineBuilder:
     def from_specifications(specs: PipelineSpecifications) -> "PipelineBuilder":
         """
         Create builder from existing specifications.
-        
+
         Useful for loading from YAML and modifying programmatically.
-        
+
         Args:
             specs: Complete pipeline specifications
-            
+
         Returns:
             PipelineBuilder pre-configured with specs
-            
+
         Example:
             specs = load_pipeline_config("config.yaml")
             builder = PipelineBuilder.from_specifications(specs)
@@ -96,8 +94,8 @@ class PipelineBuilder:
     def from_csv(
         self,
         path: str,
-        input_columns: List[str],
-        output_columns: List[str],
+        input_columns: list[str],
+        output_columns: list[str],
         delimiter: str = ",",
         encoding: str = "utf-8",
     ) -> "PipelineBuilder":
@@ -127,8 +125,8 @@ class PipelineBuilder:
     def from_excel(
         self,
         path: str,
-        input_columns: List[str],
-        output_columns: List[str],
+        input_columns: list[str],
+        output_columns: list[str],
         sheet_name: str | int = 0,
     ) -> "PipelineBuilder":
         """
@@ -155,8 +153,8 @@ class PipelineBuilder:
     def from_parquet(
         self,
         path: str,
-        input_columns: List[str],
-        output_columns: List[str],
+        input_columns: list[str],
+        output_columns: list[str],
     ) -> "PipelineBuilder":
         """
         Configure Parquet data source.
@@ -180,8 +178,8 @@ class PipelineBuilder:
     def from_dataframe(
         self,
         df: pd.DataFrame,
-        input_columns: List[str],
-        output_columns: List[str],
+        input_columns: list[str],
+        output_columns: list[str],
     ) -> "PipelineBuilder":
         """
         Configure DataFrame source.
@@ -205,7 +203,7 @@ class PipelineBuilder:
     def with_prompt(
         self,
         template: str,
-        system_message: Optional[str] = None,
+        system_message: str | None = None,
     ) -> "PipelineBuilder":
         """
         Configure prompt template.
@@ -227,9 +225,9 @@ class PipelineBuilder:
         self,
         provider: str,
         model: str,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         temperature: float = 0.0,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs: any,
     ) -> "PipelineBuilder":
         """
@@ -247,7 +245,7 @@ class PipelineBuilder:
             Self for chaining
         """
         provider_enum = LLMProvider(provider.lower())
-        
+
         self._llm_spec = LLMSpec(
             provider=provider_enum,
             model=model,
@@ -347,6 +345,7 @@ class PipelineBuilder:
             Self for chaining
         """
         from hermes.core.specifications import ErrorPolicy
+
         self._processing_spec.error_policy = ErrorPolicy(policy.lower())
         return self
 
@@ -366,7 +365,7 @@ class PipelineBuilder:
     def with_parser(self, parser: any) -> "PipelineBuilder":
         """
         Configure response parser.
-        
+
         This method allows setting a custom parser. The parser type
         determines the response_format in the prompt spec.
 
@@ -378,30 +377,34 @@ class PipelineBuilder:
         """
         # Store the parser for later use in the pipeline
         # We'll configure response_format based on parser type
-        if hasattr(parser, '__class__'):
+        if hasattr(parser, "__class__"):
             parser_name = parser.__class__.__name__
-            if 'JSON' in parser_name:
+            if "JSON" in parser_name:
                 if not self._prompt_spec:
-                    raise ValueError("with_prompt() must be called before with_parser()")
+                    raise ValueError(
+                        "with_prompt() must be called before with_parser()"
+                    )
                 # Update the existing prompt spec's response_format
-                self._prompt_spec.response_format = 'json'
-            elif 'Regex' in parser_name:
+                self._prompt_spec.response_format = "json"
+            elif "Regex" in parser_name:
                 if not self._prompt_spec:
-                    raise ValueError("with_prompt() must be called before with_parser()")
-                self._prompt_spec.response_format = 'regex'
-                if hasattr(parser, 'patterns'):
+                    raise ValueError(
+                        "with_prompt() must be called before with_parser()"
+                    )
+                self._prompt_spec.response_format = "regex"
+                if hasattr(parser, "patterns"):
                     self._prompt_spec.regex_patterns = parser.patterns
-        
+
         # Store the parser instance in metadata for the pipeline to use
-        if not hasattr(self, '_custom_parser'):
+        if not hasattr(self, "_custom_parser"):
             self._custom_parser = parser
-        
+
         return self
 
     def to_csv(self, path: str) -> "PipelineBuilder":
         """
         Configure CSV output destination.
-        
+
         Alias for with_output(path, format='csv').
 
         Args:
@@ -410,7 +413,7 @@ class PipelineBuilder:
         Returns:
             Self for chaining
         """
-        return self.with_output(path, format='csv')
+        return self.with_output(path, format="csv")
 
     def with_output(
         self,
@@ -434,13 +437,13 @@ class PipelineBuilder:
             "excel": DataSourceType.EXCEL,
             "parquet": DataSourceType.PARQUET,
         }
-        
+
         merge_map = {
             "replace": MergeStrategy.REPLACE,
             "append": MergeStrategy.APPEND,
             "update": MergeStrategy.UPDATE,
         }
-        
+
         self._output_spec = OutputSpec(
             destination_type=format_map[format.lower()],
             destination_path=Path(path),
@@ -461,12 +464,10 @@ class PipelineBuilder:
         self._executor = executor
         return self
 
-    def with_async_execution(
-        self, max_concurrency: int = 10
-    ) -> "PipelineBuilder":
+    def with_async_execution(self, max_concurrency: int = 10) -> "PipelineBuilder":
         """
         Use async execution strategy.
-        
+
         Enables async/await for non-blocking execution.
         Ideal for FastAPI, aiohttp, and async frameworks.
 
@@ -482,7 +483,7 @@ class PipelineBuilder:
     def with_streaming(self, chunk_size: int = 1000) -> "PipelineBuilder":
         """
         Use streaming execution strategy.
-        
+
         Processes data in chunks for memory-efficient handling.
         Ideal for large datasets (100K+ rows).
 
@@ -512,12 +513,12 @@ class PipelineBuilder:
             raise ValueError("Prompt specification required")
         if not self._llm_spec:
             raise ValueError("LLM specification required")
-        
+
         # Prepare metadata with custom parser if provided
         metadata = {}
         if self._custom_parser is not None:
-            metadata['custom_parser'] = self._custom_parser
-        
+            metadata["custom_parser"] = self._custom_parser
+
         # Create specifications bundle
         specifications = PipelineSpecifications(
             dataset=self._dataset_spec,
@@ -527,11 +528,10 @@ class PipelineBuilder:
             output=self._output_spec,
             metadata=metadata,
         )
-        
+
         # Create and return pipeline
         return Pipeline(
             specifications,
             dataframe=self._dataframe,
             executor=self._executor,
         )
-

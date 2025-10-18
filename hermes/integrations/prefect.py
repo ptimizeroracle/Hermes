@@ -5,22 +5,23 @@ Provides llm_transform_task for easy integration into Prefect flows.
 """
 
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
 try:
     from prefect import task
-    
+
     PREFECT_AVAILABLE = True
 except ImportError:
     PREFECT_AVAILABLE = False
-    
+
     # Placeholder decorator
     def task(*args, **kwargs):
         def decorator(func):
             return func
+
         return decorator
+
 
 from hermes.api import Pipeline
 from hermes.config import ConfigLoader
@@ -29,22 +30,22 @@ from hermes.config import ConfigLoader
 @task(name="llm_transform")
 def llm_transform_task(
     config_path: str,
-    input_data: Optional[pd.DataFrame] = None,
-    input_file: Optional[str] = None,
-    output_file: Optional[str] = None,
-    max_budget: Optional[float] = None,
-    provider_override: Optional[str] = None,
-    model_override: Optional[str] = None,
+    input_data: pd.DataFrame | None = None,
+    input_file: str | None = None,
+    output_file: str | None = None,
+    max_budget: float | None = None,
+    provider_override: str | None = None,
+    model_override: str | None = None,
 ) -> pd.DataFrame:
     """
     Prefect task for LLM dataset transformations.
-    
+
     Integrates LLM Dataset Engine into Prefect flows.
-    
+
     Example:
         from prefect import flow
         from hermes.integrations.prefect import llm_transform_task
-        
+
         @flow
         def data_pipeline():
             raw_data = load_data()
@@ -66,7 +67,7 @@ def llm_transform_task(
 
     Returns:
         Result DataFrame
-        
+
     Raises:
         ValueError: If neither input_data nor input_file provided
     """
@@ -75,22 +76,24 @@ def llm_transform_task(
             "Prefect is required to use llm_transform_task. "
             "Install with: pip install prefect"
         )
-    
+
     # Load configuration
     specs = ConfigLoader.from_yaml(config_path)
-    
+
     # Override settings
     if max_budget is not None:
         from decimal import Decimal
+
         specs.processing.max_budget = Decimal(str(max_budget))
-    
+
     if provider_override:
         from hermes.core.specifications import LLMProvider
+
         specs.llm.provider = LLMProvider(provider_override)
-    
+
     if model_override:
         specs.llm.model = model_override
-    
+
     # Get input
     if input_data is not None:
         pipeline = Pipeline(specs, dataframe=input_data)
@@ -99,7 +102,7 @@ def llm_transform_task(
         pipeline = Pipeline(specs)
     else:
         raise ValueError("Either input_data or input_file required")
-    
+
     # Set output if specified
     if output_file:
         from hermes.core.specifications import (
@@ -107,23 +110,22 @@ def llm_transform_task(
             MergeStrategy,
             OutputSpec,
         )
-        
+
         specs.output = OutputSpec(
             destination_type=DataSourceType.CSV,
             destination_path=Path(output_file),
             merge_strategy=MergeStrategy.REPLACE,
         )
-    
+
     # Execute
     result = pipeline.execute()
-    
+
     # Log metrics (Prefect will capture)
     print(f"✅ Processed {result.metrics.total_rows} rows")
     print(f"💰 Cost: ${result.costs.total_cost}")
     print(f"⏱️  Duration: {result.duration:.2f}s")
-    
+
     return result.data
 
 
 __all__ = ["llm_transform_task"]
-

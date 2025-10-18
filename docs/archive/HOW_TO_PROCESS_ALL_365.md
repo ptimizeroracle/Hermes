@@ -37,7 +37,7 @@ Validating pipeline...
 ✅ Validation passed
 
 Estimating cost...
-       Cost Estimate       
+       Cost Estimate
 ┏━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
 ┃ Metric        ┃ Value    ┃
 ┡━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
@@ -50,7 +50,7 @@ Processing dataset...
 [Pipeline execution logs with progress]
 
 ✅ Processing complete!
-     Execution Results      
+     Execution Results
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Metric       ┃ Value     ┃
 ┡━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
@@ -63,8 +63,8 @@ Processing dataset...
 Output written to: tmp/bacon_all_365_cleaned.xlsx
 ```
 
-**Time**: ~2-3 minutes  
-**Cost**: ~$0.50  
+**Time**: ~2-3 minutes
+**Cost**: ~$0.50
 **Output**: `tmp/bacon_all_365_cleaned.xlsx`
 
 ---
@@ -98,7 +98,7 @@ print(f"✅ Loaded {len(df)} rows from tmp/ground_truth.xlsx\n")
 cleaning_prompt = """Rewrite this bacon description to be clean and professional.
 
 Rules:
-1. Include: preparation (raw/cooked/frozen), special features (sugar-cured, gluten-free, etc), 
+1. Include: preparation (raw/cooked/frozen), special features (sugar-cured, gluten-free, etc),
    smoke type (applewood-smoked, etc), bacon type (sliced/slab/bits), count if present
 2. Remove: brand names (OLD SMOKEHOUSE, etc), codes (BCN, PL, CC, etc), pack sizes
 3. Format: [prep], [features], [smoke] [type], [count], layflat if L/O present
@@ -108,7 +108,7 @@ Input: {Item_Description_Long}
 
 Output only the cleaned description:"""
 
-system_message = """You are a professional product description editor. 
+system_message = """You are a professional product description editor.
 Clean fragmented text into clear, consistent descriptions.
 Be factual, concise, and remove all marketing fluff and codes.
 Follow the rules exactly."""
@@ -210,4 +210,3 @@ python process_all_bacon.py
 **For PRODUCTION**: Fix the CLI parser and use Method 1
 
 Want me to create the `process_all_bacon.py` script for you and run it?
-

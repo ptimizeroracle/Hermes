@@ -6,8 +6,7 @@ Implements Decorator pattern to wrap any stage and run it multiple times.
 
 from abc import ABC, abstractmethod
 from collections import Counter
-from decimal import Decimal
-from typing import Any, Generic, List, TypeVar
+from typing import Any, Generic, TypeVar
 
 from hermes.core.models import CostEstimate, ValidationResult
 from hermes.stages.pipeline_stage import PipelineStage, TInput, TOutput
@@ -18,12 +17,12 @@ T = TypeVar("T")
 class AggregationStrategy(ABC, Generic[T]):
     """
     Abstract base for aggregation strategies.
-    
+
     Follows Strategy pattern for different ways to aggregate results.
     """
 
     @abstractmethod
-    def aggregate(self, results: List[T]) -> T:
+    def aggregate(self, results: list[T]) -> T:
         """
         Aggregate multiple results into one.
 
@@ -39,22 +38,20 @@ class AggregationStrategy(ABC, Generic[T]):
 class ConsensusStrategy(AggregationStrategy[str]):
     """Returns most common result (consensus voting)."""
 
-    def aggregate(self, results: List[str]) -> str:
+    def aggregate(self, results: list[str]) -> str:
         """Return most frequent result."""
         if not results:
             return ""
-        
+
         # Count occurrences
         counter = Counter(results)
-        most_common = counter.most_common(1)[0][0]
-        
-        return most_common
+        return counter.most_common(1)[0][0]
 
 
 class FirstSuccessStrategy(AggregationStrategy[T]):
     """Returns first successful (non-None) result."""
 
-    def aggregate(self, results: List[T]) -> T:
+    def aggregate(self, results: list[T]) -> T:
         """Return first non-None result."""
         for result in results:
             if result is not None:
@@ -65,7 +62,7 @@ class FirstSuccessStrategy(AggregationStrategy[T]):
 class AllStrategy(AggregationStrategy[T]):
     """Returns all results as list (no aggregation)."""
 
-    def aggregate(self, results: List[T]) -> List[T]:
+    def aggregate(self, results: list[T]) -> list[T]:
         """Return all results."""
         return results
 
@@ -73,7 +70,7 @@ class AllStrategy(AggregationStrategy[T]):
 class AverageStrategy(AggregationStrategy[float]):
     """Returns average of numeric results."""
 
-    def aggregate(self, results: List[float]) -> float:
+    def aggregate(self, results: list[float]) -> float:
         """Return average."""
         if not results:
             return 0.0
@@ -83,12 +80,12 @@ class AverageStrategy(AggregationStrategy[float]):
 class MultiRunStage(PipelineStage[TInput, TOutput]):
     """
     Decorator stage that runs wrapped stage multiple times.
-    
+
     Use cases:
     - Run LLM 3 times, take consensus (reduce hallucinations)
     - Retry until success
     - Collect multiple responses for analysis
-    
+
     Example:
         multi_llm = MultiRunStage(
             wrapped=LLMInvocationStage(...),
@@ -114,42 +111,36 @@ class MultiRunStage(PipelineStage[TInput, TOutput]):
         super().__init__(f"MultiRun({wrapped_stage.name})")
         self.wrapped_stage = wrapped_stage
         self.num_runs = num_runs
-        self.aggregation_strategy = (
-            aggregation_strategy or ConsensusStrategy()
-        )
+        self.aggregation_strategy = aggregation_strategy or ConsensusStrategy()
 
     def process(self, input_data: TInput, context: Any) -> TOutput:
         """Execute wrapped stage multiple times and aggregate."""
-        results: List[TOutput] = []
-        
-        self.logger.info(
-            f"Running {self.wrapped_stage.name} {self.num_runs} times"
-        )
-        
+        results: list[TOutput] = []
+
+        self.logger.info(f"Running {self.wrapped_stage.name} {self.num_runs} times")
+
         for run_num in range(self.num_runs):
             try:
                 result = self.wrapped_stage.process(input_data, context)
                 results.append(result)
             except Exception as e:
-                self.logger.error(
-                    f"Run {run_num + 1}/{self.num_runs} failed: {e}"
-                )
+                self.logger.error(f"Run {run_num + 1}/{self.num_runs} failed: {e}")
                 # Continue with other runs
                 continue
-        
+
         if not results:
             raise RuntimeError(
                 f"All {self.num_runs} runs failed for {self.wrapped_stage.name}"
             )
-        
+
         # Aggregate results
         aggregated = self.aggregation_strategy.aggregate(results)
-        
+
         self.logger.info(
             f"Aggregated {len(results)} results using "
             f"{self.aggregation_strategy.__class__.__name__}"
         )
-        
+
         return aggregated
 
     def validate_input(self, input_data: TInput) -> ValidationResult:
@@ -159,7 +150,7 @@ class MultiRunStage(PipelineStage[TInput, TOutput]):
     def estimate_cost(self, input_data: TInput) -> CostEstimate:
         """Estimate cost as num_runs × wrapped stage cost."""
         single_run_cost = self.wrapped_stage.estimate_cost(input_data)
-        
+
         return CostEstimate(
             total_cost=single_run_cost.total_cost * self.num_runs,
             total_tokens=single_run_cost.total_tokens * self.num_runs,
@@ -168,4 +159,3 @@ class MultiRunStage(PipelineStage[TInput, TOutput]):
             rows=single_run_cost.rows,
             confidence=f"{single_run_cost.confidence} × {self.num_runs} runs",
         )
-

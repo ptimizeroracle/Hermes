@@ -177,7 +177,7 @@ Success rate: 99%+
    ```python
    import pandas as pd
    df = pd.read_excel("tmp/bacon_all_365_cleaned.xlsx")
-   
+
    # Compare first 5
    for i in range(5):
        print(f"\nInput:  {df.iloc[i]['Item_Description_Long']}")
@@ -238,4 +238,3 @@ python process_all_365_bacon.py
 **Your cleaned dataset will be in**: `tmp/bacon_all_365_cleaned.xlsx`
 
 Good luck! 🥓
-

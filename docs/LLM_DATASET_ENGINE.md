@@ -1,7 +1,7 @@
 # **LLM Dataset Processing SDK - Architecture & Design Document**
 
-**Version:** 1.0  
-**Date:** 2025  
+**Version:** 1.0
+**Date:** 2025
 **Status:** Golden Design Specification
 
 ---
@@ -338,7 +338,7 @@ A layered SDK that separates:
 - **Layer 1**: Infrastructure Adapters (external systems)
 - **Layer 0**: Core Utilities (cross-cutting)
 
-**Flow Direction**: Top-down (API → Orchestration → Stages → Adapters)  
+**Flow Direction**: Top-down (API → Orchestration → Stages → Adapters)
 **Dependency Direction**: Always downward (upper layers depend on lower layers)
 
 ### **5.2 System Architecture Diagram**
@@ -491,7 +491,7 @@ OUTPUT DATA (CSV/Excel/DataFrame)
 
 + validate() → ValidationResult
     Purpose: Validate pipeline integrity before execution
-    Checks: 
+    Checks:
         - Stage type compatibility
         - Configuration completeness
         - Input data availability
@@ -537,32 +537,32 @@ OUTPUT DATA (CSV/Excel/DataFrame)
 ```
 + create() → PipelineBuilder (static)
     Purpose: Start builder chain
-    
+
 + from_csv(path: str, input_columns: List[str], output_columns: List[str]) → PipelineBuilder
     Purpose: Configure CSV data source
     Creates: DatasetSpec + DataLoaderStage internally
-    
+
 + from_dataframe(df: DataFrame, input_columns: List[str], output_columns: List[str]) → PipelineBuilder
     Purpose: Configure DataFrame source
-    
+
 + with_prompt(template: Union[str, PromptTemplate]) → PipelineBuilder
     Purpose: Configure prompt template
     Creates: PromptSpec + PromptFormatterStage
-    
+
 + with_llm(provider: str, model: str, **kwargs) → PipelineBuilder
     Purpose: Configure LLM provider
     Creates: LLMSpec + LLMInvocationStage
-    
+
 + with_parser(parser: Callable) → PipelineBuilder
     Purpose: Configure response parser
     Creates: ResponseParserStage
-    
+
 + with_batch_size(size: int) → PipelineBuilder
 + with_concurrency(threads: int) → PipelineBuilder
 + with_checkpoint_interval(rows: int) → PipelineBuilder
     Purpose: Configure processing parameters
     Updates: ProcessingSpec
-    
+
 + build() → Pipeline
     Purpose: Construct final Pipeline
     Validation: Ensure all required specs provided
@@ -606,11 +606,11 @@ pipeline = (
 + __init__(data, input_column, output_column, prompt, llm_config)
     Purpose: Initialize with minimal parameters
     Process: Internally builds Pipeline via PipelineBuilder
-    
+
 + run() → DataFrame
     Purpose: Execute processing and return results
     Shortcut for: self.pipeline.execute().data
-    
+
 + run_sample(n: int) → DataFrame
     Purpose: Test on first N rows
     Use case: Validate prompt before full run
@@ -655,7 +655,7 @@ pipeline = (
         4. Finalize results
         5. Clean up checkpoints
         6. Return ExecutionResult
-    
+
     Error Handling:
         - Transient errors: Retry with backoff
         - Row-level errors: Skip row, log, continue
@@ -663,14 +663,14 @@ pipeline = (
 
 + pause()
     Purpose: Graceful pause (finish current batch, checkpoint)
-    
+
 + resume(execution_id: UUID) → ExecutionResult
     Purpose: Resume from saved checkpoint
     Process:
         1. Load checkpoint from state_manager
         2. Restore execution context
         3. Continue from last completed stage + row
-    
+
 + cancel()
     Purpose: Immediate stop, save checkpoint
 ```
@@ -719,20 +719,20 @@ IDLE → INITIALIZING → EXECUTING → [PAUSED ↔ EXECUTING] → COMPLETED
 ```
 + update_stage(stage_index: int)
     Purpose: Track current stage
-    
+
 + update_row(row_index: int)
     Purpose: Track progress
-    
+
 + add_cost(cost: Decimal, tokens: int)
     Purpose: Accumulate costs
-    
+
 + get_progress() → float
     Purpose: Calculate completion percentage
     Formula: (last_processed_row / total_rows) * 100
-    
+
 + to_checkpoint() → Dict
     Purpose: Serialize for persistence
-    
+
 + from_checkpoint(data: Dict) → ExecutionContext (static)
     Purpose: Deserialize from checkpoint
 ```
@@ -765,7 +765,7 @@ IDLE → INITIALIZING → EXECUTING → [PAUSED ↔ EXECUTING] → COMPLETED
         4. Update checkpoint index
     File format: JSON or pickle
     Location: {checkpoint_dir}/{session_id}_checkpoint_{row}.json
-    
+
 + load_checkpoint(session_id: UUID) → Optional[ExecutionContext]
     Purpose: Restore from latest checkpoint
     Process:
@@ -773,13 +773,13 @@ IDLE → INITIALIZING → EXECUTING → [PAUSED ↔ EXECUTING] → COMPLETED
         2. Read from storage
         3. Deserialize to ExecutionContext
         4. Validate integrity (version, completeness)
-    
+
 + can_resume(session_id: UUID) → bool
     Purpose: Check if valid checkpoint exists
-    
+
 + cleanup_checkpoints(session_id: UUID)
     Purpose: Remove checkpoints after successful completion
-    
+
 + list_checkpoints() → List[CheckpointInfo]
     Purpose: View available checkpoints for debugging
 ```
@@ -816,23 +816,23 @@ IDLE → INITIALIZING → EXECUTING → [PAUSED ↔ EXECUTING] → COMPLETED
 + on_pipeline_start(pipeline: Pipeline, context: ExecutionContext)
     Called: Before first stage execution
     Use cases: Initialize progress bar, start timer
-    
+
 + on_stage_start(stage: PipelineStage, context: ExecutionContext)
     Called: Before each stage
     Use cases: Log stage name, update status
-    
+
 + on_stage_complete(stage: PipelineStage, context: ExecutionContext, result: Any)
     Called: After successful stage completion
     Use cases: Log metrics, update progress
-    
+
 + on_stage_error(stage: PipelineStage, context: ExecutionContext, error: Exception)
     Called: On stage failure
     Use cases: Log error, send alerts
-    
+
 + on_pipeline_complete(context: ExecutionContext, result: ExecutionResult)
     Called: After all stages complete
     Use cases: Close progress bar, print summary
-    
+
 + on_pipeline_error(context: ExecutionContext, error: Exception)
     Called: On fatal pipeline failure
     Use cases: Log error, cleanup resources
@@ -883,7 +883,7 @@ TOutput: Output data type
 + process(input: TInput, context: ExecutionContext) → TOutput (abstract)
     Purpose: Core transformation logic
     Contract: Must be idempotent (same input → same output)
-    
+
 + validate_input(input: TInput) → ValidationResult (abstract)
     Purpose: Validate input before processing
     Returns: ValidationResult(is_valid, errors, warnings)
@@ -900,15 +900,15 @@ TOutput: Output data type
            ELSE: handle error per policy
         4. after_process(result) [hook]
         5. Return result
-    
+
 + before_process(context: ExecutionContext)
     Purpose: Pre-processing hook (default: no-op)
     Use cases: Initialize resources, log start
-    
+
 + after_process(result: TOutput, context: ExecutionContext)
     Purpose: Post-processing hook (default: no-op)
     Use cases: Cleanup, log completion
-    
+
 + on_error(error: Exception, context: ExecutionContext) → ErrorDecision
     Purpose: Handle errors per ErrorPolicy
     Returns: ErrorDecision(action=RETRY|SKIP|FAIL)
@@ -1004,7 +1004,7 @@ process(df: DataFrame, context: ExecutionContext) → List[PromptBatch]:
             c. Attach metadata (row_id, row_index)
         2. Group prompts into batches of size batch_size
         3. Return List[PromptBatch]
-    
+
     PromptBatch structure:
         {
             "prompts": List[str],
@@ -1058,7 +1058,7 @@ process(prompt_batches: List[PromptBatch], context: ExecutionContext) → List[R
             c. Collect responses
             d. Create ResponseBatch
         2. Return List[ResponseBatch]
-    
+
     ResponseBatch structure:
         {
             "responses": List[str],
@@ -1074,7 +1074,7 @@ process(prompt_batches: List[PromptBatch], context: ExecutionContext) → List[R
 invoke_with_retry(prompt: str) → str:
     max_retries = 3
     backoff = exponential (1s, 2s, 4s)
-    
+
     FOR attempt IN 1..max_retries:
         TRY:
             response = llm_client.invoke(prompt)
@@ -1087,7 +1087,7 @@ invoke_with_retry(prompt: str) → str:
             CONTINUE
         CATCH AuthError:
             RAISE (fatal, no retry)
-    
+
     RAISE MaxRetriesExceeded
 ```
 
@@ -1308,15 +1308,15 @@ multi_llm = MultiRunStage(
         - max_tokens: int (optional)
         - top_p: float (optional)
     Returns: LLMResponse(text, tokens_in, tokens_out, model, cost)
-    
+
 + batch_invoke(prompts: List[str], **kwargs) → List[LLMResponse]
     Purpose: Batch execution (provider-optimized if supported)
     Default: Loop over invoke()
-    
+
 + estimate_tokens(text: str) → int
     Purpose: Estimate token count
     Implementation: Provider-specific tokenizer
-    
+
 + get_pricing() → PricingInfo
     Purpose: Get current pricing per token
     Returns: PricingInfo(input_rate, output_rate, currency)
@@ -1395,10 +1395,10 @@ invoke() implementation:
 ```
 + read() → DataFrame (abstract)
     Purpose: Read entire dataset
-    
+
 + read_chunked(chunk_size: int) → Iterator[DataFrame] (abstract)
     Purpose: Read data in chunks (for large files)
-    
+
 + validate_schema(expected: Schema) → bool
     Purpose: Check if data matches expected schema
 ```
@@ -1458,10 +1458,10 @@ read():
 ```
 + write(data: DataFrame, path: Path) → WriteConfirmation (abstract)
     Purpose: Write complete dataset
-    
+
 + append(data: DataFrame, path: Path) → WriteConfirmation
     Purpose: Append to existing file
-    
+
 + atomic_write(data: DataFrame, path: Path) → WriteConfirmation
     Purpose: Write with rollback on failure
 ```
@@ -1639,7 +1639,7 @@ load(session_id):
 ```
 + record_request(model: str, tokens_in: int, tokens_out: int, cost: Decimal)
     Purpose: Record single request cost
-    Side effects: 
+    Side effects:
         - Update totals
         - Check budget
         - Emit alerts if threshold crossed
@@ -1654,7 +1654,7 @@ load(session_id):
 + check_budget() → BudgetStatus
     Purpose: Check if within budget
     Returns: BudgetStatus(within_budget, percentage_used, amount_remaining)
-    
+
 + get_cost_breakdown() → Dict[str, Any]
     Purpose: Detailed cost report
     Returns:
@@ -1841,7 +1841,7 @@ Observers
   ├─▶ ProgressBarObserver: Initialize progress bar (total=1000 rows)
   ├─▶ LoggingObserver: Log "Pipeline started at 10:00:00"
   └─▶ CostTrackingObserver: Reset cost counter
-  
+
   FOR EACH stage:
   │
   │ notify: on_stage_start(stage)
@@ -1850,7 +1850,7 @@ Observers
   ├─▶ ProgressBarObserver: Update status "Stage 1: DataLoader"
   ├─▶ LoggingObserver: Log "Stage 1 started"
   └─▶ CostTrackingObserver: No action
-  
+
   │ stage.execute()
   │
   │ notify: on_stage_complete(stage, result)
@@ -1859,7 +1859,7 @@ Observers
   ├─▶ ProgressBarObserver: Update progress bar
   ├─▶ LoggingObserver: Log "Stage 1 complete, processed 1000 rows"
   └─▶ CostTrackingObserver: Track stage cost
-  
+
   │
   │ notify: on_pipeline_complete(result)
   ▼
@@ -2195,18 +2195,18 @@ import pandas as pd
 
 class CustomValidationStage(PipelineStage[pd.DataFrame, pd.DataFrame]):
     """Custom stage: Validate data quality before processing"""
-    
+
     def process(self, input: pd.DataFrame, context) -> pd.DataFrame:
         # Custom logic: Remove rows with < 10 characters
         filtered = input[input['description'].str.len() >= 10]
         context.update_stat("rows_filtered", len(input) - len(filtered))
         return filtered
-    
+
     def validate_input(self, input: pd.DataFrame) -> ValidationResult:
         if "description" not in input.columns:
             return ValidationResult(False, errors=["Missing 'description' column"])
         return ValidationResult(True)
-    
+
     def estimate_cost(self, input: pd.DataFrame) -> Cost:
         return Cost(0, "USD")  # No LLM cost
 
@@ -2227,18 +2227,18 @@ from llm_sdk import LLMClient, LLMResponse
 
 class HuggingFaceClient(LLMClient):
     """Custom provider: HuggingFace Inference API"""
-    
+
     def __init__(self, model_id: str, api_key: str):
         self.model_id = model_id
         self.api_key = api_key
         self.client = InferenceClient(model=model_id, token=api_key)
-    
+
     def invoke(self, prompt: str, **kwargs) -> LLMResponse:
         response = self.client.text_generation(prompt, **kwargs)
         tokens_in = self.estimate_tokens(prompt)
         tokens_out = self.estimate_tokens(response)
         cost = (tokens_in + tokens_out) * 0.0001  # $0.0001 per 1K tokens
-        
+
         return LLMResponse(
             text=response,
             tokens_in=tokens_in,
@@ -2246,7 +2246,7 @@ class HuggingFaceClient(LLMClient):
             model=self.model_id,
             cost=cost
         )
-    
+
     def estimate_tokens(self, text: str) -> int:
         return len(text) // 4  # Rough estimate
 
@@ -2266,13 +2266,13 @@ import re
 
 class RegexParser(ResponseParser):
     """Extract structured data using regex"""
-    
+
     def __init__(self, patterns: Dict[str, str]):
         self.patterns = {
-            key: re.compile(pattern) 
+            key: re.compile(pattern)
             for key, pattern in patterns.items()
         }
-    
+
     def parse(self, response: str) -> Dict[str, Any]:
         result = {}
         for key, pattern in self.patterns.items():
@@ -2300,14 +2300,14 @@ from llm_sdk import ExecutionObserver
 
 class SlackNotificationObserver(ExecutionObserver):
     """Send Slack notifications on pipeline events"""
-    
+
     def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
-    
+
     def on_pipeline_complete(self, context, result):
         message = f"Pipeline completed: {result.rows_processed} rows, ${result.total_cost:.2f}"
         requests.post(self.webhook_url, json={"text": message})
-    
+
     def on_pipeline_error(self, context, error):
         message = f"Pipeline failed: {str(error)}"
         requests.post(self.webhook_url, json={"text": message})
@@ -2353,7 +2353,7 @@ data:
 
 prompt:
   template: "Clean this product description: {description}"
-  
+
 llm:
   provider: "openai"
   model: "gpt-4o-mini"
@@ -2426,7 +2426,7 @@ def test_cost_accumulation():
 # tests/unit/test_retry_handler.py
 def test_retry_with_transient_error():
     handler = RetryHandler(max_retries=3)
-    
+
     call_count = 0
     def flaky_function():
         nonlocal call_count
@@ -2434,7 +2434,7 @@ def test_retry_with_transient_error():
         if call_count < 3:
             raise TimeoutError("Timeout")
         return "success"
-    
+
     result = handler.with_retry(flaky_function)
     assert result == "success"
     assert call_count == 3
@@ -2449,22 +2449,22 @@ def test_retry_with_transient_error():
 @pytest.mark.integration
 def test_llm_invocation_with_real_api():
     """Test LLM invocation with real Azure OpenAI"""
-    
+
     client = AzureOpenAIClient(
         endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         api_key=os.getenv("AZURE_OPENAI_KEY"),
         deployment="gpt-4o-mini"
     )
-    
+
     stage = LLMInvocationStage(client, concurrency=1)
-    
+
     prompts = PromptBatch([
         "What is 2+2?",
         "What is the capital of France?"
     ])
-    
+
     responses = stage.process(prompts, ExecutionContext())
-    
+
     assert len(responses) == 2
     assert "4" in responses[0].text.lower()
     assert "paris" in responses[1].text.lower()
@@ -2473,20 +2473,20 @@ def test_llm_invocation_with_real_api():
 @pytest.mark.integration
 def test_checkpoint_and_resume():
     """Test pipeline can checkpoint and resume"""
-    
+
     # First run: process 500 rows, simulate crash
     pipeline = create_test_pipeline(total_rows=1000)
-    
+
     # Mock crash after 500 rows
     with pytest.raises(SimulatedCrashError):
         executor = PipelineExecutor(pipeline)
         executor.execute_until(row=500)
         raise SimulatedCrashError()
-    
+
     # Resume: should continue from row 501
     executor2 = PipelineExecutor(pipeline)
     result = executor2.resume(session_id=executor.session_id)
-    
+
     assert result.rows_processed == 1000
     assert result.rows_from_checkpoint == 500
 ```
@@ -2499,7 +2499,7 @@ def test_checkpoint_and_resume():
 @pytest.mark.slow
 def test_full_pipeline_with_real_data():
     """Test complete pipeline with real CSV and real LLM"""
-    
+
     # Setup: Create test CSV
     test_data = pd.DataFrame({
         "description": [
@@ -2509,11 +2509,11 @@ def test_full_pipeline_with_real_data():
         ]
     })
     test_data.to_csv("test_input.csv", index=False)
-    
+
     # Execute pipeline
     pipeline = (
         PipelineBuilder.create()
-        .from_csv("test_input.csv", 
+        .from_csv("test_input.csv",
                   input_columns=["description"],
                   output_columns=["cleaned"])
         .with_prompt("Clean this product description: {description}")
@@ -2521,9 +2521,9 @@ def test_full_pipeline_with_real_data():
         .with_batch_size(10)
         .build()
     )
-    
+
     result = pipeline.execute()
-    
+
     # Assertions
     assert result.success == True
     assert result.rows_processed == 3
@@ -2531,7 +2531,7 @@ def test_full_pipeline_with_real_data():
     assert result.total_cost > 0
     assert "cleaned" in result.data.columns
     assert result.data["cleaned"].notna().all()
-    
+
     # Cleanup
     os.remove("test_input.csv")
 ```
@@ -2545,10 +2545,10 @@ from hypothesis import given, strategies as st
 @given(st.lists(st.text(min_size=1), min_size=1, max_size=100))
 def test_cost_monotonically_increases(prompts):
     """Cost should never decrease during execution"""
-    
+
     tracker = CostTracker()
     previous_cost = Decimal("0")
-    
+
     for prompt in prompts:
         tracker.record_request("gpt-4o", len(prompt), len(prompt), Decimal("0.01"))
         current_cost = tracker.get_current_cost()
@@ -2558,17 +2558,17 @@ def test_cost_monotonically_increases(prompts):
 @given(st.data())
 def test_checkpoint_recovery_idempotent(data):
     """Checkpoint → Resume should produce same result as continuous run"""
-    
+
     rows = data.draw(st.integers(min_value=100, max_value=1000))
     checkpoint_at = data.draw(st.integers(min_value=10, max_value=rows-10))
-    
+
     # Run 1: Continuous
     result1 = run_pipeline_continuous(rows)
-    
+
     # Run 2: Checkpoint and resume
     run_pipeline_until(checkpoint_at)
     result2 = resume_pipeline()
-    
+
     assert result1.data.equals(result2.data)
 ```
 
@@ -2579,29 +2579,29 @@ def test_checkpoint_recovery_idempotent(data):
 @pytest.mark.performance
 def test_throughput_meets_target():
     """Verify throughput: 100 rows/minute"""
-    
+
     test_data = generate_test_dataframe(rows=1000)
-    
+
     start_time = time.time()
     result = pipeline.execute()
     elapsed = time.time() - start_time
-    
+
     rows_per_minute = (result.rows_processed / elapsed) * 60
-    
+
     assert rows_per_minute >= 100, f"Throughput too low: {rows_per_minute:.1f} rows/min"
 
 @pytest.mark.performance
 def test_memory_usage():
     """Verify memory usage < 500MB for 50K rows"""
-    
+
     import tracemalloc
     tracemalloc.start()
-    
+
     pipeline.execute()
-    
+
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
-    
+
     peak_mb = peak / 1024 / 1024
     assert peak_mb < 500, f"Memory usage too high: {peak_mb:.1f} MB"
 ```
@@ -2746,8 +2746,8 @@ black >= 23.0          # Formatting
 mypy >= 1.7            # Type checking
 ```
 
-**Total Core Dependencies: 4**  
-**Total with all providers: 8**  
+**Total Core Dependencies: 4**
+**Total with all providers: 8**
 **Total with all optionals: 12**
 
 ---
@@ -2952,12 +2952,12 @@ defaults:
     provider: "openai"
     model: "gpt-4o-mini"
     temperature: 0.7
-  
+
   processing:
     batch_size: 100
     concurrency: 5
     checkpoint_interval: 500
-  
+
   error_policy:
     on_llm_failure: "RETRY_WITH_BACKOFF"
     max_retries: 3
@@ -2965,7 +2965,7 @@ defaults:
 providers:
   openai:
     api_key: "${OPENAI_API_KEY}"
-  
+
   azure:
     endpoint: "${AZURE_OPENAI_ENDPOINT}"
     api_key: "${AZURE_OPENAI_KEY}"
@@ -3074,7 +3074,7 @@ def main():
         .with_max_budget(float(os.getenv("MAX_BUDGET", "100.0")))
         .build()
     )
-    
+
     result = pipeline.execute()
     print(f"Completed: {result.rows_processed} rows, ${result.total_cost:.2f}")
 
@@ -3152,7 +3152,7 @@ with DAG(
     schedule_interval='@daily',
     catchup=False
 ) as dag:
-    
+
     # Process 10 batches in parallel
     for i in range(10):
         task = PythonOperator(
@@ -3171,16 +3171,16 @@ import boto3
 
 def lambda_handler(event, context):
     """Process data triggered by S3 upload"""
-    
+
     # Get file from S3
     s3 = boto3.client('s3')
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = event['Records'][0]['s3']['object']['key']
-    
+
     # Download to /tmp
     local_file = f"/tmp/{key}"
     s3.download_file(bucket, key, local_file)
-    
+
     # Process with pipeline
     pipeline = (
         PipelineBuilder.create()
@@ -3191,14 +3191,14 @@ def lambda_handler(event, context):
         .with_concurrency(2)
         .build()
     )
-    
+
     result = pipeline.execute()
-    
+
     # Upload results to S3
     output_key = key.replace('.csv', '_processed.csv')
     result.data.to_csv(f"/tmp/output.csv", index=False)
     s3.upload_file(f"/tmp/output.csv", bucket, output_key)
-    
+
     return {
         'statusCode': 200,
         'body': json.dumps({
@@ -3233,13 +3233,13 @@ groups:
     for: 5m
     annotations:
       summary: "LLM SDK error rate > 5%"
-  
+
   - alert: HighCostPerRow
     expr: llm_sdk_cost_total / llm_sdk_rows_processed_total > 0.10
     for: 10m
     annotations:
       summary: "Cost per row exceeds $0.10"
-  
+
   - alert: LowThroughput
     expr: rate(llm_sdk_rows_processed_total[5m]) * 60 < 50
     for: 10m
@@ -3380,7 +3380,7 @@ from llm_sdk import PipelineBuilder
 
 pipeline = (
     PipelineBuilder.create()
-    .from_csv("data.csv", 
+    .from_csv("data.csv",
               input_columns=["text"],
               output_columns=["cleaned"])
     .with_prompt("Clean: {text}")
@@ -3834,9 +3834,9 @@ Wait for real user demand before adding complexity.
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-01-15  
-**Status:** Final Design Specification  
+**Document Version:** 1.0
+**Last Updated:** 2025-01-15
+**Status:** Final Design Specification
 **Next Review:** After MVP implementation
 
 ---
@@ -5656,7 +5656,7 @@ Your design doc's principles vs LLamaIndex:
 
 The delta between integration vs from-scratch is:
 - **-6 weeks development time**
-- **-7,050 lines of code** 
+- **-7,050 lines of code**
 - **-$48,000 in costs**
 - **+40 LLM providers ready**
 - **+RAG ready in 1 week instead of 4**

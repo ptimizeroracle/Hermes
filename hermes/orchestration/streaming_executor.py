@@ -5,13 +5,13 @@ Provides memory-efficient processing for large datasets by processing
 data in chunks.
 """
 
+from collections.abc import Iterator
 from datetime import datetime
 from decimal import Decimal
-from typing import Iterator, List
 
 import pandas as pd
 
-from hermes.core.models import ExecutionResult
+from hermes.core.models import CostEstimate, ExecutionResult, ProcessingStats
 from hermes.orchestration.execution_context import ExecutionContext
 from hermes.orchestration.execution_strategy import ExecutionStrategy
 from hermes.stages.pipeline_stage import PipelineStage
@@ -23,10 +23,10 @@ logger = get_logger(__name__)
 class StreamingExecutor(ExecutionStrategy):
     """
     Streaming execution strategy.
-    
+
     Processes data in chunks to maintain constant memory usage.
     Ideal for very large datasets (100K+ rows) that don't fit in memory.
-    
+
     Benefits:
     - Constant memory footprint
     - Can process unlimited dataset sizes
@@ -46,7 +46,7 @@ class StreamingExecutor(ExecutionStrategy):
 
     def execute(
         self,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         context: ExecutionContext,
     ) -> Iterator[pd.DataFrame]:
         """
@@ -59,35 +59,31 @@ class StreamingExecutor(ExecutionStrategy):
         Yields:
             DataFrames with processed chunks
         """
-        self.logger.info(
-            f"Starting streaming execution (chunk_size={self.chunk_size})"
-        )
-        
+        self.logger.info(f"Starting streaming execution (chunk_size={self.chunk_size})")
+
         # Get data loader stage
         data_loader = stages[0]
-        
+
         # Stream data in chunks
         chunk_index = 0
         total_rows_processed = 0
-        
+
         # Read data in chunks
         for chunk in self._read_chunks(data_loader, context):
-            self.logger.info(
-                f"Processing chunk {chunk_index} ({len(chunk)} rows)"
-            )
-            
+            self.logger.info(f"Processing chunk {chunk_index} ({len(chunk)} rows)")
+
             # Process chunk through remaining stages
             result_chunk = self._process_chunk(chunk, stages[1:], context)
-            
+
             # Update context
             total_rows_processed += len(result_chunk)
             context.update_row(total_rows_processed - 1)
-            
+
             # Yield result
             yield result_chunk
-            
+
             chunk_index += 1
-        
+
         self.logger.info(
             f"Streaming execution complete: {total_rows_processed} rows, "
             f"{chunk_index} chunks"
@@ -100,20 +96,20 @@ class StreamingExecutor(ExecutionStrategy):
     ) -> Iterator[pd.DataFrame]:
         """
         Read data in chunks.
-        
+
         Uses pandas chunksize parameter for memory-efficient reading.
         """
         # Get data source from data loader
         # For now, this is a simplified implementation
         # In full implementation, would use data_loader's chunked reading
-        
+
         # Placeholder: would integrate with DataLoaderStage's chunked reading
         yield pd.DataFrame()  # Placeholder
 
     def _process_chunk(
         self,
         chunk: pd.DataFrame,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         context: ExecutionContext,
     ) -> pd.DataFrame:
         """
@@ -128,11 +124,11 @@ class StreamingExecutor(ExecutionStrategy):
             Processed chunk
         """
         current_data = chunk
-        
+
         for stage in stages:
             self.logger.debug(f"Applying stage: {stage.name}")
             current_data = stage.process(current_data, context)
-        
+
         return current_data
 
     def supports_async(self) -> bool:
@@ -146,7 +142,7 @@ class StreamingExecutor(ExecutionStrategy):
     # Alias for backward compatibility
     def execute_stream(
         self,
-        stages: List[PipelineStage],
+        stages: list[PipelineStage],
         context: ExecutionContext,
     ) -> Iterator[pd.DataFrame]:
         """Alias for execute() method."""
@@ -161,7 +157,7 @@ class StreamingExecutor(ExecutionStrategy):
 class StreamingResult:
     """
     Result container for streaming execution.
-    
+
     Provides access to metrics after consuming the stream.
     """
 
@@ -183,7 +179,7 @@ class StreamingResult:
         """Create final ExecutionResult."""
         self.end_time = datetime.now()
         duration = (self.end_time - self.start_time).total_seconds()
-        
+
         stats = ProcessingStats(
             total_rows=self.total_rows,
             processed_rows=self.total_rows,
@@ -192,7 +188,7 @@ class StreamingResult:
             rows_per_second=self.total_rows / duration if duration > 0 else 0,
             total_duration_seconds=duration,
         )
-        
+
         costs = CostEstimate(
             total_cost=self.total_cost,
             total_tokens=0,
@@ -201,7 +197,7 @@ class StreamingResult:
             rows=self.total_rows,
             confidence="actual",
         )
-        
+
         return ExecutionResult(
             data=pd.DataFrame(),  # Streaming doesn't return full data
             metrics=stats,
@@ -210,4 +206,3 @@ class StreamingResult:
             end_time=self.end_time,
             success=True,
         )
-

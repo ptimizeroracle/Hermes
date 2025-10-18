@@ -11,7 +11,7 @@ I've successfully implemented the **LLM Dataset Processing Engine** based on the
 The project follows a clean **5-layer architecture** based on SOLID principles:
 
 1. **Layer 0: Core Utilities** - Cross-cutting concerns
-2. **Layer 1: Infrastructure Adapters** - External system integrations  
+2. **Layer 1: Infrastructure Adapters** - External system integrations
 3. **Layer 2: Processing Stages** - Data transformation logic
 4. **Layer 3: Orchestration Engine** - Execution control
 5. **Layer 4: High-Level API** - User-facing interfaces
@@ -380,4 +380,3 @@ Following principles from:
 **Ready to deploy**: With minor additions (tests, CI/CD)
 
 Enjoy your new LLM Dataset Processing Engine! 🚀
-

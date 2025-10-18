@@ -20,9 +20,9 @@ class TestParserFactory:
             template="Process: {text}",
             response_format="raw",
         )
-        
+
         parser = create_response_parser(spec, ["output"])
-        
+
         assert isinstance(parser, RawTextParser)
 
     def test_create_raw_parser_implicit(self):
@@ -31,9 +31,9 @@ class TestParserFactory:
             template="Process: {text}",
             # response_format defaults to "raw"
         )
-        
+
         parser = create_response_parser(spec, ["output"])
-        
+
         assert isinstance(parser, RawTextParser)
 
     def test_create_json_parser(self):
@@ -43,9 +43,9 @@ class TestParserFactory:
             response_format="json",
             json_fields=["field1", "field2"],
         )
-        
+
         parser = create_response_parser(spec, ["field1", "field2"])
-        
+
         assert isinstance(parser, JSONParser)
 
     def test_create_json_parser_without_fields(self):
@@ -54,9 +54,9 @@ class TestParserFactory:
             template="Return JSON: {text}",
             response_format="json",
         )
-        
+
         parser = create_response_parser(spec, ["result"])
-        
+
         assert isinstance(parser, JSONParser)
 
     def test_create_regex_parser(self):
@@ -69,11 +69,9 @@ class TestParserFactory:
                 "explanation": r"EXPLANATION:\s*(.+)",
             },
         )
-        
-        parser = create_response_parser(
-            spec, ["score", "explanation"]
-        )
-        
+
+        parser = create_response_parser(spec, ["score", "explanation"])
+
         assert isinstance(parser, RegexParser)
 
     def test_regex_parser_missing_patterns(self):
@@ -83,7 +81,7 @@ class TestParserFactory:
             response_format="regex",
             # Missing regex_patterns
         )
-        
+
         with pytest.raises(ValueError, match="requires regex_patterns"):
             create_response_parser(spec, ["output"])
 
@@ -97,11 +95,9 @@ class TestParserFactory:
                 # Missing "explanation" pattern
             },
         )
-        
+
         with pytest.raises(ValueError, match="Missing regex patterns"):
-            create_response_parser(
-                spec, ["score", "explanation"]
-            )
+            create_response_parser(spec, ["score", "explanation"])
 
     def test_invalid_response_format(self):
         """Test validation catches invalid response format."""
@@ -121,15 +117,13 @@ class TestParserIntegration:
             template="Analyze: {text}",
             response_format="json",
         )
-        
-        parser = create_response_parser(
-            spec, ["similarity", "explanation"]
-        )
-        
+
+        parser = create_response_parser(spec, ["similarity", "explanation"])
+
         # Simulate LLM response
         response = '{"similarity": "95%", "explanation": "Very similar"}'
         result = parser.parse(response)
-        
+
         assert result["similarity"] == "95%"
         assert result["explanation"] == "Very similar"
 
@@ -139,13 +133,13 @@ class TestParserIntegration:
             template="Analyze: {text}",
             response_format="json",
         )
-        
+
         parser = create_response_parser(spec, ["output"])
-        
+
         # Malformed JSON
         response = "This is not JSON"
         result = parser.parse(response)
-        
+
         # Should fallback to raw text
         assert "output" in result
 
@@ -159,13 +153,13 @@ class TestParserIntegration:
                 "reason": r"REASON:\s*(.+)",
             },
         )
-        
+
         parser = create_response_parser(spec, ["score", "reason"])
-        
+
         # Simulate LLM response
         response = "SCORE: 95%\nREASON: Both are similar"
         result = parser.parse(response)
-        
+
         assert result["score"] == "95"
         assert result["reason"] == "Both are similar"
 
@@ -175,12 +169,12 @@ class TestParserIntegration:
             template="Process: {text}",
             response_format="raw",
         )
-        
+
         parser = create_response_parser(spec, ["result"])
-        
+
         response = "Processed result"
         result = parser.parse(response)
-        
+
         assert result["output"] == "Processed result"
 
 
@@ -194,12 +188,12 @@ class TestBackwardCompatibility:
             system_message="You are a helper",
             # No response_format specified
         )
-        
+
         parser = create_response_parser(spec, ["output"])
-        
+
         # Should default to RawTextParser
         assert isinstance(parser, RawTextParser)
-        
+
         # Should parse normally
         result = parser.parse("Some output")
         assert result["output"] == "Some output"
@@ -210,12 +204,9 @@ class TestBackwardCompatibility:
             template="Process: {text}",
             response_format="raw",
         )
-        
+
         # Multiple output columns with raw parser
         # Should create parser but log warning
-        parser = create_response_parser(
-            spec, ["output1", "output2", "output3"]
-        )
-        
-        assert isinstance(parser, RawTextParser)
+        parser = create_response_parser(spec, ["output1", "output2", "output3"])
 
+        assert isinstance(parser, RawTextParser)

@@ -32,7 +32,7 @@ prompt:
     Evaluate bacon substitutability:
     Incumbent: {incumbent}
     Portfolio: {portfolio}
-    
+
     Return JSON:
     {
       "llm_similarity": "95%",
@@ -92,15 +92,15 @@ result = (
 # composition_config.yaml
 composition:
   input: "ground_truth.xlsx"
-  
+
   pipelines:
     - column: llm_similarity
       config: similarity_config.yaml
-    
+
     - column: Explanation
       depends_on: [llm_similarity]
       config: explanation_config.yaml
-    
+
     - column: confidence_score
       depends_on: [llm_similarity, Explanation]
       config: confidence_config.yaml
@@ -389,4 +389,3 @@ See:
 - **Total**: 6 hours
 
 **Delivered on schedule!** ✅
-

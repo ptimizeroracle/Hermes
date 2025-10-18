@@ -263,8 +263,8 @@ Clean: BACON APPLEWOOD SMOKED 14/18
 ```python
 pipeline = (
     PipelineBuilder.create()
-    .from_dataframe(products_df, 
-                    input_columns=["raw_description"], 
+    .from_dataframe(products_df,
+                    input_columns=["raw_description"],
                     output_columns=["clean_description"])
     .with_prompt(
         template="Clean this product description: {raw_description}",
@@ -280,7 +280,7 @@ pipeline = (
 )
 ```
 
-**Input**: `BACON APPLEWOOD SMOKED 14/18 LB CASE`  
+**Input**: `BACON APPLEWOOD SMOKED 14/18 LB CASE`
 **Output**: `Bacon Applewood Smoked – 14–18 lb case`
 
 ---
@@ -335,7 +335,7 @@ def with_prompt(
 
 ## ✅ Summary
 
-**Question**: Can I use system prompts AND transformation prompts?  
+**Question**: Can I use system prompts AND transformation prompts?
 **Answer**: ✅ **YES! Fully supported!**
 
 **How to use**:
@@ -344,11 +344,10 @@ def with_prompt(
 - ✅ CLI: System message in config file
 - ✅ Direct specs: `PromptSpec(template="...", system_message="...")`
 
-**Tested**: ✅ Working perfectly with Groq provider  
-**Examples**: ✅ See `examples/09_system_prompts.py`  
+**Tested**: ✅ Working perfectly with Groq provider
+**Examples**: ✅ See `examples/09_system_prompts.py`
 **Documentation**: ✅ This guide!
 
 ---
 
 **Need more examples?** Run: `python examples/09_system_prompts.py`
-

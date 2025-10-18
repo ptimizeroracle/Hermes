@@ -33,7 +33,7 @@ class MockLLMClient(LLMClient):
     def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Return mock response."""
         self.call_count += 1
-        
+
         return LLMResponse(
             text=self.mock_response,
             tokens_in=10,
@@ -51,10 +51,12 @@ class MockLLMClient(LLMClient):
 @pytest.fixture
 def sample_dataframe():
     """Create sample DataFrame for testing."""
-    return pd.DataFrame({
-        "text": ["Hello world", "Test data", "Sample text"],
-        "category": ["A", "B", "A"],
-    })
+    return pd.DataFrame(
+        {
+            "text": ["Hello world", "Test data", "Sample text"],
+            "category": ["A", "B", "A"],
+        }
+    )
 
 
 @pytest.fixture
@@ -92,4 +94,3 @@ def llm_spec():
 def mock_llm_client(llm_spec):
     """Create mock LLM client."""
     return MockLLMClient(llm_spec)
-

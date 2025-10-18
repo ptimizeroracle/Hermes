@@ -6,15 +6,17 @@ during pipeline execution.
 """
 
 import pandas as pd
+
 from hermes import PipelineBuilder
 
 # Create larger dataset
-data = pd.DataFrame({
-    "text": [
-        f"This is sample text number {i} that needs processing."
-        for i in range(100)
-    ]
-})
+data = pd.DataFrame(
+    {
+        "text": [
+            f"This is sample text number {i} that needs processing." for i in range(100)
+        ]
+    }
+)
 
 # Build pipeline with cost controls
 pipeline = (
@@ -64,10 +66,11 @@ print(f"  Actual total: ${result.costs.total_cost:.4f}")
 print(f"  Total tokens: {result.costs.total_tokens:,}")
 print(f"  Input tokens: {result.costs.input_tokens:,}")
 print(f"  Output tokens: {result.costs.output_tokens:,}")
-print(f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}")
+print(
+    f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}"
+)
 
 # Compare estimate vs actual
 variance = float(result.costs.total_cost - estimate.total_cost)
 variance_pct = (variance / float(estimate.total_cost)) * 100
 print(f"\nEstimate Variance: ${variance:+.4f} ({variance_pct:+.1f}%)")
-

@@ -5,20 +5,22 @@ This example shows the DatasetProcessor convenience wrapper
 for simple use cases.
 """
 
-from hermes import DatasetProcessor
-
 # Create sample CSV (in real use, this would be an existing file)
 import pandas as pd
 
-sample_data = pd.DataFrame({
-    "customer_review": [
-        "This product is absolutely amazing! Best purchase ever.",
-        "Terrible quality. Broke after one week. Very disappointed.",
-        "It's okay. Nothing special but does the job.",
-        "Exceeded my expectations! Highly recommend to everyone.",
-        "Not worth the price. There are better alternatives.",
-    ]
-})
+from hermes import DatasetProcessor
+
+sample_data = pd.DataFrame(
+    {
+        "customer_review": [
+            "This product is absolutely amazing! Best purchase ever.",
+            "Terrible quality. Broke after one week. Very disappointed.",
+            "It's okay. Nothing special but does the job.",
+            "Exceeded my expectations! Highly recommend to everyone.",
+            "Not worth the price. There are better alternatives.",
+        ]
+    }
+)
 sample_data.to_csv("/tmp/reviews.csv", index=False)
 
 # Process with minimal configuration
@@ -30,9 +32,9 @@ processor = DatasetProcessor(
     - Positive
     - Negative
     - Neutral
-    
+
     Review: {customer_review}
-    
+
     Sentiment:""",
     llm_config={
         "provider": "openai",
@@ -57,4 +59,3 @@ print(result)
 # Analyze results
 print("\nSentiment Distribution:")
 print(result["sentiment"].value_counts())
-

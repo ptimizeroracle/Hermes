@@ -3,17 +3,17 @@
 
 composition:
   input: "ground_truth.xlsx"
-  
+
   pipelines:
     # Column 1: Similarity score (independent)
     - column: llm_similarity
       config: examples/bacon_similarity_only.yaml
-    
+
     # Column 2: Explanation (depends on similarity)
     - column: Explanation
       depends_on: [llm_similarity]
       config: examples/bacon_explanation.yaml
-    
+
     # Column 3: Confidence score (depends on both)
     - column: confidence_score
       depends_on: [llm_similarity, Explanation]
@@ -30,4 +30,3 @@ composition:
 #   from src.api import PipelineComposer
 #   composer = PipelineComposer.from_yaml("examples/composition_example.yaml")
 #   result = composer.execute()
-

@@ -13,7 +13,7 @@ processing:
   # Enable input preprocessing (cleans text before LLM)
   enable_preprocessing: true
   preprocessing_max_length: 500
-  
+
   # Enable auto-retry for failed rows
   auto_retry_failed: true
   max_retry_attempts: 2
@@ -98,11 +98,11 @@ Quality acceptable ✅
 
 ## Benefits
 
-✅ **No separate scripts** - Built into Pipeline  
-✅ **Config-driven** - Enable/disable via YAML  
-✅ **Same prompt** - Retry uses exact same config  
-✅ **Cost-efficient** - Only retries failed rows  
-✅ **Quality guaranteed** - Stops at 70% threshold  
+✅ **No separate scripts** - Built into Pipeline
+✅ **Config-driven** - Enable/disable via YAML
+✅ **Same prompt** - Retry uses exact same config
+✅ **Cost-efficient** - Only retries failed rows
+✅ **Quality guaranteed** - Stops at 70% threshold
 ✅ **SOLID design** - Extensible, testable, clean
 
 ## Expected Results
@@ -136,28 +136,28 @@ def _preprocess_inputs(self, df: pd.DataFrame) -> pd.DataFrame:
 ```python
 def _auto_retry_failed_rows(self, result: ExecutionResult) -> ExecutionResult:
     quality = result.validate_output_quality(output_cols)
-    
+
     for attempt in range(1, max_retry_attempts + 1):
         # Find null rows
         null_mask = result.data[output_col].isna()
         failed_indices = result.data[null_mask].index.tolist()
-        
+
         if not failed_indices:
             break
-        
+
         # Retry with same config
         retry_df = self.dataframe.loc[failed_indices]
         retry_pipeline = Pipeline(self.specifications, dataframe=retry_df)
         retry_result = retry_pipeline.execute()
-        
+
         # Merge back
         result.data.loc[failed_indices] = retry_result.data
-        
+
         # Check if acceptable
         quality = result.validate_output_quality(output_cols)
         if quality.is_acceptable:  # ≥70%
             break
-    
+
     return result
 ```
 
@@ -233,14 +233,14 @@ processing:
 
 ## Troubleshooting
 
-**Q: Preprocessing corrupts my data**  
+**Q: Preprocessing corrupts my data**
 A: Set `preprocessing_max_length` higher or disable it
 
-**Q: Retry not improving results**  
+**Q: Retry not improving results**
 A: Check if root cause is prompt complexity, not transient errors
 
-**Q: Cost too high**  
+**Q: Cost too high**
 A: Reduce `max_retry_attempts` or disable retry
 
-**Q: Still <95% success after retry**  
+**Q: Still <95% success after retry**
 A: Review failed rows manually, may need template fallback

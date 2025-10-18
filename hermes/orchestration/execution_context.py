@@ -7,7 +7,7 @@ Implements Memento pattern for checkpoint serialization.
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from hermes.core.models import ProcessingStats
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class ExecutionContext:
     """
     Runtime state container for pipeline execution.
-    
+
     Carries shared state between stages and tracks progress.
     Immutable for most fields to prevent accidental modification.
     """
@@ -29,25 +29,25 @@ class ExecutionContext:
     pipeline_id: UUID = field(default_factory=uuid4)
     start_time: datetime = field(default_factory=datetime.now)
     end_time: datetime | None = None
-    
+
     # Progress tracking
     current_stage_index: int = 0
     last_processed_row: int = 0
     total_rows: int = 0
-    
+
     # Cost tracking
     accumulated_cost: Decimal = field(default_factory=lambda: Decimal("0.0"))
     accumulated_tokens: int = 0
-    
+
     # Intermediate data storage
-    intermediate_data: Dict[str, Any] = field(default_factory=dict)
-    
+    intermediate_data: dict[str, Any] = field(default_factory=dict)
+
     # Statistics
     failed_rows: int = 0
     skipped_rows: int = 0
-    
+
     # Observers for progress notifications
-    observers: List["ExecutionObserver"] = field(default_factory=list)
+    observers: list["ExecutionObserver"] = field(default_factory=list)
 
     def update_stage(self, stage_index: int) -> None:
         """Update current stage."""
@@ -84,14 +84,14 @@ class ExecutionContext:
             if self.end_time is None
             else (self.end_time - self.start_time).total_seconds()
         )
-        
+
         # last_processed_row is 0-based index, so add 1 for count
-        actual_processed = self.last_processed_row + 1 if self.last_processed_row >= 0 else 0
-        
-        rows_per_second = (
-            actual_processed / duration if duration > 0 else 0.0
+        actual_processed = (
+            self.last_processed_row + 1 if self.last_processed_row >= 0 else 0
         )
-        
+
+        rows_per_second = actual_processed / duration if duration > 0 else 0.0
+
         return ProcessingStats(
             total_rows=self.total_rows,
             processed_rows=actual_processed,
@@ -101,7 +101,7 @@ class ExecutionContext:
             total_duration_seconds=duration,
         )
 
-    def to_checkpoint(self) -> Dict[str, Any]:
+    def to_checkpoint(self) -> dict[str, Any]:
         """
         Serialize to checkpoint dictionary (Memento pattern).
 
@@ -124,7 +124,7 @@ class ExecutionContext:
         }
 
     @classmethod
-    def from_checkpoint(cls, data: Dict[str, Any]) -> "ExecutionContext":
+    def from_checkpoint(cls, data: dict[str, Any]) -> "ExecutionContext":
         """
         Deserialize from checkpoint dictionary.
 
@@ -154,12 +154,11 @@ class ExecutionContext:
         )
 
     # Aliases for backward compatibility
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Alias for to_checkpoint()."""
         return self.to_checkpoint()
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExecutionContext":
+    def from_dict(cls, data: dict[str, Any]) -> "ExecutionContext":
         """Alias for from_checkpoint()."""
         return cls.from_checkpoint(data)
-

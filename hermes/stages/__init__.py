@@ -45,4 +45,3 @@ __all__ = [
     "AllStrategy",
     "AverageStrategy",
 ]
-

@@ -6,21 +6,24 @@ using the LLM Dataset Engine.
 """
 
 import pandas as pd
+
 from hermes import PipelineBuilder
 
 # Create sample data
-data = pd.DataFrame({
-    "product_name": [
-        "Apple iPhone 13 Pro Max 256GB",
-        "Samsung Galaxy S22 Ultra 512GB",
-        "MacBook Pro 16\" M2 32GB RAM",
-    ],
-    "description": [
-        "Latest iPhone with advanced camera system",
-        "Premium Android flagship with S Pen",
-        "Powerful laptop for professionals",
-    ],
-})
+data = pd.DataFrame(
+    {
+        "product_name": [
+            "Apple iPhone 13 Pro Max 256GB",
+            "Samsung Galaxy S22 Ultra 512GB",
+            'MacBook Pro 16" M2 32GB RAM',
+        ],
+        "description": [
+            "Latest iPhone with advanced camera system",
+            "Premium Android flagship with S Pen",
+            "Powerful laptop for professionals",
+        ],
+    }
+)
 
 # Build pipeline with fluent API
 pipeline = (
@@ -35,10 +38,10 @@ pipeline = (
         - Electronics > Smartphones
         - Electronics > Laptops
         - Electronics > Accessories
-        
+
         Product: {product_name}
         Description: {description}
-        
+
         Category:"""
     )
     .with_llm(
@@ -66,9 +69,10 @@ print("\nResults:")
 print(result.data[["product_name", "category"]])
 
 # Show metrics
-print(f"\nMetrics:")
+print("\nMetrics:")
 print(f"  Processed rows: {result.metrics.processed_rows}")
 print(f"  Duration: {result.metrics.total_duration_seconds:.2f}s")
 print(f"  Total cost: ${result.costs.total_cost:.4f}")
-print(f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}")
-
+print(
+    f"  Cost per row: ${float(result.costs.total_cost) / result.metrics.total_rows:.6f}"
+)

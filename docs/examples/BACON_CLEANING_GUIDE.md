@@ -44,9 +44,9 @@ prompt:
   template: |
     Now, rewrite the following input using these guidelines.
     Return only the cleaned description and metadata.
-    
+
     Input: {Item_Description_Long}
-  
+
   system_message: |
     You are a careful product copy editor...
     [Your detailed prompt here]
@@ -322,8 +322,8 @@ BACON SLICED APPLEWOOD SMOKED LAYOUT 18-22 CT | BACON 18/22 CT LAYOUT APPLEWOOD 
 Raw, sliced applewood-smoked bacon, 18–22 slices per pound (thin-cut), layflat.
 ```
 
-**Time**: ~2-3 minutes for 365 rows  
-**Cost**: ~$0.45-0.50  
+**Time**: ~2-3 minutes for 365 rows
+**Cost**: ~$0.45-0.50
 **Success Rate**: ~99% (363/365 rows)
 
 ---
@@ -341,4 +341,3 @@ Raw, sliced applewood-smoked bacon, 18–22 slices per pound (thin-cut), layflat
 **To run**: Just execute `python run_bacon_cleaning.py` and follow prompts!
 
 **Your reputation is secure** - this solution is production-ready! 🚀
-
