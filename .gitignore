@@ -28,3 +28,6 @@ examples/swap_risk_assessment.yaml
 
 # Processing scripts with data
 process_all_*.py
+
+# Checkpoints directory
+.checkpoints/
