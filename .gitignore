@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Excel files
+*.xlsx
+*.xls
+
+# Temporary directory
+tmp/
