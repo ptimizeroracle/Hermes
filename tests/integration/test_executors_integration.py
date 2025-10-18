@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from hermes import PipelineBuilder
-from src.orchestration import AsyncExecutor, StreamingExecutor
+from hermes.orchestration import AsyncExecutor, StreamingExecutor
 
 
 @pytest.mark.integration

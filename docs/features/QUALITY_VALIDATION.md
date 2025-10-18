@@ -69,7 +69,7 @@ Consider:
 ### SDK (Manual)
 
 ```python
-from src import PipelineBuilder
+from hermes import PipelineBuilder
 
 pipeline = PipelineBuilder.create()...
 result = pipeline.execute()

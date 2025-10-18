@@ -2,12 +2,12 @@
 
 import pytest
 
-from src.core.error_handler import (
+from hermes.core.error_handler import (
     ErrorAction,
     ErrorDecision,
     ErrorHandler,
 )
-from src.core.specifications import ErrorPolicy
+from hermes.core.specifications import ErrorPolicy
 
 
 class TestErrorHandler:

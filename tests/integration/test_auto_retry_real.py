@@ -10,8 +10,8 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from decimal import Decimal
 
-from src import PipelineBuilder
-from src.core.models import LLMResponse
+from hermes import PipelineBuilder
+from hermes.core.models import LLMResponse
 
 
 class TestAutoRetryActualExecution:

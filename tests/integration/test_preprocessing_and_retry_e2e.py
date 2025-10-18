@@ -12,8 +12,8 @@ import pytest
 from pathlib import Path
 from decimal import Decimal
 
-from src import PipelineBuilder
-from src.core.specifications import ErrorPolicy
+from hermes import PipelineBuilder
+from hermes.core.specifications import ErrorPolicy
 
 
 class TestPreprocessingE2E:

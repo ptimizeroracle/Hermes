@@ -6,14 +6,14 @@ from decimal import Decimal
 import pandas as pd
 import pytest
 
-from src.core.models import ProcessingStats
-from src.orchestration import (
+from hermes.core.models import ProcessingStats
+from hermes.orchestration import (
     AsyncExecutor,
     ExecutionContext,
     StreamingExecutor,
     SyncExecutor,
 )
-from src.stages.pipeline_stage import PipelineStage
+from hermes.stages.pipeline_stage import PipelineStage
 
 
 class MockStage(PipelineStage):

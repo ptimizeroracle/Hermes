@@ -14,10 +14,10 @@ import pandas as pd
 import pytest
 from unittest.mock import MagicMock, patch
 
-from src.api.pipeline_composer import PipelineComposer
-from src.api.pipeline import Pipeline
-from src.core.models import CostEstimate, ExecutionResult
-from src.core.specifications import (
+from hermes.api.pipeline_composer import PipelineComposer
+from hermes.api.pipeline import Pipeline
+from hermes.core.models import CostEstimate, ExecutionResult
+from hermes.core.specifications import (
     DatasetSpec,
     DataSourceType,
     LLMProvider,

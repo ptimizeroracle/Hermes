@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from src.utils import BudgetController, BudgetExceededError
+from hermes.utils import BudgetController, BudgetExceededError
 
 
 class TestBudgetController:

@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from decimal import Decimal
 
-from src.api.pipeline import Pipeline
-from src.core.specifications import (
+from hermes.api.pipeline import Pipeline
+from hermes.core.specifications import (
     DatasetSpec,
     DataSourceType,
     LLMProvider,

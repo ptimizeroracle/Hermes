@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.adapters.data_io import (
+from hermes.adapters.data_io import (
     CSVReader,
     CSVWriter,
     DataFrameReader,
@@ -17,7 +17,7 @@ from src.adapters.data_io import (
     create_data_reader,
     create_data_writer,
 )
-from src.core.specifications import DataSourceType
+from hermes.core.specifications import DataSourceType
 
 
 class TestDataReaders:

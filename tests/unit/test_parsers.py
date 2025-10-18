@@ -3,7 +3,7 @@
 import pytest
 from pydantic import BaseModel
 
-from src.stages import (
+from hermes.stages import (
     JSONParser,
     PydanticParser,
     RawTextParser,

@@ -22,7 +22,7 @@ processing:
 ### Via SDK
 
 ```python
-from src import PipelineBuilder
+from hermes import PipelineBuilder
 
 pipeline = (
     PipelineBuilder.create()

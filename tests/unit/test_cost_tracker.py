@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from src.utils import CostTracker
+from hermes.utils import CostTracker
 
 
 class TestCostTracker:

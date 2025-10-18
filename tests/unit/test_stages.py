@@ -5,14 +5,14 @@ from decimal import Decimal
 import pandas as pd
 import pytest
 
-from src.core.models import LLMResponse, PromptBatch, RowMetadata
-from src.core.specifications import (
+from hermes.core.models import LLMResponse, PromptBatch, RowMetadata
+from hermes.core.specifications import (
     DatasetSpec,
     DataSourceType,
     PromptSpec,
 )
-from src.orchestration import ExecutionContext
-from src.stages import (
+from hermes.orchestration import ExecutionContext
+from hermes.stages import (
     DataLoaderStage,
     JSONParser,
     LLMInvocationStage,

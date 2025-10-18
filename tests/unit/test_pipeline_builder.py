@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from hermes import PipelineBuilder
-from src.core.specifications import (
+from hermes.core.specifications import (
     DataSourceType,
     LLMProvider,
 )

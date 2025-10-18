@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from hermes import PipelineBuilder
-from src.stages import JSONParser, PydanticParser, RegexParser
+from hermes.stages import JSONParser, PydanticParser, RegexParser
 
 
 @pytest.mark.integration

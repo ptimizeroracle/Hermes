@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from click.testing import CliRunner
 
-from src.cli.main import cli
+from hermes.cli.main import cli
 
 
 class TestCLI:

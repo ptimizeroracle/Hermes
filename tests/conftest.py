@@ -10,9 +10,9 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from src.adapters.llm_client import LLMClient
-from src.core.models import LLMResponse
-from src.core.specifications import (
+from hermes.adapters.llm_client import LLMClient
+from hermes.core.models import LLMResponse
+from hermes.core.specifications import (
     DatasetSpec,
     DataSourceType,
     LLMProvider,

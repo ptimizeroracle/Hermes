@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from src.utils.input_preprocessing import (
+from hermes.utils.input_preprocessing import (
     TextPreprocessor,
     preprocess_dataframe,
     PreprocessingStats,

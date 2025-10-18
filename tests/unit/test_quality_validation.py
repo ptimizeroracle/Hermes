@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import datetime
 from uuid import uuid4
 
-from src.core.models import (
+from hermes.core.models import (
     ExecutionResult,
     QualityReport,
     ProcessingStats,

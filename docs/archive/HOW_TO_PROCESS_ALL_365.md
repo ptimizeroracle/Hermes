@@ -82,7 +82,7 @@ import os
 sys.path.insert(0, "src")
 
 import pandas as pd
-from src import PipelineBuilder
+from hermes import PipelineBuilder
 
 # Set API key
 os.environ["GROQ_API_KEY"] = "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"
