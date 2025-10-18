@@ -153,3 +153,13 @@ class ExecutionContext:
             skipped_rows=data.get("skipped_rows", 0),
         )
 
+    # Aliases for backward compatibility
+    def to_dict(self) -> Dict[str, Any]:
+        """Alias for to_checkpoint()."""
+        return self.to_checkpoint()
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ExecutionContext":
+        """Alias for from_checkpoint()."""
+        return cls.from_checkpoint(data)
+

@@ -104,6 +104,7 @@ class TestErrorRecovery:
             max_attempts=3,
             initial_delay=0.01,
             exponential_base=2,
+            retryable_exceptions=(ValueError,),
         )
         
         attempt_count = 0

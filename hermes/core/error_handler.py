@@ -44,6 +44,7 @@ class ErrorHandler:
         self,
         policy: ErrorPolicy = ErrorPolicy.SKIP,
         max_retries: int = 3,
+        default_value: Any = None,
         default_value_factory: Optional[Callable[[], Any]] = None,
     ):
         """
@@ -52,13 +53,18 @@ class ErrorHandler:
         Args:
             policy: Error handling policy
             max_retries: Maximum retry attempts
+            default_value: Static default value (or use default_value_factory)
             default_value_factory: Function to generate default values
         """
         self.policy = policy
         self.max_retries = max_retries
-        self.default_value_factory = default_value_factory or (
-            lambda: None
-        )
+        self.default_value = default_value
+        
+        # If default_value_factory is provided, use it; otherwise use lambda returning default_value
+        if default_value_factory is not None:
+            self.default_value_factory = default_value_factory
+        else:
+            self.default_value_factory = lambda: default_value
 
     def handle_error(
         self,
@@ -77,6 +83,8 @@ class ErrorHandler:
         Returns:
             ErrorDecision with action to take
         """
+        # Get attempt from context if available, otherwise use parameter
+        attempt = context.get("attempt", attempt)
         row_index = context.get("row_index", "unknown")
         stage = context.get("stage", "unknown")
         

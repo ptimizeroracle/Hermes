@@ -143,6 +143,15 @@ class StreamingExecutor(ExecutionStrategy):
         """Streaming executor supports streaming."""
         return True
 
+    # Alias for backward compatibility
+    def execute_stream(
+        self,
+        stages: List[PipelineStage],
+        context: ExecutionContext,
+    ) -> Iterator[pd.DataFrame]:
+        """Alias for execute() method."""
+        return self.execute(stages, context)
+
     @property
     def name(self) -> str:
         """Strategy name."""

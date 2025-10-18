@@ -168,6 +168,15 @@ class AsyncExecutor(ExecutionStrategy):
         """Async executor doesn't support streaming."""
         return False
 
+    # Alias for backward compatibility
+    async def execute_async(
+        self,
+        stages: List[PipelineStage],
+        context: ExecutionContext,
+    ) -> ExecutionResult:
+        """Alias for execute() method."""
+        return await self.execute(stages, context)
+
     @property
     def name(self) -> str:
         """Strategy name."""

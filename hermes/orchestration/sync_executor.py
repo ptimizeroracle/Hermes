@@ -109,9 +109,16 @@ class SyncExecutor(ExecutionStrategy):
         context: ExecutionContext,
     ) -> pd.DataFrame:
         """Execute all stages sequentially."""
-        # This would contain the current Pipeline._execute_stages logic
-        # For now, return empty DataFrame as placeholder
-        return pd.DataFrame()
+        data = None
+        
+        for stage in stages:
+            self.logger.info(f"Executing stage: {stage.name}")
+            context.current_stage = stage.name
+            
+            # Process data through stage
+            data = stage.process(data, context)
+            
+        return data if isinstance(data, pd.DataFrame) else pd.DataFrame()
 
     def supports_async(self) -> bool:
         """Sync executor doesn't support async."""
