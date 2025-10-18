@@ -155,7 +155,7 @@ class TestDependencyResolution:
 class TestComposerExecution:
     """Test actual execution of composed pipelines."""
 
-    @patch('src.api.pipeline.Pipeline.execute')
+    @patch('hermes.api.pipeline.Pipeline.execute')
     def test_execute_single_column(self, mock_execute):
         """Test executing single column pipeline."""
         # Setup
@@ -196,7 +196,7 @@ class TestComposerExecution:
         assert "output1" in result.data.columns
         assert len(result.data) == 2
 
-    @patch('src.api.pipeline.Pipeline.execute')
+    @patch('hermes.api.pipeline.Pipeline.execute')
     def test_execute_multiple_independent_columns(self, mock_execute):
         """Test executing multiple independent columns."""
         df = pd.DataFrame({"text": ["sample"]})

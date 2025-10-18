@@ -17,7 +17,7 @@ from hermes.core.models import LLMResponse
 class TestAutoRetryActualExecution:
     """Integration tests that actually execute retry logic."""
     
-    @patch('src.adapters.llm_client.GroqClient')
+    @patch('hermes.adapters.llm_client.GroqClient')
     def test_retry_processes_only_failed_rows_not_all(self, mock_groq_class):
         """
         CRITICAL TEST: Verify retry processes ONLY failed rows.
@@ -119,7 +119,7 @@ class TestAutoRetryActualExecution:
         assert quality.valid_outputs == 10  # All should be valid after retry
         assert quality.success_rate == 100.0
     
-    @patch('src.adapters.llm_client.GroqClient')
+    @patch('hermes.adapters.llm_client.GroqClient')
     def test_retry_respects_max_attempts(self, mock_groq_class):
         """Should stop retrying after max_retry_attempts."""
         df = pd.DataFrame({
