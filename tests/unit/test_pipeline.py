@@ -114,11 +114,10 @@ class TestPipeline:
         )
         
         pipeline = Pipeline(specs, dataframe=df)
-        estimate = pipeline.estimate_cost(sample_size=10)
+        estimate = pipeline.estimate_cost()
         
         assert estimate.total_cost >= 0
         assert estimate.rows == 100
-        assert estimate.confidence == "sample-based"
 
     def test_add_observer(self):
         """Test adding observers to pipeline."""

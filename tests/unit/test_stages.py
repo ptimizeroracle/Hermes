@@ -65,7 +65,7 @@ class TestDataLoaderStage:
             output_columns=["result"],
         )
         
-        with pytest.raises(ValueError, match="Missing required columns"):
+        with pytest.raises(ValueError, match="Missing columns"):
             stage.process(spec, context)
 
     def test_data_loader_cost_estimation(self):
@@ -81,7 +81,7 @@ class TestDataLoaderStage:
             output_columns=["result"],
         )
         
-        estimate = stage.estimate_cost(spec, context)
+        estimate = stage.estimate_cost(spec)
         
         assert estimate.rows == 10
         assert estimate.total_cost == Decimal("0.0")
@@ -162,9 +162,10 @@ class TestLLMInvocationStage:
         batch = PromptBatch(
             prompts=prompts,
             metadata=[
-                RowMetadata(row_index=0, original_data={"text": "test1"}),
-                RowMetadata(row_index=1, original_data={"text": "test2"}),
+                RowMetadata(row_index=0, custom={"original_data": {"text": "test1"}}),
+                RowMetadata(row_index=1, custom={"original_data": {"text": "test2"}}),
             ],
+            batch_id=0,
         )
         
         response_batches = stage.process([batch], context)
@@ -188,9 +189,10 @@ class TestLLMInvocationStage:
         batch = PromptBatch(
             prompts=prompts,
             metadata=[
-                RowMetadata(row_index=i, original_data={"text": f"test{i}"})
+                RowMetadata(row_index=i, custom={"original_data": {"text": f"test{i}"}})
                 for i in range(5)
             ],
+            batch_id=0,
         )
         
         response_batches = stage.process([batch], context)
@@ -292,8 +294,8 @@ class TestResponseParserStage:
         batch = ResponseBatch(
             responses=responses,
             metadata=[
-                RowMetadata(row_index=0, original_data={}),
-                RowMetadata(row_index=1, original_data={}),
+                RowMetadata(row_index=0),
+                RowMetadata(row_index=1),
             ],
         )
         
