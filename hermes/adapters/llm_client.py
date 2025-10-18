@@ -336,6 +336,98 @@ class GroqClient(LLMClient):
         return len(self.tokenizer.encode(text))
 
 
+class OpenAICompatibleClient(LLMClient):
+    """
+    Client for OpenAI-compatible API endpoints.
+
+    Supports custom providers like Ollama, vLLM, Together.ai, Anyscale,
+    and any other API that implements the OpenAI chat completions format.
+    """
+
+    def __init__(self, spec: LLMSpec):
+        """
+        Initialize OpenAI-compatible client.
+
+        Args:
+            spec: LLM specification with base_url required
+
+        Raises:
+            ValueError: If base_url not provided
+        """
+        super().__init__(spec)
+
+        if not spec.base_url:
+            raise ValueError("base_url required for openai_compatible provider")
+
+        # Get API key (optional for local APIs like Ollama)
+        api_key = spec.api_key or os.getenv("OPENAI_COMPATIBLE_API_KEY") or "dummy"
+
+        # Initialize OpenAI client with custom base URL
+        self.client = OpenAI(
+            model=spec.model,
+            api_key=api_key,
+            api_base=spec.base_url,
+            temperature=spec.temperature,
+            max_tokens=spec.max_tokens,
+        )
+
+        # Use provider_name for logging/metrics, or default
+        self.provider_name = spec.provider_name or "OpenAI-Compatible"
+
+        # Initialize tokenizer (use default encoding for custom providers)
+        self.tokenizer = tiktoken.get_encoding("cl100k_base")
+
+    def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
+        """
+        Invoke OpenAI-compatible API.
+
+        Args:
+            prompt: Text prompt
+            **kwargs: Additional model parameters
+
+        Returns:
+            LLMResponse with result and metadata
+        """
+        start_time = time.time()
+
+        message = ChatMessage(role="user", content=prompt)
+        response = self.client.chat([message])
+
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Extract text from response
+        response_text = str(response) if response else ""
+
+        # Estimate token usage (approximate for custom providers)
+        tokens_in = len(self.tokenizer.encode(prompt))
+        tokens_out = len(self.tokenizer.encode(response_text))
+
+        cost = self.calculate_cost(tokens_in, tokens_out)
+
+        return LLMResponse(
+            text=response_text,
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
+            model=f"{self.provider_name}/{self.model}",  # Show provider in metrics
+            cost=cost,
+            latency_ms=latency_ms,
+        )
+
+    def estimate_tokens(self, text: str) -> int:
+        """
+        Estimate tokens using tiktoken.
+
+        Note: This is approximate for custom providers.
+
+        Args:
+            text: Input text
+
+        Returns:
+            Estimated token count
+        """
+        return len(self.tokenizer.encode(text))
+
+
 def create_llm_client(spec: LLMSpec) -> LLMClient:
     """
     Factory function to create appropriate LLM client.
@@ -357,4 +449,6 @@ def create_llm_client(spec: LLMSpec) -> LLMClient:
         return AnthropicClient(spec)
     if spec.provider == LLMProvider.GROQ:
         return GroqClient(spec)
+    if spec.provider == LLMProvider.OPENAI_COMPATIBLE:
+        return OpenAICompatibleClient(spec)
     raise ValueError(f"Unsupported provider: {spec.provider}")
