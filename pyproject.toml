@@ -50,6 +50,7 @@ dev = [
     "pre-commit>=4.0.0",
     "bandit>=1.7.0",
     "pip-audit>=2.7.0",
+    "pip-licenses>=4.3.0",
     "ipython>=8.20.0",
     "jupyter>=1.0.0",
 ]
