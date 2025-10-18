@@ -15,3 +15,13 @@ wheels/
 
 # Temporary directory
 tmp/
+
+# macOS files
+.DS_Store
+
+# Test/example YAML files with data
+*bacon*.yaml
+test_similarity_composition.py
+ground_truth*.xlsx
+examples/similarity_*.yaml
+examples/swap_risk_assessment.yaml
