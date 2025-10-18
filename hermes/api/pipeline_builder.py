@@ -55,6 +55,7 @@ class PipelineBuilder:
         self._output_spec: Optional[OutputSpec] = None
         self._dataframe: Optional[pd.DataFrame] = None
         self._executor: Optional[ExecutionStrategy] = None
+        self._custom_parser: Optional[any] = None
 
     @staticmethod
     def create() -> "PipelineBuilder":
@@ -335,6 +336,82 @@ class PipelineBuilder:
         self._processing_spec.max_budget = Decimal(str(budget))
         return self
 
+    def with_error_policy(self, policy: str) -> "PipelineBuilder":
+        """
+        Configure error handling policy.
+
+        Args:
+            policy: Error policy ('skip', 'fail', 'retry', 'use_default')
+
+        Returns:
+            Self for chaining
+        """
+        from hermes.core.specifications import ErrorPolicy
+        self._processing_spec.error_policy = ErrorPolicy(policy.lower())
+        return self
+
+    def with_checkpoint_dir(self, directory: str) -> "PipelineBuilder":
+        """
+        Configure checkpoint directory.
+
+        Args:
+            directory: Path to checkpoint directory
+
+        Returns:
+            Self for chaining
+        """
+        self._processing_spec.checkpoint_dir = Path(directory)
+        return self
+
+    def with_parser(self, parser: any) -> "PipelineBuilder":
+        """
+        Configure response parser.
+        
+        This method allows setting a custom parser. The parser type
+        determines the response_format in the prompt spec.
+
+        Args:
+            parser: Parser instance (JSONParser, RegexParser, PydanticParser, etc.)
+
+        Returns:
+            Self for chaining
+        """
+        # Store the parser for later use in the pipeline
+        # We'll configure response_format based on parser type
+        if hasattr(parser, '__class__'):
+            parser_name = parser.__class__.__name__
+            if 'JSON' in parser_name:
+                if not self._prompt_spec:
+                    raise ValueError("with_prompt() must be called before with_parser()")
+                # Update the existing prompt spec's response_format
+                self._prompt_spec.response_format = 'json'
+            elif 'Regex' in parser_name:
+                if not self._prompt_spec:
+                    raise ValueError("with_prompt() must be called before with_parser()")
+                self._prompt_spec.response_format = 'regex'
+                if hasattr(parser, 'patterns'):
+                    self._prompt_spec.regex_patterns = parser.patterns
+        
+        # Store the parser instance in metadata for the pipeline to use
+        if not hasattr(self, '_custom_parser'):
+            self._custom_parser = parser
+        
+        return self
+
+    def to_csv(self, path: str) -> "PipelineBuilder":
+        """
+        Configure CSV output destination.
+        
+        Alias for with_output(path, format='csv').
+
+        Args:
+            path: Output CSV file path
+
+        Returns:
+            Self for chaining
+        """
+        return self.with_output(path, format='csv')
+
     def with_output(
         self,
         path: str,
@@ -436,6 +513,11 @@ class PipelineBuilder:
         if not self._llm_spec:
             raise ValueError("LLM specification required")
         
+        # Prepare metadata with custom parser if provided
+        metadata = {}
+        if self._custom_parser is not None:
+            metadata['custom_parser'] = self._custom_parser
+        
         # Create specifications bundle
         specifications = PipelineSpecifications(
             dataset=self._dataset_spec,
@@ -443,6 +525,7 @@ class PipelineBuilder:
             llm=self._llm_spec,
             processing=self._processing_spec,
             output=self._output_spec,
+            metadata=metadata,
         )
         
         # Create and return pipeline

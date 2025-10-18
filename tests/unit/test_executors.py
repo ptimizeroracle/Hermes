@@ -136,7 +136,7 @@ class TestStreamingExecutor:
         spec = DatasetSpec(
             source_type=DataSourceType.DATAFRAME,
             input_columns=["text"],
-            output_columns=["text"],
+            output_columns=["result"],
         )
         
         # Process data through loader first
@@ -170,7 +170,7 @@ class TestStreamingExecutor:
         spec = DatasetSpec(
             source_type=DataSourceType.DATAFRAME,
             input_columns=["text"],
-            output_columns=["text"],
+            output_columns=["result"],
         )
         
         # Process data

@@ -187,12 +187,20 @@ class ResponseParserStage(
 
     def process(
         self,
-        input_data: List[ResponseBatch],
+        input_data: tuple[List[ResponseBatch], List[str]] | List[ResponseBatch],
         context: Any,
     ) -> pd.DataFrame:
         """Parse responses into DataFrame."""
-        batches = input_data
-        output_cols = self.output_columns
+        # Handle both tuple (batches, output_cols) and list [batches] for backward compatibility
+        if isinstance(input_data, tuple):
+            batches, output_cols = input_data
+            # Use output_cols from input_data (overrides self.output_columns if provided)
+            if not output_cols:
+                output_cols = self.output_columns
+        else:
+            # Backward compatibility: input_data is just the list of batches
+            batches = input_data
+            output_cols = self.output_columns
         
         # Initialize result storage
         results: Dict[int, Dict[str, Any]] = {}

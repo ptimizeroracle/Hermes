@@ -18,6 +18,7 @@ from hermes.adapters import (
 from hermes.core.models import (
     CostEstimate,
     ExecutionResult,
+    ProcessingStats,
     ValidationResult,
 )
 from hermes.core.specifications import (
@@ -114,6 +115,14 @@ class Pipeline:
         
         if not self.specifications.dataset.output_columns:
             result.add_error("No output columns specified")
+        
+        # Validate that input columns exist in dataframe (if dataframe is provided)
+        if self.dataframe is not None and self.specifications.dataset.input_columns:
+            df_cols = set(self.dataframe.columns)
+            input_cols = set(self.specifications.dataset.input_columns)
+            missing_cols = input_cols - df_cols
+            if missing_cols:
+                result.add_error(f"Input columns not found in dataframe: {missing_cols}")
         
         # Validate prompt spec
         if not self.specifications.prompt.template:
@@ -362,10 +371,15 @@ class Pipeline:
             state_manager.save_checkpoint(context)
         
         # Stage 4: Parse responses (using configured parser)
-        parser = create_response_parser(
-            prompt_spec=specs.prompt,
-            output_columns=specs.dataset.output_columns,
-        )
+        # Check if custom parser provided in metadata
+        custom_parser = specs.metadata.get('custom_parser') if specs.metadata else None
+        if custom_parser:
+            parser = custom_parser
+        else:
+            parser = create_response_parser(
+                prompt_spec=specs.prompt,
+                output_columns=specs.dataset.output_columns,
+            )
         parser_stage = ResponseParserStage(
             parser=parser,
             output_columns=specs.dataset.output_columns,
@@ -413,12 +427,15 @@ class Pipeline:
                 "Use AsyncExecutor: Pipeline(specs, executor=AsyncExecutor())"
             )
         
-        # Use executor's async execute method
-        return await self.executor.execute([], ExecutionContext())
+        # For now, wrap synchronous execution in async
+        # TODO: Implement fully async execution pipeline
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.execute, resume_from)
 
     def execute_stream(
-        self, chunk_size: int = 1000
-    ) -> Iterator[pd.DataFrame]:
+        self, chunk_size: int | None = None
+    ) -> Iterator[ExecutionResult]:
         """
         Execute pipeline in streaming mode.
         
@@ -426,10 +443,10 @@ class Pipeline:
         Ideal for datasets that don't fit in memory.
 
         Args:
-            chunk_size: Number of rows per chunk
+            chunk_size: Number of rows per chunk (uses executor's chunk_size if None)
 
         Yields:
-            DataFrames with processed chunks
+            ExecutionResult objects for each processed chunk
             
         Raises:
             ValueError: If executor doesn't support streaming
@@ -437,11 +454,52 @@ class Pipeline:
         if not self.executor.supports_streaming():
             raise ValueError(
                 "Current executor doesn't support streaming. "
-                f"Use StreamingExecutor: Pipeline(specs, executor=StreamingExecutor({chunk_size}))"
+                f"Use StreamingExecutor: Pipeline(specs, executor=StreamingExecutor())"
             )
         
-        # Use executor's streaming execute method
-        return self.executor.execute([], ExecutionContext())
+        # Use executor's chunk_size if not provided
+        if chunk_size is None and isinstance(self.executor, StreamingExecutor):
+            chunk_size = self.executor.chunk_size
+        elif chunk_size is None:
+            chunk_size = 1000  # Default fallback
+        
+        # For now, execute the full pipeline and split result into chunks
+        # TODO: Implement proper streaming execution that processes chunks independently
+        result = self.execute()
+        
+        # Split the result data into chunks and yield as separate ExecutionResults
+        total_rows = len(result.data)
+        for start_idx in range(0, total_rows, chunk_size):
+            end_idx = min(start_idx + chunk_size, total_rows)
+            chunk_data = result.data.iloc[start_idx:end_idx].copy()
+            
+            # Create a chunk result with proportional metrics
+            chunk_rows = len(chunk_data)
+            chunk_result = ExecutionResult(
+                data=chunk_data,
+                metrics=ProcessingStats(
+                    total_rows=chunk_rows,
+                    processed_rows=chunk_rows,
+                    failed_rows=0,
+                    skipped_rows=0,
+                    rows_per_second=result.metrics.rows_per_second,
+                    total_duration_seconds=result.metrics.total_duration_seconds * (chunk_rows / total_rows),
+                    stage_durations=result.metrics.stage_durations,
+                ),
+                costs=CostEstimate(
+                    total_cost=result.costs.total_cost * Decimal(chunk_rows / total_rows),
+                    total_tokens=int(result.costs.total_tokens * (chunk_rows / total_rows)),
+                    input_tokens=int(result.costs.input_tokens * (chunk_rows / total_rows)),
+                    output_tokens=int(result.costs.output_tokens * (chunk_rows / total_rows)),
+                    rows=chunk_rows,
+                    confidence=result.costs.confidence,
+                ),
+                execution_id=result.execution_id,
+                start_time=result.start_time,
+                end_time=result.end_time,
+                success=True,
+            )
+            yield chunk_result
 
     def _execute_stage(
         self, stage: Any, input_data: Any, context: ExecutionContext
