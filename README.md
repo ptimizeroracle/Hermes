@@ -17,7 +17,7 @@ Built with **LlamaIndex** for LLM abstraction and following **SOLID** principles
 ## 🚀 Quick Start
 
 ```python
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 # Process CSV with LLM transformations
 pipeline = (
@@ -47,13 +47,13 @@ print(f"Duration: {result.metrics.total_duration_seconds:.2f}s")
 ### Using uv (recommended)
 
 ```bash
-uv add llm-dataset-engine
+uv add hermes
 ```
 
 ### Using pip
 
 ```bash
-pip install llm-dataset-engine
+pip install hermes
 ```
 
 ### Set up API keys
@@ -72,7 +72,7 @@ export ANTHROPIC_API_KEY="your-key-here"
 ### 1. Simple Data Processing
 
 ```python
-from llm_dataset_engine import DatasetProcessor
+from hermes import DatasetProcessor
 
 # Minimal configuration for simple use cases
 processor = DatasetProcessor(
@@ -94,7 +94,7 @@ result = processor.run()
 ### 2. Structured Data Extraction
 
 ```python
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 pipeline = (
     PipelineBuilder.create()
@@ -298,7 +298,7 @@ The SDK follows a **layered architecture** based on SOLID principles:
 uv run pytest
 
 # With coverage
-uv run pytest --cov=llm_dataset_engine --cov-report=html
+uv run pytest --cov=src --cov-report=html
 
 # Run specific test
 uv run pytest tests/test_pipeline.py
