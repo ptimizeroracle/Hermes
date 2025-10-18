@@ -315,7 +315,7 @@ uv run pytest tests/test_pipeline.py
 
 Contributions welcome! Please follow:
 
-1. Fork the repository at https://github.com/optimizeroracle/hermes
+1. Fork the repository at https://github.com/ptimizeroracle/Hermes
 2. Create a feature branch
 3. Follow the existing code style (Black, Ruff)
 4. Add tests for new features
@@ -334,7 +334,7 @@ MIT License - see LICENSE file for details
 
 ## 📞 Support
 
-- **Repository**: https://github.com/optimizeroracle/hermes
+- **Repository**: https://github.com/ptimizeroracle/Hermes
 - **Issues**: Open an issue on GitHub
 - **Discussions**: Use GitHub Discussions for questions
 - **Email**: git@binblok.com
