@@ -1075,7 +1075,7 @@ Then YOU can test with your API keys and give feedback!
 
 ```bash
 Model: openai/gpt-oss-120b
-API Key: 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
+API Key: YOUR_GROQ_API_KEY_HERE
 Status: ✅ WORKING
 
 Results:

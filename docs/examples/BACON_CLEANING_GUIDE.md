@@ -23,7 +23,7 @@ Raw, sliced applewood-smoked bacon, 18–22 slices per pound (thin-cut), layflat
 ### **Step 1: Set Your API Key**
 
 ```bash
-export GROQ_API_KEY="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"
+export GROQ_API_KEY="your-api-key-here"
 ```
 
 ### **Step 2: Review the Configuration**

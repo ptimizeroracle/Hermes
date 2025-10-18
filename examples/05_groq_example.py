@@ -33,8 +33,8 @@ pipeline = (
     .with_prompt("Answer this question concisely: {question}\n\nAnswer:")
     .with_llm(
         provider="groq",
-        model="openai/gpt-oss-120b",  # Groq's GPT model
-        api_key="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",
+        model="llama-3.3-70b-versatile",  # Current Groq model
+        # API key will be read from GROQ_API_KEY environment variable
         temperature=0.0,
     )
     .with_batch_size(5)

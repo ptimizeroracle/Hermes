@@ -10,7 +10,7 @@ This guide shows you **2 ways** to process all 365 bacon descriptions.
 
 ```bash
 # 1. Set your API key
-export GROQ_API_KEY="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"
+export GROQ_API_KEY="your-api-key-here"
 
 # 2. Go to project directory
 cd /Users/atikpro/PycharmProjects/Hermes
@@ -85,7 +85,7 @@ import pandas as pd
 from hermes import PipelineBuilder
 
 # Set API key
-os.environ["GROQ_API_KEY"] = "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"
+os.environ["GROQ_API_KEY"] = "your-api-key-here"
 
 print("🥓 Processing ALL 365 Bacon Descriptions")
 print("="*80 + "\n")

@@ -55,7 +55,10 @@ class PromptFormatterStage(
 
         # Create template renderer
         if self.use_jinja2:
-            template = Jinja2Template(template_str)
+            # Note: autoescape=False is intentional for LLM prompts (not HTML)
+            # We're generating text prompts, not web content, so HTML escaping
+            # would corrupt the prompt data sent to the LLM
+            template = Jinja2Template(template_str, autoescape=False)  # noqa: S701
 
         # Format prompt for each row
         for idx, row in df.iterrows():

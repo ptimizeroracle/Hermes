@@ -19,7 +19,7 @@
 ### **Run This Command:**
 
 ```bash
-export GROQ_API_KEY="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"
+export GROQ_API_KEY="your-api-key-here"
 cd /Users/atikpro/PycharmProjects/Hermes
 python process_all_365_bacon.py
 ```
@@ -231,7 +231,7 @@ You have **2 proven working methods**:
 ```bash
 # Everything you need in one command:
 cd /Users/atikpro/PycharmProjects/Hermes && \
-export GROQ_API_KEY="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" && \
+export GROQ_API_KEY="your-api-key-here" && \
 python process_all_365_bacon.py
 ```
 
