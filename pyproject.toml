@@ -111,7 +111,6 @@ ignore = [
     "SIM105", # contextlib.suppress suggestion (readability preference)
     "SIM108", # ternary operator suggestion (readability preference)
     "SIM102", # nested if simplification (readability preference)
-    "UP038",  # isinstance with union (compatibility)
     "S603",   # subprocess without shell=True
     "S607",   # starting process with partial path
 ]
