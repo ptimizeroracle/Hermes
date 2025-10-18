@@ -50,6 +50,7 @@ dev = [
     "pre-commit>=4.0.0",
     "bandit>=1.7.0",
     "pip-audit>=2.7.0",
+    "pip-licenses>=4.3.0",
     "ipython>=8.20.0",
     "jupyter>=1.0.0",
 ]
@@ -111,7 +112,6 @@ ignore = [
     "SIM105", # contextlib.suppress suggestion (readability preference)
     "SIM108", # ternary operator suggestion (readability preference)
     "SIM102", # nested if simplification (readability preference)
-    "UP038",  # isinstance with union (compatibility)
     "S603",   # subprocess without shell=True
     "S607",   # starting process with partial path
 ]
