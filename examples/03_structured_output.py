@@ -6,8 +6,8 @@ responses using JSON output.
 """
 
 import pandas as pd
-from llm_dataset_engine import PipelineBuilder
-from llm_dataset_engine.stages import JSONParser, ResponseParserStage
+from hermes import PipelineBuilder
+from hermes.stages import JSONParser, ResponseParserStage
 
 # Sample product descriptions
 data = pd.DataFrame({

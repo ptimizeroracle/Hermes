@@ -6,7 +6,7 @@ during pipeline execution.
 """
 
 import pandas as pd
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 # Create larger dataset
 data = pd.DataFrame({

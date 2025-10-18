@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import pytest
 
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 from src.orchestration import AsyncExecutor, StreamingExecutor
 
 

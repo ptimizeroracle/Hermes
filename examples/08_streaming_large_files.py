@@ -6,7 +6,7 @@ large datasets that don't fit in memory.
 """
 
 import pandas as pd
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 # For demonstration, create a sample file
 # In real use, this would be a large CSV (100K+ rows)

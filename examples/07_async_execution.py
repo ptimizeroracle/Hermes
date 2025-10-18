@@ -8,7 +8,7 @@ with FastAPI, aiohttp, and other async frameworks.
 import asyncio
 
 import pandas as pd
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 # Sample data
 data = pd.DataFrame({
@@ -66,7 +66,7 @@ async def fastapi_example():
     
     Usage:
         from fastapi import FastAPI
-        from llm_dataset_engine import PipelineBuilder
+        from hermes import PipelineBuilder
         
         app = FastAPI()
         

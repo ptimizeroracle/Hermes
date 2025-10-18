@@ -6,7 +6,7 @@ using the LLM Dataset Engine.
 """
 
 import pandas as pd
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 # Create sample data
 data = pd.DataFrame({

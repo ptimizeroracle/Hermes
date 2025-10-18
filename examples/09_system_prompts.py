@@ -6,7 +6,7 @@ while keeping the transformation prompt separate.
 """
 
 import pandas as pd
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 
 # Sample product data
 data = pd.DataFrame({
@@ -128,7 +128,7 @@ def example_3_json_extraction_with_system():
     print("EXAMPLE 3: Structured Output with System Prompt")
     print("=" * 70)
     
-    from llm_dataset_engine.stages import JSONParser
+    from hermes.stages import JSONParser
     
     products = pd.DataFrame({
         "text": [
@@ -195,7 +195,7 @@ processing:
 """
     
     import tempfile
-    from llm_dataset_engine.config import ConfigLoader
+    from hermes.config import ConfigLoader
     
     # Write config to temp file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
@@ -213,7 +213,7 @@ processing:
         "description": ["Fresh Bananas", "Ground Beef 80/20", "Sourdough Bread"]
     })
     
-    from llm_dataset_engine.api import Pipeline
+    from hermes.api import Pipeline
     pipeline = Pipeline(specs, dataframe=df)
     result = pipeline.execute()
     

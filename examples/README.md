@@ -102,7 +102,7 @@ if estimate.total_cost > MAX_BUDGET:
 ```python
 # Progress bar and logging are enabled by default
 # Add custom observers if needed
-from llm_dataset_engine.orchestration import CostTrackingObserver
+from hermes.orchestration import CostTrackingObserver
 
 pipeline.add_observer(CostTrackingObserver(warning_threshold=0.8))
 ```

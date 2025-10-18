@@ -11,7 +11,7 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from llm_dataset_engine import PipelineBuilder
+from hermes import PipelineBuilder
 from src.stages import JSONParser, PydanticParser, RegexParser
 
 

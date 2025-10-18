@@ -5,8 +5,8 @@ This example shows how to define pipelines in configuration files
 for easy management and version control.
 """
 
-from llm_dataset_engine.api.pipeline import Pipeline
-from llm_dataset_engine.config import ConfigLoader
+from hermes.api.pipeline import Pipeline
+from hermes.config import ConfigLoader
 
 # Load configuration from YAML
 print("Loading configuration from YAML...")

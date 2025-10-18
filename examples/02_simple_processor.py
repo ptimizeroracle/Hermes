@@ -5,7 +5,7 @@ This example shows the DatasetProcessor convenience wrapper
 for simple use cases.
 """
 
-from llm_dataset_engine import DatasetProcessor
+from hermes import DatasetProcessor
 
 # Create sample CSV (in real use, this would be an existing file)
 import pandas as pd
