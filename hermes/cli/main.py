@@ -206,7 +206,7 @@ def process(
                 specs.output.destination_path = output
             else:
                 # Create output spec if not in config
-                from src.core.specifications import OutputSpec, MergeStrategy
+                from hermes.core.specifications import OutputSpec, MergeStrategy
                 
                 # Detect output type from extension
                 output_suffix = output.suffix.lower()
@@ -490,8 +490,8 @@ def resume(
         llm-dataset resume -s abc-123 --checkpoint-dir /path/to/checkpoints
     """
     try:
-        from src.adapters import LocalFileCheckpointStorage
-        from src.orchestration import StateManager
+        from hermes.adapters import LocalFileCheckpointStorage
+        from hermes.orchestration import StateManager
         
         # Load checkpoint
         console.print(f"[cyan]Looking for checkpoint in {checkpoint_dir}...[/cyan]")
@@ -649,7 +649,7 @@ def list_checkpoints(checkpoint_dir: Path):
         llm-dataset list-checkpoints --checkpoint-dir /path/to/checkpoints
     """
     try:
-        from src.adapters import LocalFileCheckpointStorage
+        from hermes.adapters import LocalFileCheckpointStorage
         
         console.print(f"[cyan]Scanning {checkpoint_dir} for checkpoints...[/cyan]")
         

@@ -25,7 +25,7 @@ class MockStage(PipelineStage):
 
     def validate_input(self, input_data, context):
         """Validate input."""
-        from src.core.models import ValidationResult
+        from hermes.core.models import ValidationResult
         return ValidationResult(is_valid=True, errors=[])
 
     def process(self, input_data, context):
@@ -37,7 +37,7 @@ class MockStage(PipelineStage):
 
     def estimate_cost(self, input_data, context):
         """Estimate cost."""
-        from src.core.models import CostEstimate
+        from hermes.core.models import CostEstimate
         return CostEstimate(
             total_cost=Decimal("0.0"),
             total_tokens=0,

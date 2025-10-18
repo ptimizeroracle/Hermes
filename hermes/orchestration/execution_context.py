@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 from hermes.core.models import ProcessingStats
 
 if TYPE_CHECKING:
-    from src.orchestration.observers import ExecutionObserver
+    from hermes.orchestration.observers import ExecutionObserver
 
 
 @dataclass

@@ -43,7 +43,7 @@ def llm_transform_task(
     
     Example:
         from prefect import flow
-        from src.integrations.prefect import llm_transform_task
+        from hermes.integrations.prefect import llm_transform_task
         
         @flow
         def data_pipeline():
@@ -85,7 +85,7 @@ def llm_transform_task(
         specs.processing.max_budget = Decimal(str(max_budget))
     
     if provider_override:
-        from src.core.specifications import LLMProvider
+        from hermes.core.specifications import LLMProvider
         specs.llm.provider = LLMProvider(provider_override)
     
     if model_override:
@@ -102,7 +102,7 @@ def llm_transform_task(
     
     # Set output if specified
     if output_file:
-        from src.core.specifications import (
+        from hermes.core.specifications import (
             DataSourceType,
             MergeStrategy,
             OutputSpec,

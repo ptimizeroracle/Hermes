@@ -312,7 +312,7 @@ class PipelineComposer:
             This enables pure YAML workflows without Python code.
         """
         import yaml
-        from src.config import ConfigLoader
+        from hermes.config import ConfigLoader
         
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)

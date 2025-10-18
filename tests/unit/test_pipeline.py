@@ -122,7 +122,7 @@ class TestPipeline:
 
     def test_add_observer(self):
         """Test adding observers to pipeline."""
-        from src.orchestration import LoggingObserver
+        from hermes.orchestration import LoggingObserver
         
         specs = PipelineSpecifications(
             dataset=DatasetSpec(
@@ -143,7 +143,7 @@ class TestPipeline:
 
     def test_pipeline_with_executor(self):
         """Test pipeline with custom executor."""
-        from src.orchestration import SyncExecutor
+        from hermes.orchestration import SyncExecutor
         
         specs = PipelineSpecifications(
             dataset=DatasetSpec(

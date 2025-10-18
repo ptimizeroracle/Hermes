@@ -167,7 +167,7 @@ class TestQualityValidationE2E:
     def test_quality_validation_detects_poor_results(self):
         """Should detect when quality is below acceptable threshold."""
         # Simulate a result with poor quality
-        from src.core.models import ExecutionResult, ProcessingStats, CostEstimate, QualityReport
+        from hermes.core.models import ExecutionResult, ProcessingStats, CostEstimate, QualityReport
         from uuid import uuid4
         from datetime import datetime
         
@@ -247,7 +247,7 @@ class TestFullPipelineE2E:
     
     def test_config_driven_preprocessing_and_retry(self):
         """Should work when configured via YAML/dict."""
-        from src.core.specifications import (
+        from hermes.core.specifications import (
             PipelineSpecifications,
             DatasetSpec,
             PromptSpec,
@@ -299,9 +299,9 @@ class TestRegressionPrevention:
     
     def test_pipeline_init_without_observers(self):
         """Should initialize Pipeline without observers parameter (regression test)."""
-        from src.api.pipeline import Pipeline
-        from src.core.specifications import PipelineSpecifications, DatasetSpec, PromptSpec, LLMSpec, ProcessingSpec
-        from src.core.specifications import DataSourceType, LLMProvider
+        from hermes.api.pipeline import Pipeline
+        from hermes.core.specifications import PipelineSpecifications, DatasetSpec, PromptSpec, LLMSpec, ProcessingSpec
+        from hermes.core.specifications import DataSourceType, LLMProvider
         
         specs = PipelineSpecifications(
             dataset=DatasetSpec(

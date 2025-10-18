@@ -98,7 +98,7 @@ class TestErrorRecovery:
 
     def test_retry_with_backoff(self):
         """Test retry with exponential backoff."""
-        from src.utils import RetryHandler
+        from hermes.utils import RetryHandler
         
         handler = RetryHandler(
             max_attempts=3,

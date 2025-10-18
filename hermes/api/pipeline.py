@@ -284,7 +284,7 @@ class Pipeline:
         # Create budget controller if max_budget specified
         budget_controller = None
         if specs.processing.max_budget:
-            from src.utils import BudgetController
+            from hermes.utils import BudgetController
             
             budget_controller = BudgetController(
                 max_budget=specs.processing.max_budget,
@@ -300,7 +300,7 @@ class Pipeline:
         
         # Optional: Preprocess loaded data
         if specs.processing.enable_preprocessing:
-            from src.utils.input_preprocessing import preprocess_dataframe
+            from hermes.utils.input_preprocessing import preprocess_dataframe
             
             self.logger.info("Preprocessing loaded data...")
             df, stats = preprocess_dataframe(
@@ -512,7 +512,7 @@ class Pipeline:
             retry_df = retry_df.reset_index(drop=True)
             
             # Create modified specs for retry (use dataframe, not file)
-            from src.core.specifications import DataSourceType
+            from hermes.core.specifications import DataSourceType
             
             retry_specs = self.specifications.model_copy(deep=True)
             retry_specs.dataset.source_type = DataSourceType.DATAFRAME

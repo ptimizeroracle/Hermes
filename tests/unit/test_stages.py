@@ -148,7 +148,7 @@ class TestLLMInvocationStage:
 
     def test_llm_invocation_with_mock_client(self):
         """Test LLM invocation with mock client."""
-        from src.core.specifications import LLMProvider, LLMSpec
+        from hermes.core.specifications import LLMProvider, LLMSpec
         
         mock_client = MockLLMClient(
             spec=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
@@ -175,7 +175,7 @@ class TestLLMInvocationStage:
 
     def test_llm_invocation_maintains_order(self):
         """Test LLM invocation maintains response order."""
-        from src.core.specifications import LLMProvider, LLMSpec
+        from hermes.core.specifications import LLMProvider, LLMSpec
         
         mock_client = MockLLMClient(
             spec=LLMSpec(provider=LLMProvider.OPENAI, model="gpt-4o-mini"),
@@ -264,7 +264,7 @@ class TestResponseParserStage:
 
     def test_response_parser_stage_with_json(self):
         """Test response parser stage with JSON parser."""
-        from src.core.models import ResponseBatch
+        from hermes.core.models import ResponseBatch
         
         parser = JSONParser()
         stage = ResponseParserStage(parser=parser, output_columns=["name", "value"])

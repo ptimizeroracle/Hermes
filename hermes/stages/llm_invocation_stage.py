@@ -175,7 +175,7 @@ class LLMInvocationStage(
                     
                     if decision.action == ErrorAction.SKIP:
                         # Create placeholder response for skipped row
-                        from src.core.models import LLMResponse
+                        from hermes.core.models import LLMResponse
                         from decimal import Decimal
                         
                         placeholder = LLMResponse(

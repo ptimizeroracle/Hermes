@@ -534,7 +534,7 @@ class TestCheckpointStorage:
     def test_checkpoint_save_and_load(self):
         """Test saving and loading checkpoints."""
         from uuid import uuid4
-        from src.adapters import LocalFileCheckpointStorage
+        from hermes.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = LocalFileCheckpointStorage(Path(temp_dir))
@@ -559,7 +559,7 @@ class TestCheckpointStorage:
     def test_checkpoint_list(self):
         """Test listing checkpoints."""
         from uuid import uuid4
-        from src.adapters import LocalFileCheckpointStorage
+        from hermes.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = LocalFileCheckpointStorage(Path(temp_dir))
@@ -576,7 +576,7 @@ class TestCheckpointStorage:
     def test_checkpoint_delete(self):
         """Test deleting checkpoints."""
         from uuid import uuid4
-        from src.adapters import LocalFileCheckpointStorage
+        from hermes.adapters import LocalFileCheckpointStorage
         
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = LocalFileCheckpointStorage(Path(temp_dir))
