@@ -1,4 +1,12 @@
-# LLM Dataset Processing Engine
+# Hermes - LLM Dataset Engine
+
+[![Tests](https://github.com/ptimizeroracle/Hermes/actions/workflows/ci.yml/badge.svg)](https://github.com/ptimizeroracle/Hermes/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ptimizeroracle/Hermes/branch/main/graph/badge.svg)](https://codecov.io/gh/ptimizeroracle/Hermes)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 Production-grade SDK for processing tabular datasets using Large Language Models (LLMs) with reliability, observability, and cost control.
 
