@@ -25,3 +25,6 @@ test_similarity_composition.py
 ground_truth*.xlsx
 examples/similarity_*.yaml
 examples/swap_risk_assessment.yaml
+
+# Processing scripts with data
+process_all_*.py
