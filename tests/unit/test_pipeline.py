@@ -94,9 +94,13 @@ class TestPipeline:
 
     def test_estimate_cost_with_sample(self):
         """Test cost estimation with sample data."""
+        import os
         df = pd.DataFrame({
             "text": [f"Sample {i}" for i in range(100)]
         })
+        
+        # Set a dummy API key for cost estimation (doesn't need to be real)
+        os.environ["OPENAI_API_KEY"] = "sk-test-dummy-key-for-estimation"
         
         specs = PipelineSpecifications(
             dataset=DatasetSpec(
@@ -113,11 +117,16 @@ class TestPipeline:
             ),
         )
         
-        pipeline = Pipeline(specs, dataframe=df)
-        estimate = pipeline.estimate_cost()
-        
-        assert estimate.total_cost >= 0
-        assert estimate.rows == 100
+        try:
+            pipeline = Pipeline(specs, dataframe=df)
+            estimate = pipeline.estimate_cost()
+            
+            assert estimate.total_cost >= 0
+            assert estimate.rows == 100
+        finally:
+            # Clean up
+            if "OPENAI_API_KEY" in os.environ:
+                del os.environ["OPENAI_API_KEY"]
 
     def test_add_observer(self):
         """Test adding observers to pipeline."""

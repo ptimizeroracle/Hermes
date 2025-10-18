@@ -98,16 +98,16 @@ class PydanticParser(ResponseParser):
         self.model = model
         self.strict = strict
 
-    def parse(self, response: str) -> Dict[str, Any]:
+    def parse(self, response: str) -> BaseModel:
         """Parse and validate response with Pydantic model."""
         try:
             # Try to parse as JSON first
             json_parser = JSONParser(strict=False)
             data = json_parser.parse(response)
             
-            # Validate with Pydantic
+            # Validate with Pydantic and return the model instance
             validated = self.model(**data)
-            return validated.model_dump()
+            return validated
             
         except ValidationError as e:
             if self.strict:
@@ -187,11 +187,12 @@ class ResponseParserStage(
 
     def process(
         self,
-        input_data: tuple[List[ResponseBatch], List[str]],
+        input_data: List[ResponseBatch],
         context: Any,
     ) -> pd.DataFrame:
         """Parse responses into DataFrame."""
-        batches, output_cols = input_data
+        batches = input_data
+        output_cols = self.output_columns
         
         # Initialize result storage
         results: Dict[int, Dict[str, Any]] = {}
@@ -202,8 +203,9 @@ class ResponseParserStage(
                 batch.responses, batch.metadata
             ):
                 try:
-                    # Parse response
-                    parsed = self.parser.parse(response)
+                    # Parse response text
+                    response_text = response.text if hasattr(response, 'text') else str(response)
+                    parsed = self.parser.parse(response_text)
                     
                     # Map to output columns
                     row_data = {}

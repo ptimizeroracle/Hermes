@@ -118,6 +118,14 @@ class Pipeline:
         # Validate prompt spec
         if not self.specifications.prompt.template:
             result.add_error("No prompt template specified")
+        else:
+            # Check that template variables match input columns
+            import re
+            template_vars = set(re.findall(r'\{(\w+)\}', self.specifications.prompt.template))
+            input_cols = set(self.specifications.dataset.input_columns)
+            missing_vars = template_vars - input_cols
+            if missing_vars:
+                result.add_error(f"Template variables not in input columns: {missing_vars}")
         
         # Validate LLM spec
         if not self.specifications.llm.model:

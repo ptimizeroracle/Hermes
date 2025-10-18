@@ -297,6 +297,9 @@ class TestResponseParserStage:
                 RowMetadata(row_index=0),
                 RowMetadata(row_index=1),
             ],
+            tokens_used=100,
+            cost=Decimal("0.01"),
+            batch_id=0,
         )
         
         result_df = stage.process([batch], context)

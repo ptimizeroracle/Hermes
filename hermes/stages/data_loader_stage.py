@@ -85,11 +85,16 @@ class DataLoaderStage(PipelineStage[DatasetSpec, pd.DataFrame]):
 
     def estimate_cost(self, spec: DatasetSpec) -> CostEstimate:
         """Data loading has no LLM cost."""
+        # Try to determine row count if dataframe is available
+        row_count = 0
+        if self.dataframe is not None:
+            row_count = len(self.dataframe)
+        
         return CostEstimate(
             total_cost=Decimal("0.0"),
             total_tokens=0,
             input_tokens=0,
             output_tokens=0,
-            rows=0,
+            rows=row_count,
         )
 

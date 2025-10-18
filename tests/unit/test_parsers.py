@@ -82,9 +82,10 @@ class TestPydanticParser:
         
         result = parser.parse(json_str)
         
-        assert result["name"] == "iPhone"
-        assert result["price"] == 999.99
-        assert result["category"] == "Electronics"
+        # Result is a Pydantic model instance, use attribute access
+        assert result.name == "iPhone"
+        assert result.price == 999.99
+        assert result.category == "Electronics"
 
     def test_parse_invalid_strict(self):
         """Test strict mode fails on validation error."""
