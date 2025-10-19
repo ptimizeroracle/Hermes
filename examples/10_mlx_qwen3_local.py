@@ -46,15 +46,15 @@ if not os.getenv("HUGGING_FACE_HUB_TOKEN"):
     print("   Get token at: https://huggingface.co/settings/tokens")
     exit(1)
 
-# Create sample data for testing
+# Create sample data: HR resume screening
 data = pd.DataFrame(
     {
-        "product": [
-            "Organic whole grain bread with seeds",
-            "Wireless Bluetooth headphones with noise cancellation",
-            "Fresh Atlantic salmon fillet",
-            "Cotton t-shirt in navy blue",
-            "Stainless steel water bottle 32oz",
+        "resume_summary": [
+            "5 years Python engineer, ML/AI experience, Stanford CS degree, worked at Google",
+            "Recent bootcamp grad, 2 projects in React, seeking junior frontend role",
+            "Senior DevOps with 8 years AWS/K8s, led team of 6, startup experience",
+            "Marketing manager, 10 years B2B SaaS, grew ARR from $1M to $20M",
+            "Data scientist PhD, published 12 papers, expert in NLP and transformers",
         ]
     }
 )
@@ -68,26 +68,22 @@ pipeline = (
     PipelineBuilder.create()
     .from_dataframe(
         data,
-        input_columns=["product"],
-        output_columns=["category", "description"],
+        input_columns=["resume_summary"],
+        output_columns=["role_fit"],
     )
     .with_prompt(
-        """Analyze this product and provide:
-1. Category (Food, Electronics, Clothing, Home, Sports)
-2. Brief description (10 words max)
+        """You are an HR screening assistant. Analyze this resume and recommend the best role fit.
 
-Product: {product}
+Roles: Software Engineer, Data Scientist, DevOps Engineer, Marketing Manager, Product Manager
 
-Return JSON:
-{
-  "category": "...",
-  "description": "..."
-}"""
+Resume: {resume_summary}
+
+Recommended Role:"""
     )
     .with_llm(
         provider="mlx",
         model="mlx-community/Qwen3-1.7B-4bit",  # Fast, small model
-        max_tokens=150,
+        max_tokens=20,
         input_cost_per_1k_tokens=0.0,  # Free!
         output_cost_per_1k_tokens=0.0,
     )
@@ -115,9 +111,8 @@ print("✅ RESULTS")
 print("=" * 60)
 
 for idx, row in result.data.iterrows():
-    print(f"\n{idx + 1}. Product: {row['product']}")
-    print(f"   Category: {row['category']}")
-    print(f"   Description: {row['description']}")
+    print(f"\n{idx + 1}. Resume: {row['resume_summary'][:60]}...")
+    print(f"   Recommended Role: {row['role_fit']}")
 
 # Show performance metrics
 print("\n" + "=" * 60)

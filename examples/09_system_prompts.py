@@ -3,46 +3,52 @@ System Prompts Example - Using system messages with transformation prompts.
 
 This example demonstrates how to use system messages to guide LLM behavior
 while keeping the transformation prompt separate.
+
+Use cases span multiple industries:
+- Customer Support (ticket classification)
+- E-commerce (product data cleaning)
+- Finance (transaction categorization)
 """
 
 import pandas as pd
 
 from hermes import PipelineBuilder
 
-# Sample product data
+# Sample customer feedback data
 data = pd.DataFrame(
     {
-        "raw_description": [
-            "BACON APPLEWOOD SMOKED 14/18 LB CASE",
-            "LETTUCE ROMAINE HEARTS 12CT ORGANIC",
-            "CHICKEN BREAST BONELESS SKINLESS 40LB",
-            "TOMATOES CHERRY ON VINE 12/1PT",
+        "customer_feedback": [
+            "The app crashes every time I try to upload a photo",
+            "I was charged twice for the same order last month",
+            "How do I change my email address on my account?",
+            "My package says delivered but I never received it",
         ],
     }
 )
 
 
 def example_1_basic_system_prompt():
-    """Example 1: Basic system prompt usage."""
+    """Example 1: Basic system prompt for customer support classification."""
     print("=" * 70)
-    print("EXAMPLE 1: Basic System Prompt")
+    print("EXAMPLE 1: Customer Support Ticket Classification")
     print("=" * 70)
 
     pipeline = (
         PipelineBuilder.create()
         .from_dataframe(
             data,
-            input_columns=["raw_description"],
-            output_columns=["clean_description"],
+            input_columns=["customer_feedback"],
+            output_columns=["category"],
         )
         .with_prompt(
-            template="Clean this product description: {raw_description}",
-            system_message="You are a professional product data specialist. "
-            "Clean product descriptions by: "
-            "1) Converting to proper case "
-            "2) Expanding abbreviations "
-            "3) Making it customer-friendly "
-            "4) Keeping it concise",
+            template="Classify this customer feedback: {customer_feedback}",
+            system_message="You are a customer support specialist. "
+            "Classify feedback into these categories: "
+            "Technical, Billing, Account, Shipping, or General. "
+            "Rules: "
+            "1) Use only one category "
+            "2) Be consistent "
+            "3) Choose the most specific category",
         )
         .with_llm(
             provider="groq",
@@ -67,8 +73,8 @@ def example_1_basic_system_prompt():
 
     print("\n✅ Results:")
     for i, row in result.data.iterrows():
-        print(f"\nOriginal: {row['raw_description']}")
-        print(f"Cleaned:  {row['clean_description']}")
+        print(f"\nFeedback: {row['customer_feedback']}")
+        print(f"Category: {row['category']}")
 
 
 def example_2_different_personas():
@@ -167,27 +173,27 @@ def example_3_json_extraction_with_system():
 
 
 def example_4_yaml_config_with_system():
-    """Example 4: System prompt in YAML configuration."""
+    """Example 4: System prompt in YAML configuration for finance."""
     print("\n" + "=" * 70)
-    print("EXAMPLE 4: System Prompt in YAML Config")
+    print("EXAMPLE 4: Finance Transaction Categorization")
     print("=" * 70)
 
     # Create YAML config with system message
     yaml_config = """
 dataset:
   source_type: dataframe
-  input_columns: [description]
+  input_columns: [transaction_description]
   output_columns: [category]
 
 prompt:
-  template: "Categorize this product: {description}"
+  template: "Categorize this transaction: {transaction_description}"
   system_message: |
-    You are a product categorization expert.
-    Categories: Produce, Meat, Dairy, Bakery, Pantry
+    You are a financial categorization expert.
+    Categories: Software, Travel, Marketing, Office, Equipment, Dining
     Rules:
     - Choose only one category
     - Be consistent
-    - Consider the main product type
+    - Consider business expense type
 
 llm:
   provider: groq
@@ -216,7 +222,13 @@ processing:
 
     # Use it
     df = pd.DataFrame(
-        {"description": ["Fresh Bananas", "Ground Beef 80/20", "Sourdough Bread"]}
+        {
+            "transaction_description": [
+                "AWS Cloud Services - Monthly",
+                "United Airlines - SFO to NYC",
+                "Google Ads Campaign Q1",
+            ]
+        }
     )
 
     from hermes.api import Pipeline
@@ -226,7 +238,7 @@ processing:
 
     print("\n✅ Categorization Results:")
     for i, row in result.data.iterrows():
-        print(f"{row['description']}: {row['category']}")
+        print(f"{row['transaction_description']}: {row['category']}")
 
 
 def example_5_cli_with_system_prompt():

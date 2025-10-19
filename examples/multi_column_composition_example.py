@@ -11,18 +11,19 @@ Use Cases:
 """
 
 import pandas as pd
-from src.api import PipelineBuilder, PipelineComposer
 
-# Sample data
-bacon_data = pd.DataFrame(
+from hermes.api import PipelineBuilder, PipelineComposer
+
+# Sample data: E-commerce product matching
+product_data = pd.DataFrame(
     {
-        "incumbent": [
-            "BACON SLICED APPLEWOOD 14-18 SLICES/LB 10LB",
-            "BACON BITS REAL 20LB",
+        "current_product": [
+            "Apple iPhone 14 Pro Max 256GB Space Black",
+            "Sony WH-1000XM5 Wireless Noise Cancelling Headphones",
         ],
-        "portfolio": [
-            "BACON SLICED HICKORY SMOKED 14-18 SLICES/LB 10LB",
-            "BACON BITS IMITATION 20LB",
+        "candidate_product": [
+            "Apple iPhone 14 Pro 256GB Midnight",
+            "Sony WH-1000XM4 Wireless Noise Cancelling Over-Ear Headphones",
         ],
     }
 )
@@ -31,19 +32,19 @@ bacon_data = pd.DataFrame(
 def example_1_python_api():
     """Example 1: Python API (programmatic composition)"""
     print("\n" + "=" * 70)
-    print("EXAMPLE 1: Python API - Programmatic Composition")
+    print("EXAMPLE 1: Python API - E-commerce Product Matching")
     print("=" * 70)
 
-    # Build Pipeline 1: Similarity scoring
-    similarity_pipeline = (
+    # Build Pipeline 1: Match score
+    match_pipeline = (
         PipelineBuilder.create()
         .from_dataframe(
-            bacon_data,
-            input_columns=["incumbent", "portfolio"],
-            output_columns=["llm_similarity"],
+            product_data,
+            input_columns=["current_product", "candidate_product"],
+            output_columns=["match_score"],
         )
         .with_prompt(
-            template="Rate similarity (0-100%): {incumbent} vs {portfolio}",
+            template="Rate product match similarity (0-100%): '{current_product}' vs '{candidate_product}'",
         )
         .with_llm(
             provider="groq",
@@ -55,16 +56,16 @@ def example_1_python_api():
         .build()
     )
 
-    # Build Pipeline 2: Explanation (uses similarity score)
+    # Build Pipeline 2: Match explanation (uses match score)
     explanation_pipeline = (
         PipelineBuilder.create()
         .from_dataframe(
-            bacon_data,
-            input_columns=["incumbent", "portfolio", "llm_similarity"],
-            output_columns=["Explanation"],
+            product_data,
+            input_columns=["current_product", "candidate_product", "match_score"],
+            output_columns=["explanation"],
         )
         .with_prompt(
-            template="Explain {llm_similarity}% score for {incumbent} vs {portfolio}",
+            template="Explain why '{current_product}' and '{candidate_product}' have a {match_score}% match score. Consider: brand, model, features, specs.",
         )
         .with_llm(
             provider="groq",
@@ -77,11 +78,11 @@ def example_1_python_api():
     )
 
     # Compose pipelines
-    composer = PipelineComposer(input_data=bacon_data)
+    composer = PipelineComposer(input_data=product_data)
 
     result = (
-        composer.add_column("llm_similarity", similarity_pipeline)
-        .add_column("Explanation", explanation_pipeline, depends_on=["llm_similarity"])
+        composer.add_column("match_score", match_pipeline)
+        .add_column("explanation", explanation_pipeline, depends_on=["match_score"])
         .execute()
     )
 
@@ -120,22 +121,22 @@ def example_3_json_multi_output():
     pipeline = (
         PipelineBuilder.create()
         .from_dataframe(
-            bacon_data,
-            input_columns=["incumbent", "portfolio"],
-            output_columns=["llm_similarity", "Explanation"],  # Both columns!
+            product_data,
+            input_columns=["current_product", "candidate_product"],
+            output_columns=["match_score", "explanation"],  # Both columns!
         )
         .with_prompt(
             template="""
-Rate similarity and explain in JSON format:
+Analyze product match and explain in JSON format:
 
-Incumbent: {incumbent}
-Portfolio: {portfolio}
+Current: {current_product}
+Candidate: {candidate_product}
 
 Return JSON:
-{
-  "llm_similarity": "95%",
-  "Explanation": "Both are applewood-smoked, thick-cut..."
-}
+{{
+  "match_score": "85%",
+  "explanation": "Same brand and product line, but different generation/model..."
+}}
 """,
         )
         .with_llm(
