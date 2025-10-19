@@ -259,6 +259,224 @@ graph TD
 
 ---
 
+# Part 5: Layer 1 - Infrastructure Adapters (LLM Providers)
+
+## 5.1 LLM Provider Overview
+
+Hermes supports multiple LLM providers through the **Adapter pattern**, allowing easy switching between providers without changing core logic.
+
+### Supported Providers
+
+| Provider | Category | Platform | Cost | Use Case |
+|----------|----------|----------|------|----------|
+| **OpenAI** | Cloud API | All | $$ | Production, high quality |
+| **Azure OpenAI** | Cloud API | All | $$ | Enterprise, compliance |
+| **Anthropic** | Cloud API | All | $$$ | Claude models, long context |
+| **Groq** | Cloud API | All | Free tier | Fast inference, development |
+| **OpenAI-Compatible** | Custom/Local/Cloud | All | Varies | Ollama, vLLM, Together.AI, custom APIs |
+
+### Provider Selection Guide
+
+**Choose OpenAI if**: Production quality, mature ecosystem, GPT-4
+**Choose Azure if**: Enterprise compliance, private deployments
+**Choose Anthropic if**: Claude models, 100K+ context
+**Choose Groq if**: Fast inference, free tier, development
+**Choose OpenAI-Compatible if**: Custom endpoints, Ollama, vLLM, Together.AI, self-hosted
+
+---
+
+## 5.2 OpenAI-Compatible Provider (Custom APIs)
+
+### Purpose
+Enable integration with any LLM API that implements the OpenAI chat completions format.
+
+### Class: `OpenAICompatibleClient`
+
+**Inheritance**: `LLMClient` (Adapter pattern)
+
+**Platform**: All (platform-agnostic)
+
+**Responsibility**: Connect to custom OpenAI-compatible API endpoints
+
+**Supports**:
+- ✅ **Ollama** (local LLM server)
+- ✅ **vLLM** (self-hosted inference)
+- ✅ **Together.AI** (cloud API)
+- ✅ **Anyscale** (cloud API)
+- ✅ **LocalAI** (self-hosted)
+- ✅ **Any custom OpenAI-compatible API**
+
+### Configuration
+
+**Required Fields**:
+- `provider: openai_compatible`
+- `base_url`: Custom API endpoint URL
+- `model`: Model identifier
+
+**Optional Fields**:
+- `provider_name`: Custom name for logging/metrics
+- `api_key`: Authentication (or use env var, or "dummy" for local)
+- `input_cost_per_1k_tokens`: Custom pricing
+- `output_cost_per_1k_tokens`: Custom pricing
+
+### Architecture
+
+```python
+class OpenAICompatibleClient(LLMClient):
+    def __init__(self, spec: LLMSpec):
+        # Validate base_url is provided
+        # Initialize OpenAI client with custom base_url
+        # Use provider_name for metrics
+
+    def invoke(self, prompt: str, **kwargs) -> LLMResponse:
+        # Call custom API using OpenAI format
+        # Return standardized LLMResponse
+```
+
+**Design Decision: Reuse OpenAI Client**
+
+Instead of reimplementing HTTP calls, leverage llama-index's OpenAI client with custom `api_base`:
+
+```python
+self.client = OpenAI(
+    model=spec.model,
+    api_key=api_key or "dummy",
+    api_base=spec.base_url,  # Custom URL
+)
+```
+
+**Rationale**:
+- ✅ DRY: Reuse existing, well-tested code
+- ✅ Reliability: llama-index handles edge cases
+- ✅ Compatibility: Ensures OpenAI format compliance
+- ✅ Maintainability: Updates to OpenAI client benefit us
+
+### Example Configurations
+
+#### Local Ollama (Free)
+```yaml
+llm:
+  provider: openai_compatible
+  provider_name: "Ollama-Local"
+  model: llama3.1:70b
+  base_url: http://localhost:11434/v1
+  # No API key needed
+  input_cost_per_1k_tokens: 0.0
+  output_cost_per_1k_tokens: 0.0
+```
+
+#### Together.AI (Cloud)
+```yaml
+llm:
+  provider: openai_compatible
+  provider_name: "Together.AI"
+  model: meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+  base_url: https://api.together.xyz/v1
+  api_key: \${TOGETHER_API_KEY}
+  input_cost_per_1k_tokens: 0.0006
+  output_cost_per_1k_tokens: 0.0006
+```
+
+#### Self-Hosted vLLM
+```yaml
+llm:
+  provider: openai_compatible
+  provider_name: "vLLM-Custom"
+  model: meta-llama/Llama-3.1-70B-Instruct
+  base_url: http://your-vllm-server:8000/v1
+  input_cost_per_1k_tokens: 0.0  # Self-hosted = free
+  output_cost_per_1k_tokens: 0.0
+```
+
+### Validation
+
+**Pydantic Model Validator**:
+```python
+@model_validator(mode="after")
+def validate_provider_requirements(self) -> "LLMSpec":
+    if self.provider == LLMProvider.OPENAI_COMPATIBLE and self.base_url is None:
+        raise ValueError("base_url required for openai_compatible provider")
+    return self
+```
+
+**Design**: Fail fast with clear error message
+
+### Token Estimation
+
+Uses tiktoken with cl100k_base encoding (approximation):
+```python
+self.tokenizer = tiktoken.get_encoding("cl100k_base")
+tokens = len(self.tokenizer.encode(text))
+```
+
+**Tradeoff**: Not model-specific, but consistent and fast
+
+### Performance Characteristics
+
+**Depends on backend**:
+- **Ollama local**: ~10-20 tokens/sec (70B model, single GPU)
+- **vLLM multi-GPU**: ~50-80 tokens/sec (70B model, tensor parallel)
+- **Together.AI cloud**: ~30-50 tokens/sec (network latency)
+
+### Authentication Handling
+
+**Priority order**:
+1. `spec.api_key` (explicit in config)
+2. `OPENAI_COMPATIBLE_API_KEY` env var
+3. `"dummy"` fallback (for local APIs without auth)
+
+**Design**: Flexible authentication for different scenarios
+
+### Provider Naming
+
+The `provider_name` field appears in metrics/logging:
+```python
+model=f"{self.provider_name}/{self.model}"
+# Example: "Together.AI/meta-llama/Llama-3.1-70B"
+```
+
+**Benefit**: Clear identification in logs and cost tracking
+
+### Dependencies
+
+```python
+from llama_index.llms.openai import OpenAI  # Reuse OpenAI client
+import tiktoken  # Token estimation
+```
+
+### Used By
+
+- `create_llm_client()` factory
+- Any pipeline with `provider: openai_compatible`
+- Examples: Ollama, Together.AI, vLLM configs
+
+### Testing Strategy
+
+**Unit Tests (14 tests)**:
+- Validation (base_url requirement)
+- Provider naming
+- Dummy API keys for local APIs
+- Cost calculation with custom pricing
+- Factory integration
+- Backward compatibility
+
+### Known Limitations
+
+- Assumes OpenAI-compatible format (doesn't support exotic APIs)
+- Token counting is approximate (cl100k_base encoding)
+- Can't use provider-specific features (only OpenAI format)
+
+### Future Improvements
+
+- [ ] Support custom headers (for exotic auth)
+- [ ] Add provider-specific tokenizers
+- [ ] Support streaming responses
+- [ ] Add connection pooling for performance
+
+---
+
+---
+
 # Part 3: Layer 0 - Core Utilities
 
 ## 3.1 Overview

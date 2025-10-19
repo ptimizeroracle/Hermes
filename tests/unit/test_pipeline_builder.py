@@ -133,7 +133,9 @@ class TestPipelineBuilder:
             .with_prompt("Process: {text}")
         )
 
-        with pytest.raises(ValueError, match="LLM specification required"):
+        with pytest.raises(
+            ValueError, match="Either LLM specification or custom LLM client required"
+        ):
             builder.build()
 
     def test_fluent_api_chaining(self):
