@@ -177,6 +177,23 @@ class LLMSpec(BaseModel):
         default=None, description="Output token cost"
     )
 
+    @field_validator("base_url")
+    @classmethod
+    def validate_base_url_format(cls, v: str | None) -> str | None:
+        """Validate base_url is a valid HTTP(S) URL with a host."""
+        if v is None:
+            return v
+        from urllib.parse import urlparse
+
+        parsed = urlparse(v)
+        if parsed.scheme not in {"http", "https"}:
+            raise ValueError("base_url must start with http:// or https://")
+        if not parsed.netloc:
+            raise ValueError(
+                "base_url must include a host (e.g., localhost, api.example.com)"
+            )
+        return v
+
     @field_validator("azure_endpoint", "azure_deployment")
     @classmethod
     def validate_azure_config(cls, v: str | None, info: Any) -> str | None:

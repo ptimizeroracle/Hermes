@@ -254,3 +254,39 @@ class TestLLMSpecValidation:
         assert spec.base_url == "https://api.together.xyz/v1"
         assert spec.provider_name == "Together.AI"
         assert spec.model == "llama-3.1-70b"
+
+    def test_base_url_validates_http_scheme(self):
+        """Should reject base_url without http(s) scheme."""
+        with pytest.raises(ValueError, match="base_url must start with http"):
+            LLMSpec(
+                provider=LLMProvider.OPENAI_COMPATIBLE,
+                model="test-model",
+                base_url="ftp://invalid.com/v1",  # Invalid scheme
+            )
+
+    def test_base_url_validates_host_presence(self):
+        """Should reject base_url without a host."""
+        with pytest.raises(ValueError, match="base_url must include a host"):
+            LLMSpec(
+                provider=LLMProvider.OPENAI_COMPATIBLE,
+                model="test-model",
+                base_url="http://",  # No host
+            )
+
+    def test_base_url_accepts_localhost(self):
+        """Should accept localhost URLs."""
+        spec = LLMSpec(
+            provider=LLMProvider.OPENAI_COMPATIBLE,
+            model="llama3.1:70b",
+            base_url="http://localhost:11434/v1",
+        )
+        assert spec.base_url == "http://localhost:11434/v1"
+
+    def test_base_url_accepts_https(self):
+        """Should accept HTTPS URLs."""
+        spec = LLMSpec(
+            provider=LLMProvider.OPENAI_COMPATIBLE,
+            model="test-model",
+            base_url="https://api.example.com/v1",
+        )
+        assert spec.base_url == "https://api.example.com/v1"
