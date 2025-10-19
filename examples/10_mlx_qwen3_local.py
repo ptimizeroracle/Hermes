@@ -115,7 +115,7 @@ print("✅ RESULTS")
 print("=" * 60)
 
 for idx, row in result.data.iterrows():
-    print(f"\n{idx + 1}. Product: {data.loc[idx, 'product']}")
+    print(f"\n{idx + 1}. Product: {row['product']}")
     print(f"   Category: {row['category']}")
     print(f"   Description: {row['description']}")
 
