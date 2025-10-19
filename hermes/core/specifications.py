@@ -31,6 +31,7 @@ class LLMProvider(str, Enum):
     ANTHROPIC = "anthropic"
     GROQ = "groq"
     OPENAI_COMPATIBLE = "openai_compatible"
+    MLX = "mlx"
 
 
 class ErrorPolicy(str, Enum):

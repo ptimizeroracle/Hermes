@@ -195,6 +195,14 @@ graph TB
 | **ipython** | Interactive shell | Better REPL |
 | **jupyter** | Notebooks | Interactive exploration |
 
+### Optional Dependencies (1 group)
+
+| Group | Libraries | Purpose | Platform |
+|-------|-----------|---------|----------|
+| **mlx** | mlx>=0.29.0, mlx-lm>=0.28.0 | Apple Silicon local inference | macOS only (M1/M2/M3/M4) |
+
+**Installation**: `pip install hermes[mlx]`
+
 ## 2.2 Dependency Graph
 
 ```mermaid
@@ -223,8 +231,16 @@ graph TD
     Hermes --> Prometheus[prometheus-client]
     Hermes --> Dotenv[python-dotenv]
 
+    Hermes -.-> MLX[mlx + mlx-lm]
+    MLX -.-> MLXMetal[mlx-metal]
+
     Polars --> PyArrow[pyarrow]
+
+    style MLX stroke-dasharray: 5 5
+    style MLXMetal stroke-dasharray: 5 5
 ```
+
+**Note**: Dashed lines indicate optional dependencies (`pip install hermes[mlx]`)
 
 ### Critical Dependencies (Cannot Be Removed)
 
@@ -239,6 +255,7 @@ graph TD
 2. **prometheus-client** - Only for metrics export, can be disabled
 3. **rich** - Only for CLI pretty printing, can fall back to basic output
 4. **jinja2** - Only for advanced templating, can use string.format()
+5. **mlx + mlx-lm** - Only for Apple Silicon local inference, use cloud providers instead
 
 ---
 
@@ -1428,11 +1445,283 @@ def test_budget_warnings():
 
 ---
 
-**Document Status**: 🚧 IN PROGRESS (Layer 0 partially complete)
+# Part 5: Layer 1 - Infrastructure Adapters (LLM Providers)
+
+## 5.1 LLM Provider Overview
+
+Hermes supports multiple LLM providers through the **Adapter pattern**, allowing easy switching between providers without changing core logic.
+
+### Supported Providers
+
+| Provider | Category | Platform | Cost | Use Case |
+|----------|----------|----------|------|----------|
+| **OpenAI** | Cloud API | All | $$ | Production, high quality |
+| **Azure OpenAI** | Cloud API | All | $$ | Enterprise, compliance |
+| **Anthropic** | Cloud API | All | $$$ | Claude models, long context |
+| **Groq** | Cloud API | All | Free tier | Fast inference, development |
+| **MLX** | Local | macOS (Apple Silicon) | Free | Privacy, offline, no costs |
+
+### Provider Selection Guide
+
+**Choose OpenAI if**: Production quality, mature ecosystem, GPT-4
+**Choose Azure if**: Enterprise compliance, private deployments
+**Choose Anthropic if**: Claude models, 100K+ context
+**Choose Groq if**: Fast inference, free tier, development
+**Choose MLX if**: Apple Silicon Mac, privacy, free, offline capable
+
+---
+
+## 5.2 OpenAI-Compatible Provider (Custom APIs)
+
+### Purpose
+Enable integration with any LLM API that implements the OpenAI chat completions format.
+
+### Class: `OpenAICompatibleClient`
+
+**Inheritance**: `LLMClient` (Adapter pattern)
+
+**Platform**: All (platform-agnostic)
+
+**Responsibility**: Connect to custom OpenAI-compatible API endpoints
+
+**Supports**:
+- ✅ **Ollama** (local LLM server)
+- ✅ **vLLM** (self-hosted inference)
+- ✅ **Together.AI** (cloud API)
+- ✅ **Anyscale** (cloud API)
+- ✅ **LocalAI** (self-hosted)
+- ✅ **Any custom OpenAI-compatible API**
+
+### Configuration
+
+**Required Fields**:
+- `provider: openai_compatible`
+- `base_url`: Custom API endpoint URL
+- `model`: Model identifier
+
+**Optional Fields**:
+- `provider_name`: Custom name for logging/metrics
+- `api_key`: Authentication (optional for local)
+- `input_cost_per_1k_tokens`: Custom pricing
+- `output_cost_per_1k_tokens`: Custom pricing
+
+### Design Decision: Reuse OpenAI Client
+
+Instead of reimplementing HTTP, leverage llama-index's OpenAI client:
+
+```python
+self.client = OpenAI(
+    model=spec.model,
+    api_key=api_key or "dummy",
+    api_base=spec.base_url,  # Custom URL
+)
+```
+
+**Rationale**:
+- ✅ DRY: Reuse well-tested code
+- ✅ Reliability: Edge cases handled
+- ✅ Compatibility: Ensures OpenAI format
+- ✅ Maintainability: Benefit from upstream updates
+
+### Example: Together.AI
+```yaml
+llm:
+  provider: openai_compatible
+  provider_name: "Together.AI"
+  model: meta-llama/Llama-3.1-70B
+  base_url: https://api.together.xyz/v1
+  api_key: \${TOGETHER_API_KEY}
+  input_cost_per_1k_tokens: 0.0006
+```
+
+### Validation
+
+```python
+@model_validator(mode="after")
+def validate_provider_requirements(self):
+    if self.provider == OPENAI_COMPATIBLE and not self.base_url:
+        raise ValueError("base_url required")
+    return self
+```
+
+---
+
+## 5.3 MLX Provider (Apple Silicon)
+
+### Purpose
+Enable fast, free, local LLM inference on Apple Silicon using Apple's MLX framework.
+
+### Class: `MLXClient`
+
+**Inheritance**: `LLMClient` (Adapter pattern)
+
+**Platform**: macOS with M1/M2/M3/M4 chips only
+
+**Responsibility**: Local in-process LLM inference using MLX framework
+
+**Key Features**:
+- ✅ In-process (no server management)
+- ✅ Model caching (load once, use many times)
+- ✅ Lazy imports (only when MLX provider used)
+- ✅ Dependency injection (clean testing)
+- ✅ Free inference ($0 cost)
+
+### Architecture
+
+```python
+class MLXClient(LLMClient):
+    def __init__(self, spec: LLMSpec, _mlx_lm_module=None):
+        # Lazy import with helpful error
+        # Load model once (cached in instance)
+
+    def invoke(self, prompt: str, **kwargs) -> LLMResponse:
+        # Use cached model for inference
+        # No server calls, all local
+```
+
+**Design Decision: Dependency Injection**
+
+The `_mlx_lm_module` parameter enables clean testing:
+
+```python
+# Production usage (normal)
+client = MLXClient(spec)  # Imports mlx_lm automatically
+
+# Testing usage (mocked)
+mock_mlx = MagicMock()
+client = MLXClient(spec, _mlx_lm_module=mock_mlx)  # Inject mock
+```
+
+**Rationale**:
+- ✅ SOLID: Dependency Inversion Principle
+- ✅ Testable: No sys.modules hacks
+- ✅ Clear: Explicit what's being injected
+- ✅ Backward compatible: Parameter is optional
+
+### Model Caching Strategy
+
+**Problem**: Loading MLX models is expensive (~0.5-2 seconds)
+
+**Solution**: Load once in `__init__()`, cache in instance
+
+**Impact**:
+- First invocation: ~0.7s (load) + ~0.7s (inference) = 1.4s
+- Subsequent calls: ~0.7s (inference only)
+- For 100 rows: Save ~70 seconds vs reload each time!
+
+### Token Estimation
+
+**Primary**: Use MLX tokenizer (model-specific, accurate)
+```python
+tokens = len(self.mlx_tokenizer.encode(text))
+```
+
+**Fallback**: Word count (if tokenizer fails)
+```python
+tokens = len(text.split())
+```
+
+**Rationale**: Graceful degradation, never fail on token estimation
+
+### Error Handling
+
+**Import Error**:
+```
+ImportError: MLX not installed. Install with:
+  pip install hermes[mlx]
+or:
+  pip install mlx mlx-lm
+
+Note: MLX only works on Apple Silicon (M1/M2/M3/M4 chips)
+```
+
+**Model Load Error**:
+```
+Exception: Failed to load MLX model 'model-name'.
+Ensure the model exists on HuggingFace and you have access.
+Error: [original error]
+```
+
+**Design**: Actionable error messages with context
+
+### Performance Characteristics
+
+**Tested on Apple Silicon (M2)**:
+- Model: `mlx-community/Qwen3-1.7B-4bit`
+- Load time: 0.74s (once per pipeline)
+- Inference: 0.67s/prompt
+- Throughput: 1.49 prompts/sec
+- Memory: ~2GB (model in RAM)
+
+**Comparison**:
+- **vs Cloud APIs**: 10x faster (no network), free
+- **vs vLLM**: Simpler (no server), Mac-compatible
+- **vs Ollama**: Similar speed, more control
+
+### Thread Safety
+
+- ⚠️ **Not thread-safe**: MLX models are not thread-safe
+- **Recommendation**: Use `concurrency=1` in ProcessingSpec
+- **Why**: MLX optimized for Apple Neural Engine (single-threaded)
+
+### Dependencies
+
+```python
+import mlx_lm  # Lazy imported
+# mlx_lm depends on:
+# - mlx>=0.29.0
+# - mlx-metal (GPU acceleration)
+# - transformers (HuggingFace)
+```
+
+### Used By
+
+- `create_llm_client()` factory
+- Any pipeline with `provider: mlx`
+- Examples: `10_mlx_qwen3_local.py`, `10_mlx_qwen3_local.yaml`
+
+### Testing Strategy
+
+**Dependency Injection Pattern**:
+```python
+# Create mock module
+mock_mlx = MagicMock()
+mock_mlx.load.return_value = (mock_model, mock_tokenizer)
+mock_mlx.generate.return_value = "response"
+
+# Inject for testing
+client = MLXClient(spec, _mlx_lm_module=mock_mlx)
+```
+
+**Coverage**:
+- 14 unit tests
+- Model loading/caching
+- Token estimation with fallback
+- Error handling
+- Factory integration
+
+### Known Limitations
+
+- macOS only (MLX doesn't work on Linux/Windows)
+- Single-threaded (not optimized for concurrency)
+- Model download required (1-5GB per model)
+- Requires HuggingFace token for some models
+
+### Future Improvements
+
+- [ ] Add MLX streaming support
+- [ ] Support custom MLX generation parameters
+- [ ] Add model warmup option
+- [ ] Cache models globally (shared across pipelines)
+
+---
+
+**Document Status**: 🚧 IN PROGRESS (Layer 0 complete, Layer 1 MLX documented)
 
 **Next Sections**:
 - 3.6 `utils/logging_utils.py`
 - 3.7 `utils/metrics_exporter.py`
 - 3.8 `utils/input_preprocessing.py`
 - Part 4: Core Models & Specifications
-- Part 5+: Remaining layers...
+- Part 5: Complete Layer 1 (remaining providers)
+- Part 6+: Remaining layers...

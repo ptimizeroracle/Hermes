@@ -428,6 +428,125 @@ class OpenAICompatibleClient(LLMClient):
         return len(self.tokenizer.encode(text))
 
 
+class MLXClient(LLMClient):
+    """
+    MLX client for Apple Silicon local inference.
+
+    MLX is Apple's optimized ML framework for M-series chips.
+    This client enables fast, local LLM inference without API costs.
+
+    Requires: pip install hermes[mlx]
+    Platform: macOS with Apple Silicon only
+    """
+
+    def __init__(self, spec: LLMSpec, _mlx_lm_module=None):
+        """
+        Initialize MLX client and load model.
+
+        Model is loaded once and cached for fast subsequent calls.
+
+        Args:
+            spec: LLM specification with model name
+            _mlx_lm_module: MLX module (internal/testing only)
+
+        Raises:
+            ImportError: If MLX not installed
+            Exception: If model loading fails
+        """
+        super().__init__(spec)
+
+        # Load mlx_lm module (or use injected module for testing)
+        if _mlx_lm_module is None:
+            try:
+                import mlx_lm as _mlx_lm_module
+            except ImportError as e:
+                raise ImportError(
+                    "MLX not installed. Install with:\n"
+                    "  pip install hermes[mlx]\n"
+                    "or:\n"
+                    "  pip install mlx mlx-lm\n\n"
+                    "Note: MLX only works on Apple Silicon (M1/M2/M3/M4 chips)"
+                ) from e
+
+        # Store mlx_lm module for later use
+        self.mlx_lm = _mlx_lm_module
+
+        # Load model once (expensive operation, ~1-2 seconds)
+        print(f"🔄 Loading MLX model: {spec.model}...")
+        try:
+            self.mlx_model, self.mlx_tokenizer = self.mlx_lm.load(spec.model)
+            print("✅ Model loaded successfully")
+        except Exception as e:
+            raise Exception(
+                f"Failed to load MLX model '{spec.model}'. "
+                f"Ensure the model exists on HuggingFace and you have access. "
+                f"Error: {e}"
+            ) from e
+
+    def invoke(self, prompt: str, **kwargs: Any) -> LLMResponse:
+        """
+        Invoke MLX model for inference.
+
+        Args:
+            prompt: Text prompt
+            **kwargs: Additional generation parameters
+
+        Returns:
+            LLMResponse with result and metadata
+        """
+        start_time = time.time()
+
+        # Generate response using cached model
+        max_tokens = kwargs.get("max_tokens", self.max_tokens)
+
+        response_text = self.mlx_lm.generate(
+            self.mlx_model,
+            self.mlx_tokenizer,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            verbose=False,
+        )
+
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Estimate token usage using MLX tokenizer
+        try:
+            tokens_in = len(self.mlx_tokenizer.encode(prompt))
+            tokens_out = len(self.mlx_tokenizer.encode(response_text))
+        except Exception:
+            # Fallback to simple estimation if encoding fails
+            tokens_in = len(prompt.split())
+            tokens_out = len(response_text.split())
+
+        # Calculate cost (typically $0 for local models)
+        cost = self.calculate_cost(tokens_in, tokens_out)
+
+        return LLMResponse(
+            text=response_text,
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
+            model=f"MLX/{self.model}",
+            cost=cost,
+            latency_ms=latency_ms,
+        )
+
+    def estimate_tokens(self, text: str) -> int:
+        """
+        Estimate token count using MLX tokenizer.
+
+        Args:
+            text: Input text
+
+        Returns:
+            Estimated token count
+        """
+        try:
+            return len(self.mlx_tokenizer.encode(text))
+        except Exception:
+            # Fallback to simple word count
+            return len(text.split())
+
+
 def create_llm_client(spec: LLMSpec) -> LLMClient:
     """
     Factory function to create appropriate LLM client.
@@ -451,4 +570,6 @@ def create_llm_client(spec: LLMSpec) -> LLMClient:
         return GroqClient(spec)
     if spec.provider == LLMProvider.OPENAI_COMPATIBLE:
         return OpenAICompatibleClient(spec)
+    if spec.provider == LLMProvider.MLX:
+        return MLXClient(spec)
     raise ValueError(f"Unsupported provider: {spec.provider}")
