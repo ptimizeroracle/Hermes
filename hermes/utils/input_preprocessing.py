@@ -2,7 +2,6 @@
 Input preprocessing for LLM prompts.
 
 Best practices: Remove noise, normalize whitespace, control length.
-Follows SOLID principles: Single responsibility, extensible design.
 """
 
 import re

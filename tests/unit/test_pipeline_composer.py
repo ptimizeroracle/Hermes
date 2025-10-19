@@ -3,11 +3,6 @@ Unit tests for PipelineComposer.
 
 Following TDD: Tests written FIRST to define the API.
 Then implementation will be created to make these tests pass.
-
-Zen of Code:
-- Simple is better than complex
-- Explicit is better than implicit
-- Readability counts
 """
 
 from unittest.mock import MagicMock, patch
@@ -288,10 +283,10 @@ class TestComposerConfiguration:
         assert True  # Placeholder
 
 
-class TestZenPrinciples:
-    """Test adherence to Zen of Python principles."""
+class TestAPIDesign:
+    """Test API design principles."""
 
-    def test_simple_is_better_than_complex(self):
+    def test_simple_api_for_common_cases(self):
         """Test the API is simple for common cases."""
         df = pd.DataFrame({"text": ["test"]})
 
@@ -302,10 +297,9 @@ class TestZenPrinciples:
         mock_pipeline = MagicMock(spec=Pipeline)
         composer.add_column("output", mock_pipeline)
 
-        # Simple! ✅
         assert True
 
-    def test_explicit_is_better_than_implicit(self):
+    def test_explicit_dependencies(self):
         """Test dependencies are explicit, not magic."""
         df = pd.DataFrame({"text": ["test"]})
         composer = PipelineComposer(input_data=df)
@@ -315,13 +309,12 @@ class TestZenPrinciples:
 
         # Dependencies are EXPLICIT in the API
         composer.add_column("col1", p1)
-        composer.add_column("col2", p2, depends_on=["col1"])  # ← Clear!
+        composer.add_column("col2", p2, depends_on=["col1"])
 
-        # No hidden magic ✅
         assert True
 
-    def test_readability_counts(self):
-        """Test the code reads like prose."""
+    def test_fluent_api_readability(self):
+        """Test the code reads naturally."""
         df = pd.DataFrame({"text": ["test"]})
 
         # This should read naturally
@@ -331,5 +324,4 @@ class TestZenPrinciples:
             .add_column("explanation", MagicMock(), depends_on=["similarity"])
         )
 
-        # Readable! ✅
         assert composer is not None

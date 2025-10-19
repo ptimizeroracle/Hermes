@@ -2,7 +2,7 @@
 Core data models for execution results and metadata.
 
 These models represent the outputs and state information from pipeline
-execution, following clean code principles with type safety.
+execution with type safety.
 """
 
 from dataclasses import dataclass, field

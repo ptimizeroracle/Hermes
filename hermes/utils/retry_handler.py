@@ -1,8 +1,7 @@
 """
 Retry handling with exponential backoff.
 
-Provides robust retry logic for transient failures following clean code
-principles with single responsibility.
+Provides robust retry logic for transient failures.
 """
 
 from collections.abc import Callable
@@ -39,8 +38,6 @@ class NetworkError(RetryableError):
 class RetryHandler:
     """
     Handles retry logic with exponential backoff.
-
-    Follows SOLID principles with single responsibility for retry logic.
     """
 
     def __init__(

@@ -8,11 +8,6 @@ Use Cases:
 1. One-to-Many: Single prompt generates multiple columns (JSON)
 2. One-to-One: Each column has independent prompt
 3. Dependencies: Column B uses Column A as input
-
-Zen of Code:
-- Explicit is better than implicit (clear dependencies)
-- Simple is better than complex (compose from simple pipelines)
-- Readability counts (fluent API reads like prose)
 """
 
 import pandas as pd
@@ -164,7 +159,7 @@ Return JSON:
 
 def main():
     """Run all examples."""
-    print("\n" + "🧘 ZEN OF CODE: Multi-Column Processing Examples 🧘")
+    print("\n" + "Multi-Column Processing Examples")
 
     # Example 1: Python API
     example_1_python_api()

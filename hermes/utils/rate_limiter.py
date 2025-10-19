@@ -1,8 +1,7 @@
 """
 Token bucket rate limiter for API calls.
 
-Implements token bucket algorithm for rate limiting with clean,
-testable design.
+Implements token bucket algorithm for rate limiting.
 """
 
 import threading
@@ -13,7 +12,7 @@ class RateLimiter:
     """
     Token bucket rate limiter for controlling API request rates.
 
-    Thread-safe implementation following KISS principle.
+    Thread-safe implementation.
     """
 
     def __init__(self, requests_per_minute: int, burst_size: int | None = None):

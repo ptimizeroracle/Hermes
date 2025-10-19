@@ -10,8 +10,6 @@
 
 Production-grade SDK for processing tabular datasets using Large Language Models (LLMs) with reliability, observability, and cost control.
 
-Built with **LlamaIndex** for LLM abstraction and following **SOLID** principles for clean, maintainable code.
-
 ## ✨ Features
 
 - **Simple API**: 5-line hello world, fluent builder pattern
@@ -219,7 +217,7 @@ pipeline = (
 
 ## 🏗️ Architecture
 
-The SDK follows a **layered architecture** based on SOLID principles:
+The SDK follows a **layered architecture**:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -242,10 +240,9 @@ The SDK follows a **layered architecture** based on SOLID principles:
 
 ### Key Design Principles
 
-- **KISS**: Simple, straightforward solutions
-- **SOLID**: Single responsibility, Open/Closed, Liskov substitution, etc.
+- **Simple**: Straightforward solutions
 - **DRY**: No code duplication
-- **Clean Code**: Meaningful names, type hints, docstrings
+- **Type Safe**: Type hints throughout
 - **Separation of Concerns**: Configuration vs. execution
 
 ## 🎯 Use Cases
@@ -337,7 +334,6 @@ MIT License - see LICENSE file for details
 ## 🙏 Acknowledgments
 
 - Built with [LlamaIndex](https://www.llamaindex.ai/) for LLM abstraction
-- Inspired by clean code principles and SOLID design
 - Thanks to the open-source community
 
 ## 📞 Support
@@ -358,4 +354,4 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Made with ❤️ using Python, LlamaIndex, and clean code principles**
+**Made with ❤️ using Python and LlamaIndex**

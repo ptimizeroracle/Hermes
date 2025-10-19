@@ -29,7 +29,7 @@
 
 ## 1.1 System Architecture
 
-Hermes follows a **clean 5-layer architecture** based on SOLID principles:
+Hermes follows a **5-layer architecture**:
 
 ```mermaid
 graph TB
@@ -110,11 +110,10 @@ graph TB
 ### Key Design Principles
 
 1. **Dependency Rule**: Dependencies only point inward (higher layers depend on lower layers, never the reverse)
-2. **Single Responsibility**: Each component has one reason to change
-3. **Open/Closed**: Open for extension, closed for modification
-4. **Dependency Inversion**: Depend on abstractions, not concretions
-5. **Interface Segregation**: Small, focused interfaces
-6. **KISS**: Keep it simple
+2. **Focused Components**: Each component has one clear purpose
+3. **Extensible**: Open for extension, closed for modification
+4. **Abstraction**: Depend on abstractions, not concretions
+5. **Simple**: Keep it simple
 
 ## 1.2 Design Patterns Catalog
 
@@ -1593,7 +1592,6 @@ client = MLXClient(spec, _mlx_lm_module=mock_mlx)  # Inject mock
 ```
 
 **Rationale**:
-- ✅ SOLID: Dependency Inversion Principle
 - ✅ Testable: No sys.modules hacks
 - ✅ Clear: Explicit what's being injected
 - ✅ Backward compatible: Parameter is optional

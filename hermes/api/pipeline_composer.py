@@ -1,12 +1,6 @@
 """
 Pipeline Composer for multi-column, multi-prompt processing.
 
-Zen of Code Philosophy:
-- Composition over inheritance
-- Simple is better than complex
-- Explicit is better than implicit
-- Errors should never pass silently
-
 This module enables composing multiple single-prompt pipelines to generate
 multiple output columns, each with its own independent processing logic.
 
@@ -56,7 +50,7 @@ class PipelineComposer:
             - Path: Lazy loading, memory efficient
             - DataFrame: Already loaded, faster iteration
         """
-        if isinstance(input_data, (str, Path)):
+        if isinstance(input_data, str | Path):
             self.input_path = str(input_data)
             self.input_df = None  # Lazy load
         elif isinstance(input_data, pd.DataFrame):
