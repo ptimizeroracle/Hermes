@@ -30,6 +30,7 @@ class LLMProvider(str, Enum):
     AZURE_OPENAI = "azure_openai"
     ANTHROPIC = "anthropic"
     GROQ = "groq"
+    MLX = "mlx"
 
 
 class ErrorPolicy(str, Enum):

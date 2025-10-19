@@ -54,6 +54,10 @@ dev = [
     "ipython>=8.20.0",
     "jupyter>=1.0.0",
 ]
+mlx = [
+    "mlx>=0.29.0",
+    "mlx-lm>=0.28.0",
+]
 
 [project.scripts]
 hermes = "hermes.cli.main:cli"
