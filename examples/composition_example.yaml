@@ -1,5 +1,16 @@
 # Example: Multi-Column Composition Configuration
 # This demonstrates how to process multiple independent columns
+#
+# NOTE: This is a template example showing the YAML structure.
+# For a working implementation, see examples/multi_column_composition_example.py
+# which demonstrates the same concept using the Python API.
+#
+# To use this YAML approach, you would need to create the referenced config files:
+# - examples/product_match_score.yaml
+# - examples/product_match_explanation.yaml
+# - examples/product_recommendation.yaml
+#
+# For now, use the Python API example instead.
 
 composition:
   input: "products.xlsx"
@@ -26,7 +37,7 @@ composition:
 # 4. Runs product_recommendation.yaml → uses both to generate recommendation (Replace/Keep/Alternative)
 # 5. Final output has all 3 new columns
 
-# Usage:
+# Usage (once config files are created):
 #   from hermes.api import PipelineComposer
 #   composer = PipelineComposer.from_yaml("examples/composition_example.yaml")
 #   result = composer.execute()

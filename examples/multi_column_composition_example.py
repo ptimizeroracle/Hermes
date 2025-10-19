@@ -165,8 +165,8 @@ def main():
     # Example 1: Python API
     example_1_python_api()
 
-    # Example 2: YAML API
-    # example_2_yaml_api()  # Uncomment when composition configs exist
+    # Example 2: YAML API (template only - requires creating referenced config files)
+    # example_2_yaml_api()  # Uncomment when you create the referenced config files
 
     # Example 3: JSON multi-output
     # example_3_json_multi_output()  # Uncomment to test JSON mode
