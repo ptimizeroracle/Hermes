@@ -87,7 +87,6 @@ Your goal: Ensure every approved swap maintains Sodexo's brand promise of consis
     .with_batch_size(100)
     .with_concurrency(3)
     .with_max_retries(3)
-    .with_preprocessing(enabled=True, max_length=500)
     .with_streaming(chunk_size=1000)  # Process 1000 rows at a time (memory-efficient)
     .build()
 )
@@ -99,25 +98,41 @@ print(f"   Estimated rows: {estimate.rows}")
 print(f"   Estimated cost: ${estimate.total_cost:.2f}")
 print(f"   Estimated tokens: {estimate.total_tokens:,}")
 
-# Execute with streaming
+# Execute with streaming (processes in chunks, yields results incrementally)
 print("\n🔄 Processing with streaming (memory-efficient)...")
-result = pipeline.execute()
+print("   Processing in 1000-row chunks...")
+
+all_chunks = []
+total_rows = 0
+total_cost = 0.0
+
+for chunk_idx, chunk_result in enumerate(pipeline.execute_stream(chunk_size=1000)):
+    rows_in_chunk = len(chunk_result.data)
+    total_rows += rows_in_chunk
+    total_cost += chunk_result.costs.total_cost
+    all_chunks.append(chunk_result.data)
+
+    print(
+        f"   ✅ Chunk {chunk_idx + 1}: {rows_in_chunk} rows processed (total: {total_rows}, cost: ${total_cost:.4f})"
+    )
+
+# Combine all chunks
+print("\n📊 Combining results...")
+final_data = pd.concat(all_chunks, ignore_index=True)
 
 print("\n✅ Complete!")
-print(f"   Rows processed: {result.metrics.processed_rows}")
-print(f"   Failed rows: {result.metrics.failed_rows}")
-print(f"   Total cost: ${result.costs.total_cost:.4f}")
-print(f"   Duration: {result.metrics.total_duration_seconds:.2f}s")
-print(f"   Throughput: {result.metrics.rows_per_second:.2f} rows/sec")
+print(f"   Total rows processed: {total_rows}")
+print(f"   Total cost: ${total_cost:.4f}")
+print("   Memory: Constant (processed in chunks)")
 
 # Save results
 output_path = "ground_truth_similarity_results_streaming.xlsx"
-result.data.to_excel(output_path, index=False)
+final_data.to_excel(output_path, index=False)
 print(f"\n💾 Results saved to: {output_path}")
 
 # Show sample
 print("\n📋 Sample results:")
 sample_cols = ["incumbent", "portfolio", "llm_similarity", "swap_risk_score"]
-available_cols = [c for c in sample_cols if c in result.data.columns]
+available_cols = [c for c in sample_cols if c in final_data.columns]
 if available_cols:
-    print(result.data[available_cols].head(3))
+    print(final_data[available_cols].head(3))

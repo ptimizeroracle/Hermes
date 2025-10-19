@@ -47,7 +47,6 @@ Evaluate product substitutability based on functional equivalence, not just flav
     .with_batch_size(100)
     .with_concurrency(3)
     .with_max_retries(3)
-    .with_preprocessing(enabled=True, max_length=500)
     .build()
 )
 
