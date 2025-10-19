@@ -25,6 +25,58 @@ from hermes.core.specifications import (
 console = Console()
 
 
+# Provider metadata for list-providers command
+PROVIDER_METADATA = {
+    LLMProvider.OPENAI: {
+        "name": "OpenAI",
+        "platform": "Cloud (All)",
+        "cost": "$$",
+        "use_case": "Production, high quality",
+        "requirements": "OPENAI_API_KEY",
+    },
+    LLMProvider.AZURE_OPENAI: {
+        "name": "Azure OpenAI",
+        "platform": "Cloud (All)",
+        "cost": "$$",
+        "use_case": "Enterprise, compliance",
+        "requirements": "AZURE_OPENAI_API_KEY",
+    },
+    LLMProvider.ANTHROPIC: {
+        "name": "Anthropic Claude",
+        "platform": "Cloud (All)",
+        "cost": "$$$",
+        "use_case": "Long context, high quality",
+        "requirements": "ANTHROPIC_API_KEY",
+    },
+    LLMProvider.GROQ: {
+        "name": "Groq",
+        "platform": "Cloud (All)",
+        "cost": "Free tier",
+        "use_case": "Fast inference, development",
+        "requirements": "GROQ_API_KEY",
+    },
+    LLMProvider.OPENAI_COMPATIBLE: {
+        "name": "OpenAI-Compatible",
+        "platform": "Custom/Local/Cloud",
+        "cost": "Varies",
+        "use_case": "Ollama, vLLM, Together.AI, custom APIs",
+        "requirements": "base_url (API key optional)",
+    },
+    LLMProvider.MLX: {
+        "name": "Apple MLX",
+        "platform": "macOS (M1/M2/M3/M4)",
+        "cost": "Free",
+        "use_case": "Local inference, privacy, offline",
+        "requirements": "Apple Silicon Mac, pip install hermes[mlx]",
+    },
+}
+
+# Validate metadata completeness at module load
+assert set(LLMProvider) == set(
+    PROVIDER_METADATA.keys()
+), "PROVIDER_METADATA must include all LLMProvider values"
+
+
 HERMES_ART = r"""
  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄       ▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
 ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌     ▐░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
@@ -126,8 +178,8 @@ def cli(ctx):
 )
 @click.option(
     "--provider",
-    type=click.Choice(["openai", "azure_openai", "anthropic", "groq"]),
-    help="Override LLM provider from config",
+    type=click.Choice([p.value for p in LLMProvider]),
+    help="Override LLM provider from config (use 'hermes list-providers' to see all)",
 )
 @click.option(
     "--model",
@@ -397,8 +449,8 @@ def process(
 )
 @click.option(
     "--provider",
-    type=click.Choice(["openai", "azure_openai", "anthropic", "groq"]),
-    help="Override LLM provider from config",
+    type=click.Choice([p.value for p in LLMProvider]),
+    help="Override LLM provider from config (use 'hermes list-providers' to see all)",
 )
 @click.option(
     "--model",
@@ -800,6 +852,78 @@ def inspect(input: Path, head: int):
         # Preview
         console.print(f"\n[cyan]First {head} rows:[/cyan]")
         console.print(df.head(head).to_string())
+
+    except Exception as e:
+        console.print(f"[red]❌ Error: {e}[/red]")
+        sys.exit(1)
+
+
+@cli.command()
+def list_providers():
+    """
+    List all available LLM providers with details.
+
+    Shows supported providers, their platforms, costs, and requirements.
+
+    Examples:
+
+        # List all providers
+        hermes list-providers
+    """
+    try:
+        # Create table
+        table = Table(title="🪽 Available LLM Providers", show_header=True)
+        table.add_column("Provider ID", style="cyan", width=20)
+        table.add_column("Name", style="bright_white", width=20)
+        table.add_column("Platform", style="yellow", width=25)
+        table.add_column("Cost", style="magenta", width=12)
+        table.add_column("Use Case", style="white", width=35)
+
+        # Add rows for each provider
+        for provider in LLMProvider:
+            metadata = PROVIDER_METADATA[provider]
+
+            # Color-code cost
+            cost = metadata["cost"]
+            if "Free" in cost or cost == "Varies":
+                cost_colored = f"[green]{cost}[/green]"
+            elif cost == "$$":
+                cost_colored = f"[yellow]{cost}[/yellow]"
+            else:  # $$$
+                cost_colored = f"[red]{cost}[/red]"
+
+            table.add_row(
+                f"[bold]{provider.value}[/bold]",
+                metadata["name"],
+                metadata["platform"],
+                cost_colored,
+                metadata["use_case"],
+            )
+
+        console.print("\n")
+        console.print(table)
+
+        # Requirements section
+        console.print("\n[cyan]📋 Requirements by Provider:[/cyan]")
+        for provider in LLMProvider:
+            metadata = PROVIDER_METADATA[provider]
+            console.print(
+                f"  [bold cyan]{provider.value}[/bold cyan]: {metadata['requirements']}"
+            )
+
+        # Usage examples
+        console.print("\n[cyan]💡 Usage Examples:[/cyan]")
+        console.print("  [dim]# Use OpenAI[/dim]")
+        console.print("  hermes process --provider openai --config config.yaml")
+        console.print("\n  [dim]# Use local MLX on Apple Silicon[/dim]")
+        console.print("  hermes process --provider mlx --config config.yaml")
+        console.print("\n  [dim]# Use custom API (Ollama, vLLM, Together.AI)[/dim]")
+        console.print(
+            "  hermes process --provider openai_compatible --config config.yaml"
+        )
+        console.print(
+            "\n  [dim]💡 Tip: Set provider in your YAML config file or use --provider flag[/dim]\n"
+        )
 
     except Exception as e:
         console.print(f"[red]❌ Error: {e}[/red]")
