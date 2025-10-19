@@ -29,7 +29,7 @@ dataset:
 prompt:
   template: |
     Analyze this product and extract:
-    1. Category (clothing, electronics, food, etc.)
+    1. Category (clothing, electronics, home, office, sports, etc.)
     2. Relevant tags (comma-separated)
 
     Product: {product_description}

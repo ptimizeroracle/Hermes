@@ -142,8 +142,8 @@ def example_3_json_extraction_with_system():
     products = pd.DataFrame(
         {
             "text": [
-                "Organic Fuji Apples, 3lb bag, $5.99",
-                "Wild Caught Salmon Fillets, 2lbs, $24.99",
+                "Wireless Mouse Logitech MX Master 3, $99.99",
+                "USB-C Cable 6ft Braided Nylon, $12.99",
             ]
         }
     )

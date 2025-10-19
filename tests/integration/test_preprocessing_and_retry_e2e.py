@@ -22,7 +22,7 @@ class TestPreprocessingE2E:
         """Should configure preprocessing correctly."""
         # Create test data with noise
         df = pd.DataFrame(
-            {"text": ["BACON®  SLICED™", "APPLEWOOD\n\nSMOKED", "THICK    CUT"]}
+            {"text": ["PRODUCT®  ITEM™", "PREMIUM\n\nQUALITY", "TOP    GRADE"]}
         )
 
         pipeline = (
@@ -207,11 +207,11 @@ class TestFullPipelineE2E:
         df = pd.DataFrame(
             {
                 "desc": [
-                    "BACON®  SLICED™    APPLEWOOD",  # Noisy
-                    "THICK\n\nCUT    SMOKED",  # Noisy
-                    "GLUTEN    FREE®",  # Noisy
-                    "LAYFLAT™  SLICED",  # Noisy
-                    "ORGANIC BACON",  # Clean
+                    "PRODUCT®  ITEM™    PREMIUM",  # Noisy
+                    "HIGH\n\nQUALITY    GRADE",  # Noisy
+                    "CERTIFIED    AUTHENTIC®",  # Noisy
+                    "PROFESSIONAL™  SERIES",  # Noisy
+                    "STANDARD PRODUCT",  # Clean
                 ]
             }
         )
@@ -220,7 +220,7 @@ class TestFullPipelineE2E:
             PipelineBuilder.create()
             .from_dataframe(df, input_columns=["desc"], output_columns=["cleaned"])
             .with_prompt(
-                template="Clean this bacon description: {desc}",
+                template="Clean this product description: {desc}",
                 system_message="Return cleaned description only",
             )
             .with_llm(

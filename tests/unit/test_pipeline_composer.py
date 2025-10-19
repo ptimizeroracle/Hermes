@@ -224,8 +224,8 @@ class TestComposerExecution:
         """Test execution respects dependencies."""
         df = pd.DataFrame(
             {
-                "incumbent": ["bacon1"],
-                "portfolio": ["bacon2"],
+                "current_product": ["product1"],
+                "candidate_product": ["product2"],
             }
         )
 
@@ -255,19 +255,19 @@ class TestComposerExecution:
             mock.execute = execute
             return mock
 
-        p1 = create_mock_pipeline("similarity", "llm_similarity", "95%")
-        p2 = create_mock_pipeline("explanation", "Explanation", "Both similar")
+        p1 = create_mock_pipeline("match_score", "match_score", "95%")
+        p2 = create_mock_pipeline("explanation", "explanation", "Products are similar")
 
         # Add with dependency
-        composer.add_column("llm_similarity", p1)
-        composer.add_column("Explanation", p2, depends_on=["llm_similarity"])
+        composer.add_column("match_score", p1)
+        composer.add_column("explanation", p2, depends_on=["match_score"])
 
         result = composer.execute()
 
-        # Should execute in order: similarity -> explanation
-        assert execution_log == ["similarity", "explanation"]
-        assert "llm_similarity" in result.data.columns
-        assert "Explanation" in result.data.columns
+        # Should execute in order: match_score -> explanation
+        assert execution_log == ["match_score", "explanation"]
+        assert "match_score" in result.data.columns
+        assert "explanation" in result.data.columns
 
 
 class TestComposerConfiguration:

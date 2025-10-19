@@ -28,7 +28,7 @@ class TestAutoRetryActualExecution:
         df = pd.DataFrame(
             {
                 "pk": [f"row_{i}" for i in range(10)],
-                "text": [f"BACON {i}" for i in range(10)],
+                "text": [f"PRODUCT {i}" for i in range(10)],
             }
         )
 
@@ -39,7 +39,7 @@ class TestAutoRetryActualExecution:
             """Mock LLM that tracks calls and fails specific rows."""
             # Extract row identifier from prompt
             for i in range(10):
-                if f"BACON {i}" in prompt:
+                if f"PRODUCT {i}" in prompt:
                     processed_rows.append(i)
 
                     # First pass: Fail rows 2, 5, 8 (return empty)
@@ -49,10 +49,10 @@ class TestAutoRetryActualExecution:
                         if i in [2, 5, 8]:
                             text = ""  # Empty output
                         else:
-                            text = f"Cleaned bacon {i}"
+                            text = f"Cleaned product {i}"
                     else:
                         # Second time (retry) - succeed
-                        text = f"Retry cleaned bacon {i}"
+                        text = f"Retry cleaned product {i}"
 
                     return LLMResponse(
                         text=text,
@@ -104,9 +104,9 @@ class TestAutoRetryActualExecution:
         # First pass: 10 rows
         # Retry: 3 rows (indices 2, 5, 8)
         # Total: 13 LLM calls (not 20!)
-        assert len(processed_rows) == 13, (
-            f"Expected 13 calls (10 + 3 retry), got {len(processed_rows)}"
-        )
+        assert (
+            len(processed_rows) == 13
+        ), f"Expected 13 calls (10 + 3 retry), got {len(processed_rows)}"
 
         # Verify each failed row was retried exactly once
         assert processed_rows.count(2) == 2  # Once in pass 1, once in retry
@@ -168,9 +168,9 @@ class TestAutoRetryActualExecution:
 
         # Should call LLM exactly: 3 (initial) + 3 (retry 1) + 3 (retry 2) = 9 times
         # NOT infinite loop
-        assert call_count["count"] == 9, (
-            f"Expected 9 calls (3 + 3 + 3), got {call_count['count']}"
-        )
+        assert (
+            call_count["count"] == 9
+        ), f"Expected 9 calls (3 + 3 + 3), got {call_count['count']}"
 
     def test_retry_configuration_validates(self):
         """Should configure retry settings correctly."""
