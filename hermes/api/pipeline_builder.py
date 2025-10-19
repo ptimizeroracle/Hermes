@@ -54,6 +54,7 @@ class PipelineBuilder:
         self._dataframe: pd.DataFrame | None = None
         self._executor: ExecutionStrategy | None = None
         self._custom_parser: any | None = None
+        self._custom_llm_client: any | None = None
 
     @staticmethod
     def create() -> "PipelineBuilder":
@@ -254,6 +255,44 @@ class PipelineBuilder:
             max_tokens=max_tokens,
             **kwargs,
         )
+        return self
+
+    def with_custom_llm_client(self, client: any) -> "PipelineBuilder":
+        """
+        Provide a custom LLM client instance directly.
+
+        This allows advanced users to create their own LLM client implementations
+        by extending the LLMClient base class. The custom client will be used
+        instead of the factory-created client.
+
+        Args:
+            client: Custom LLM client instance (must inherit from LLMClient)
+
+        Returns:
+            Self for chaining
+
+        Example:
+            class MyCustomClient(LLMClient):
+                def invoke(self, prompt: str, **kwargs) -> LLMResponse:
+                    # Custom implementation
+                    ...
+
+            pipeline = (
+                PipelineBuilder.create()
+                .from_dataframe(df, ...)
+                .with_prompt("...")
+                .with_custom_llm_client(MyCustomClient(spec))
+                .build()
+            )
+        """
+        from hermes.adapters.llm_client import LLMClient
+
+        if not isinstance(client, LLMClient):
+            raise TypeError(
+                f"Custom client must inherit from LLMClient, got {type(client).__name__}"
+            )
+
+        self._custom_llm_client = client
         return self
 
     def with_batch_size(self, size: int) -> "PipelineBuilder":
@@ -511,19 +550,34 @@ class PipelineBuilder:
             raise ValueError("Dataset specification required")
         if not self._prompt_spec:
             raise ValueError("Prompt specification required")
-        if not self._llm_spec:
-            raise ValueError("LLM specification required")
 
-        # Prepare metadata with custom parser if provided
+        # LLM spec is optional if custom client is provided
+        if not self._llm_spec and not self._custom_llm_client:
+            raise ValueError("Either LLM specification or custom LLM client required")
+
+        # Prepare metadata with custom parser and/or custom client if provided
         metadata = {}
         if self._custom_parser is not None:
             metadata["custom_parser"] = self._custom_parser
+        if self._custom_llm_client is not None:
+            metadata["custom_llm_client"] = self._custom_llm_client
 
         # Create specifications bundle
+        # If custom client provided but no llm_spec, create a dummy spec
+        llm_spec = self._llm_spec
+        if llm_spec is None and self._custom_llm_client is not None:
+            # Create minimal spec using custom client's attributes
+            llm_spec = LLMSpec(
+                provider=LLMProvider.OPENAI,  # Dummy provider
+                model=self._custom_llm_client.model,
+                temperature=self._custom_llm_client.temperature,
+                max_tokens=self._custom_llm_client.max_tokens,
+            )
+
         specifications = PipelineSpecifications(
             dataset=self._dataset_spec,
             prompt=self._prompt_spec,
-            llm=self._llm_spec,
+            llm=llm_spec,
             processing=self._processing_spec,
             output=self._output_spec,
             metadata=metadata,

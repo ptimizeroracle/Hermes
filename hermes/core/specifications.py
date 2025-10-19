@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DataSourceType(str, Enum):
@@ -30,6 +30,7 @@ class LLMProvider(str, Enum):
     AZURE_OPENAI = "azure_openai"
     ANTHROPIC = "anthropic"
     GROQ = "groq"
+    OPENAI_COMPATIBLE = "openai_compatible"
 
 
 class ErrorPolicy(str, Enum):
@@ -158,6 +159,16 @@ class LLMSpec(BaseModel):
         default="2024-02-15-preview", description="Azure API version"
     )
 
+    # Custom/OpenAI-compatible provider fields
+    base_url: str | None = Field(
+        default=None,
+        description="Base URL for OpenAI-compatible APIs (Ollama, vLLM, Together.ai, etc.)",
+    )
+    provider_name: str | None = Field(
+        default=None,
+        description="Custom provider name for logging/metrics",
+    )
+
     # Cost tracking
     input_cost_per_1k_tokens: Decimal | None = Field(
         default=None, description="Input token cost"
@@ -165,6 +176,23 @@ class LLMSpec(BaseModel):
     output_cost_per_1k_tokens: Decimal | None = Field(
         default=None, description="Output token cost"
     )
+
+    @field_validator("base_url")
+    @classmethod
+    def validate_base_url_format(cls, v: str | None) -> str | None:
+        """Validate base_url is a valid HTTP(S) URL with a host."""
+        if v is None:
+            return v
+        from urllib.parse import urlparse
+
+        parsed = urlparse(v)
+        if parsed.scheme not in {"http", "https"}:
+            raise ValueError("base_url must start with http:// or https://")
+        if not parsed.netloc:
+            raise ValueError(
+                "base_url must include a host (e.g., localhost, api.example.com)"
+            )
+        return v
 
     @field_validator("azure_endpoint", "azure_deployment")
     @classmethod
@@ -174,6 +202,14 @@ class LLMSpec(BaseModel):
             field_name = info.field_name
             raise ValueError(f"{field_name} required for Azure OpenAI provider")
         return v
+
+    @model_validator(mode="after")
+    def validate_provider_requirements(self) -> "LLMSpec":
+        """Validate provider-specific requirements."""
+        # Check openai_compatible requires base_url
+        if self.provider == LLMProvider.OPENAI_COMPATIBLE and self.base_url is None:
+            raise ValueError("base_url required for openai_compatible provider")
+        return self
 
 
 class ProcessingSpec(BaseModel):
