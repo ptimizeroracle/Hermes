@@ -29,6 +29,10 @@ examples/swap_risk_assessment.yaml
 # Processing scripts with data
 process_all_*.py
 
+# Test/example scripts (not part of the framework)
+product_similarity_*.py
+product_similarity_*.xlsx
+
 # Checkpoints directory
 .checkpoints/
 .env
