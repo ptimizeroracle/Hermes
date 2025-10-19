@@ -8,9 +8,9 @@
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
-Production-grade SDK for processing tabular datasets using Large Language Models (LLMs) with reliability, observability, and cost control.
+Production-grade SDK for processing tabular datasets using Large Language Models with reliability, observability, and cost control.
 
-## ✨ Features
+## Features
 
 - **Simple API**: 5-line hello world, fluent builder pattern
 - **Reliability**: Automatic retries, checkpointing, error policies (99.9% completion rate)
@@ -18,9 +18,9 @@ Production-grade SDK for processing tabular datasets using Large Language Models
 - **Observability**: Progress bars, structured logging, metrics, cost reports
 - **Extensibility**: Plugin architecture, custom stages, multiple LLM providers
 - **Production Ready**: Zero data loss on crashes, resume from checkpoint
-- **Multiple Providers**: OpenAI, Azure OpenAI, Anthropic Claude (40+ via LlamaIndex)
+- **Multiple Providers**: OpenAI, Azure OpenAI, Anthropic Claude, Groq, and custom APIs
 
-## 🚀 Quick Start
+## Quick Start
 
 ```python
 from hermes import PipelineBuilder
@@ -48,7 +48,7 @@ print(f"Total cost: ${result.costs.total_cost:.4f}")
 print(f"Duration: {result.metrics.total_duration_seconds:.2f}s")
 ```
 
-## 📦 Installation
+## Installation
 
 ### Using uv (recommended)
 
@@ -73,7 +73,7 @@ export AZURE_OPENAI_ENDPOINT="https://your-endpoint.openai.azure.com/"
 export ANTHROPIC_API_KEY="your-key-here"
 ```
 
-## 📖 Usage Examples
+## Usage Examples
 
 ### 1. Simple Data Processing
 
@@ -215,7 +215,7 @@ pipeline = (
 )
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 The SDK follows a **layered architecture**:
 
@@ -245,7 +245,7 @@ The SDK follows a **layered architecture**:
 - **Type Safe**: Type hints throughout
 - **Separation of Concerns**: Configuration vs. execution
 
-## 🎯 Use Cases
+## Use Cases
 
 - **Data Cleaning**: Clean, normalize, standardize text data
 - **Sentiment Analysis**: Classify sentiment at scale
@@ -255,14 +255,14 @@ The SDK follows a **layered architecture**:
 - **Translation**: Translate content to multiple languages
 - **Data Enrichment**: Enhance datasets with LLM-generated insights
 
-## 📊 Performance
+## Performance
 
 - **Throughput**: Process 1,000 rows in < 5 minutes (GPT-4o-mini, concurrency=5)
 - **Reliability**: 99.9% completion rate with automatic retries
 - **Cost Efficiency**: Pre-execution estimation within 10% accuracy
 - **Memory**: < 500MB for datasets up to 50K rows
 
-## 🔧 Configuration Options
+## Configuration Options
 
 ### Processing Configuration
 
@@ -296,7 +296,7 @@ The SDK follows a **layered architecture**:
 )
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run tests
@@ -309,14 +309,14 @@ uv run pytest --cov=src --cov-report=html
 uv run pytest tests/test_pipeline.py
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **README.md** (this file): Quick start and usage guide
 - **LLM_DATASET_ENGINE.md**: Complete architecture and design documentation
 - **examples/**: Example scripts demonstrating various features
 - **Code docstrings**: Inline documentation for all public APIs
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please follow:
 
@@ -327,31 +327,31 @@ Contributions welcome! Please follow:
 5. Update documentation
 6. Submit a pull request
 
-## 📝 License
+## License
 
 MIT License - see LICENSE file for details
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [LlamaIndex](https://www.llamaindex.ai/) for LLM abstraction
 - Thanks to the open-source community
 
-## 📞 Support
+## Support
 
 - **Repository**: https://github.com/ptimizeroracle/Hermes
 - **Issues**: Open an issue on GitHub
 - **Discussions**: Use GitHub Discussions for questions
 - **Email**: git@binblok.com
 
-## 🗺️ Roadmap
+## Roadmap
 
-- [ ] Support for streaming responses
-- [ ] RAG integration for context-aware processing
-- [ ] Multi-modal support (images, PDFs)
-- [ ] Distributed processing (Spark integration)
-- [ ] Web UI for pipeline management
-- [ ] More LLM providers (Cohere, AI21, etc.)
+- Support for true streaming execution
+- RAG integration for context-aware processing
+- Multi-modal support (images, PDFs)
+- Distributed processing (Spark integration)
+- Web UI for pipeline management
+- Additional LLM providers (Cohere, AI21)
 
 ---
 
-**Made with ❤️ using Python and LlamaIndex**
+Built with Python and LlamaIndex
