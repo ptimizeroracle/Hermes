@@ -18,7 +18,10 @@ Production-grade SDK for processing tabular datasets using Large Language Models
 - **Observability**: Progress bars, structured logging, metrics, cost reports
 - **Extensibility**: Plugin architecture, custom stages, multiple LLM providers
 - **Production Ready**: Zero data loss on crashes, resume from checkpoint
-- **Multiple Providers**: OpenAI, Azure OpenAI, Anthropic Claude, Groq, and custom APIs
+- **Multiple Providers**: OpenAI, Azure OpenAI, Anthropic Claude, Groq, MLX (Apple Silicon), and custom APIs
+- **Local Inference**: Run models locally with MLX (Apple Silicon) or Ollama - 100% free, private, offline-capable
+- **Multi-Column Processing**: Generate multiple output columns with composition or JSON parsing
+- **Custom Providers**: Integrate any OpenAI-compatible API (Together.AI, vLLM, Ollama, custom endpoints)
 
 ## Quick Start
 
@@ -53,24 +56,42 @@ print(f"Duration: {result.metrics.total_duration_seconds:.2f}s")
 ### Using uv (recommended)
 
 ```bash
+# Basic installation
 uv add hermes
+
+# With MLX support (Apple Silicon only)
+uv add "hermes[mlx]"
 ```
 
 ### Using pip
 
 ```bash
+# Basic installation
 pip install hermes
+
+# With MLX support (Apple Silicon only)
+pip install "hermes[mlx]"
 ```
 
 ### Set up API keys
 
 ```bash
+# For cloud providers
 export OPENAI_API_KEY="your-key-here"
 # or
 export AZURE_OPENAI_API_KEY="your-key-here"
 export AZURE_OPENAI_ENDPOINT="https://your-endpoint.openai.azure.com/"
 # or
 export ANTHROPIC_API_KEY="your-key-here"
+# or
+export GROQ_API_KEY="your-key-here"
+# or
+export TOGETHER_API_KEY="your-key-here"
+
+# For MLX (Apple Silicon)
+export HUGGING_FACE_HUB_TOKEN="your-token-here"  # For model downloads
+
+# Local providers (Ollama, vLLM) don't need API keys
 ```
 
 ## Usage Examples
@@ -215,6 +236,193 @@ pipeline = (
 )
 ```
 
+### 7. Local Inference with MLX (Apple Silicon)
+
+```python
+# 100% free, private, offline-capable inference on M1/M2/M3/M4 Macs
+pipeline = (
+    PipelineBuilder.create()
+    .from_csv("data.csv", input_columns=["text"], output_columns=["summary"])
+    .with_prompt("Summarize: {text}")
+    .with_llm(
+        provider="mlx",
+        model="mlx-community/Qwen3-1.7B-4bit",  # Fast, small model
+        max_tokens=100,
+        input_cost_per_1k_tokens=0.0,  # Free!
+        output_cost_per_1k_tokens=0.0
+    )
+    .with_concurrency(1)  # MLX works best with concurrency=1
+    .build()
+)
+```
+
+**Requirements**: 
+- macOS with Apple Silicon (M1/M2/M3/M4)
+- Install with: `pip install hermes[mlx]`
+
+### 8. Custom OpenAI-Compatible APIs
+
+```python
+# Works with Ollama, vLLM, Together.AI, or any OpenAI-compatible API
+pipeline = (
+    PipelineBuilder.create()
+    .from_csv("data.csv", input_columns=["text"], output_columns=["result"])
+    .with_prompt("Process: {text}")
+    .with_llm(
+        provider="openai_compatible",
+        provider_name="Together.AI",  # Or "Ollama", "vLLM", etc.
+        model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        base_url="https://api.together.xyz/v1",  # Custom endpoint
+        api_key="${TOGETHER_API_KEY}",
+        input_cost_per_1k_tokens=0.0006,
+        output_cost_per_1k_tokens=0.0006
+    )
+    .build()
+)
+```
+
+**Supported APIs**:
+- **Ollama** (local): `http://localhost:11434/v1`
+- **Together.AI** (cloud): `https://api.together.xyz/v1`
+- **vLLM** (self-hosted): Your custom endpoint
+- **Any OpenAI-compatible API**
+
+### 9. Multi-Column Output with JSON Parsing
+
+```python
+# Single LLM call generates multiple output columns
+pipeline = (
+    PipelineBuilder.create()
+    .from_csv("products.csv", 
+              input_columns=["description"],
+              output_columns=["brand", "category", "price"])  # Multiple outputs!
+    .with_prompt("""
+        Extract structured data from this product description.
+        Return JSON format:
+        {
+          "brand": "...",
+          "category": "...",
+          "price": "..."
+        }
+        
+        Description: {description}
+    """)
+    .with_llm(provider="openai", model="gpt-4o-mini", temperature=0.0)
+    .build()
+)
+
+result = pipeline.execute()
+# Result has 3 new columns: brand, category, price
+```
+
+### 10. Pipeline Composition (Multi-Column with Dependencies)
+
+```python
+from hermes import PipelineComposer
+
+# Create multiple pipelines with dependencies
+composer = PipelineComposer(input_data=df)
+
+# Pipeline 1: Generate sentiment score
+sentiment_pipeline = (
+    PipelineBuilder.create()
+    .from_dataframe(df, input_columns=["review"], output_columns=["sentiment"])
+    .with_prompt("Rate sentiment (0-100): {review}")
+    .with_llm(provider="openai", model="gpt-4o-mini")
+    .build()
+)
+
+# Pipeline 2: Generate explanation (depends on sentiment)
+explanation_pipeline = (
+    PipelineBuilder.create()
+    .from_dataframe(df, 
+                    input_columns=["review", "sentiment"], 
+                    output_columns=["explanation"])
+    .with_prompt("Explain why this review has {sentiment}% sentiment: {review}")
+    .with_llm(provider="openai", model="gpt-4o-mini")
+    .build()
+)
+
+# Compose and execute
+result = (
+    composer
+    .add_column("sentiment", sentiment_pipeline)
+    .add_column("explanation", explanation_pipeline, depends_on=["sentiment"])
+    .execute()
+)
+```
+
+## CLI Usage
+
+Hermes includes a powerful command-line interface for processing datasets without writing code.
+
+### List Available Providers
+
+```bash
+# See all supported LLM providers
+hermes list-providers
+```
+
+This shows:
+- Provider IDs (openai, azure_openai, anthropic, groq, mlx, openai_compatible)
+- Platform requirements
+- Cost estimates
+- Use cases
+- Required environment variables
+
+### Process Datasets
+
+```bash
+# Basic usage
+hermes process --config config.yaml
+
+# Override input/output
+hermes process --config config.yaml --input data.csv --output results.csv
+
+# Override provider and model
+hermes process --config config.yaml --provider groq --model llama-3.3-70b-versatile
+
+# Set budget limit
+hermes process --config config.yaml --max-budget 10.0
+
+# Dry run (estimate only, don't execute)
+hermes process --config config.yaml --dry-run
+
+# Estimate cost
+hermes estimate --config config.yaml --input data.csv
+
+# Inspect data
+hermes inspect --input data.csv --head 10
+```
+
+### Example Config File
+
+```yaml
+# config.yaml
+dataset:
+  source_type: csv
+  source_path: data.csv
+  input_columns: [text]
+  output_columns: [sentiment]
+
+prompt:
+  template: "Classify sentiment: {text}"
+
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  temperature: 0.0
+
+processing:
+  batch_size: 100
+  concurrency: 5
+  max_budget: 10.0
+
+output:
+  destination_type: csv
+  destination_path: output.csv
+```
+
 ## Architecture
 
 The SDK follows a **layered architecture**:
@@ -245,6 +453,19 @@ The SDK follows a **layered architecture**:
 - **Type Safe**: Type hints throughout
 - **Separation of Concerns**: Configuration vs. execution
 
+## Supported LLM Providers
+
+| Provider | Platform | Cost | Use Case | Setup |
+|----------|----------|------|----------|-------|
+| **OpenAI** | Cloud (All) | $$ | Production, high quality | `OPENAI_API_KEY` |
+| **Azure OpenAI** | Cloud (All) | $$ | Enterprise, compliance | `AZURE_OPENAI_API_KEY` |
+| **Anthropic** | Cloud (All) | $$$ | Long context, Claude models | `ANTHROPIC_API_KEY` |
+| **Groq** | Cloud (All) | Free tier | Fast inference, development | `GROQ_API_KEY` |
+| **MLX** | macOS (M1/M2/M3/M4) | Free | Local, private, offline | `pip install hermes[mlx]` |
+| **OpenAI-Compatible** | Custom/Local/Cloud | Varies | Ollama, vLLM, Together.AI | `base_url` + optional API key |
+
+Run `hermes list-providers` to see detailed information about each provider.
+
 ## Use Cases
 
 - **Data Cleaning**: Clean, normalize, standardize text data
@@ -254,6 +475,8 @@ The SDK follows a **layered architecture**:
 - **Content Generation**: Generate descriptions, summaries, titles
 - **Translation**: Translate content to multiple languages
 - **Data Enrichment**: Enhance datasets with LLM-generated insights
+- **Product Matching**: Compare and score product similarity
+- **Content Moderation**: Flag inappropriate content at scale
 
 ## Performance
 
@@ -343,14 +566,33 @@ MIT License - see LICENSE file for details
 - **Discussions**: Use GitHub Discussions for questions
 - **Email**: git@binblok.com
 
+## Recent Updates
+
+### Version 1.0.0 (October 2025)
+
+**New Features:**
+- ✅ **MLX Integration**: Local inference on Apple Silicon (M1/M2/M3/M4) - 100% free, private, offline
+- ✅ **OpenAI-Compatible Provider**: Support for Ollama, vLLM, Together.AI, and custom APIs
+- ✅ **Multi-Column Processing**: Generate multiple output columns with JSON parsing
+- ✅ **Pipeline Composition**: Chain pipelines with dependencies between columns
+- ✅ **CLI Provider Discovery**: `hermes list-providers` command to explore all providers
+- ✅ **Auto-Retry for Multi-Column**: Automatic retry now checks all output columns for failures
+- ✅ **Custom LLM Clients**: Extend `LLMClient` base class for exotic APIs
+
+**Improvements:**
+- Enhanced error handling for multi-column outputs
+- Better streaming implementation
+- Improved documentation with provider comparison guide
+- More examples (10+ new example files)
+
 ## Roadmap
 
-- Support for true streaming execution
+- Support for true streaming execution (in progress)
 - RAG integration for context-aware processing
 - Multi-modal support (images, PDFs)
 - Distributed processing (Spark integration)
 - Web UI for pipeline management
-- Additional LLM providers (Cohere, AI21)
+- Additional LLM providers (Cohere, AI21, Mistral)
 
 ---
 
