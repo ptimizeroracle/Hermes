@@ -415,7 +415,7 @@ class LLMProviderPresets:
         base_url: str,
         input_cost_per_1k: float = 0.0,
         output_cost_per_1k: float = 0.0,
-        **kwargs
+        **kwargs,
     ) -> LLMSpec:
         """
         Factory method for custom OpenAI-compatible providers.
@@ -449,5 +449,5 @@ class LLMProviderPresets:
             base_url=base_url,
             input_cost_per_1k_tokens=Decimal(str(input_cost_per_1k)),
             output_cost_per_1k_tokens=Decimal(str(output_cost_per_1k)),
-            **kwargs
+            **kwargs,
         )

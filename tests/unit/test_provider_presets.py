@@ -103,9 +103,9 @@ class TestLLMProviderPresets:
         ]
 
         for preset in presets:
-            assert (
-                preset.api_key is None
-            ), f"{preset.model} has hardcoded API key - security risk!"
+            assert preset.api_key is None, (
+                f"{preset.model} has hardcoded API key - security risk!"
+            )
 
     def test_presets_are_valid_llmspec_instances(self):
         """Test all presets are valid LLMSpec instances."""
@@ -117,9 +117,9 @@ class TestLLMProviderPresets:
 
         for preset_name in preset_attrs:
             preset = getattr(LLMProviderPresets, preset_name)
-            assert isinstance(
-                preset, LLMSpec
-            ), f"{preset_name} is not an LLMSpec instance"
+            assert isinstance(preset, LLMSpec), (
+                f"{preset_name} is not an LLMSpec instance"
+            )
 
             # Validate using Pydantic
             preset.model_validate(preset.model_dump())
@@ -191,7 +191,7 @@ class TestLLMProviderPresets:
             LLMSpec(
                 provider=LLMProvider.OPENAI,
                 model="test",
-                temperature=3.0  # Invalid: max is 2.0
+                temperature=3.0,  # Invalid: max is 2.0
             )
 
 
@@ -358,7 +358,9 @@ class TestPresetsUsability:
     def test_preset_comparison_across_providers(self):
         """Test comparing pricing across different providers."""
         openai_cost = LLMProviderPresets.GPT4O_MINI.input_cost_per_1k_tokens
-        together_cost = LLMProviderPresets.TOGETHER_AI_LLAMA_70B.input_cost_per_1k_tokens
+        together_cost = (
+            LLMProviderPresets.TOGETHER_AI_LLAMA_70B.input_cost_per_1k_tokens
+        )
         ollama_cost = LLMProviderPresets.OLLAMA_LLAMA_70B.input_cost_per_1k_tokens
 
         # Ollama should be free
@@ -385,4 +387,3 @@ class TestPresetsUsability:
 
         # All should use same model
         assert creative.model == balanced.model == deterministic.model
-
