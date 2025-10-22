@@ -179,7 +179,7 @@ class TestLLMProviderPresets:
     def test_preset_override_preserves_type_safety(self):
         """Test that overriding presets maintains Pydantic validation."""
         from pydantic import ValidationError
-        
+
         original = LLMProviderPresets.GPT4O_MINI
 
         # Valid override should work
@@ -292,7 +292,7 @@ class TestPipelineBuilderWithLLMSpec:
 
     def test_with_llm_spec_chainable(self):
         """Test with_llm_spec returns self for chaining."""
-        df = pd.DataFrame({"text": ["test"]})
+        pd.DataFrame({"text": ["test"]})
 
         builder = PipelineBuilder.create()
         result = builder.with_llm_spec(LLMProviderPresets.GPT4O_MINI)

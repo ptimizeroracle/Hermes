@@ -13,7 +13,6 @@ Key Benefits:
 
 import pandas as pd
 
-from hermes.api.pipeline_builder import PipelineBuilder
 from hermes.core.specifications import LLMProviderPresets
 
 # Sample data
