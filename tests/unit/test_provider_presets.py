@@ -90,7 +90,11 @@ class TestLLMProviderPresets:
         assert spec.output_cost_per_1k_tokens == Decimal("0.015")
 
     def test_presets_have_no_api_keys(self):
-        """Test all presets have None for api_key (security requirement)."""
+        """
+        Ensure no LLM presets include embedded API keys for security.
+        
+        Asserts that each preset's `api_key` attribute is `None`; raises an AssertionError identifying the model if a hardcoded key is found.
+        """
         presets = [
             LLMProviderPresets.GPT4O_MINI,
             LLMProviderPresets.GPT4O,
@@ -372,7 +376,9 @@ class TestPresetsUsability:
         assert together_cost >= 0
 
     def test_presets_with_different_temperatures(self):
-        """Test creating multiple variations with different temperatures."""
+        """
+        Verify that creating variants of a preset with different `temperature` values updates only the temperature while keeping the underlying `model` identical.
+        """
         base = LLMProviderPresets.GPT4O_MINI
 
         creative = base.model_copy(update={"temperature": 0.9})
@@ -385,4 +391,3 @@ class TestPresetsUsability:
 
         # All should use same model
         assert creative.model == balanced.model == deterministic.model
-

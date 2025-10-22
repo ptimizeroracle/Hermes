@@ -232,18 +232,18 @@ class PipelineBuilder:
         **kwargs: any,
     ) -> "PipelineBuilder":
         """
-        Configure LLM provider.
-
-        Args:
-            provider: Provider name (openai, azure_openai, anthropic)
-            model: Model identifier
-            api_key: API key (or from env)
-            temperature: Sampling temperature
-            max_tokens: Max output tokens
-            **kwargs: Provider-specific parameters
-
+        Configure the LLM to be used by the pipeline.
+        
+        Parameters:
+            provider (str): LLM provider name; commonly "openai", "azure_openai", or "anthropic" (case-insensitive).
+            model (str): Model identifier provided by the chosen provider.
+            api_key (str | None): API key to authenticate with the provider; if None, environment-based credentials may be used.
+            temperature (float): Sampling temperature for model generation (higher values produce more diverse output).
+            max_tokens (int | None): Maximum number of tokens to generate in model responses.
+            **kwargs: Provider-specific configuration options forwarded to the underlying LLMSpec.
+        
         Returns:
-            Self for chaining
+            PipelineBuilder: The builder instance for method chaining.
         """
         provider_enum = LLMProvider(provider.lower())
 
@@ -312,31 +312,15 @@ class PipelineBuilder:
 
     def with_custom_llm_client(self, client: any) -> "PipelineBuilder":
         """
-        Provide a custom LLM client instance directly.
-
-        This allows advanced users to create their own LLM client implementations
-        by extending the LLMClient base class. The custom client will be used
-        instead of the factory-created client.
-
-        Args:
-            client: Custom LLM client instance (must inherit from LLMClient)
-
+        Use a custom LLM client instance for pipeline execution.
+        
+        The provided client must be an instance of hermes.adapters.llm_client.LLMClient; when set it will be used instead of the builder's factory-created client.
+        
+        Parameters:
+            client (LLMClient): Custom LLM client instance that inherits from `LLMClient`.
+        
         Returns:
-            Self for chaining
-
-        Example:
-            class MyCustomClient(LLMClient):
-                def invoke(self, prompt: str, **kwargs) -> LLMResponse:
-                    # Custom implementation
-                    ...
-
-            pipeline = (
-                PipelineBuilder.create()
-                .from_dataframe(df, ...)
-                .with_prompt("...")
-                .with_custom_llm_client(MyCustomClient(spec))
-                .build()
-            )
+            PipelineBuilder: The builder instance for method chaining.
         """
         from hermes.adapters.llm_client import LLMClient
 
