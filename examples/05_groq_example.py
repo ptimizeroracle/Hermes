@@ -5,10 +5,16 @@ This example demonstrates using Groq as the LLM provider.
 Groq offers very fast inference speeds.
 """
 
+# Load var env for Groq API key
+import os
+
 import pandas as pd
+from dotenv import load_dotenv
 
 from hermes import PipelineBuilder
 
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # Create sample data
 data = pd.DataFrame(
     {
@@ -33,8 +39,8 @@ pipeline = (
     .with_prompt("Answer this question concisely: {question}\n\nAnswer:")
     .with_llm(
         provider="groq",
-        model="llama-3.3-70b-versatile",  # Current Groq model
-        # API key will be read from GROQ_API_KEY environment variable
+        model="gpt-oss-20b",  # Current Groq model
+        api_key=GROQ_API_KEY,
         temperature=0.0,
     )
     .with_batch_size(5)
