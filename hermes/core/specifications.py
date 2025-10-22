@@ -296,3 +296,158 @@ class PipelineSpecifications(BaseModel):
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Custom metadata"
     )
+
+
+class LLMProviderPresets:
+    """
+    Pre-configured LLM provider specifications for common use cases.
+    
+    These presets provide convenient access to popular LLM providers with
+    correct base URLs, pricing, and configuration. API keys must be provided
+    at runtime via environment variables or explicit overrides.
+    
+    Example:
+        # Use preset with env var API key
+        from hermes.core.specifications import LLMProviderPresets
+        
+        pipeline = (
+            PipelineBuilder.create()
+            .from_csv("data.csv", input_columns=["text"], output_columns=["result"])
+            .with_prompt("Process: {text}")
+            .with_llm_spec(LLMProviderPresets.TOGETHER_AI_LLAMA_70B)
+            .build()
+        )
+        
+        # Override API key
+        spec = LLMProviderPresets.TOGETHER_AI_LLAMA_70B.model_copy(
+            update={"api_key": "your-key"}
+        )
+        pipeline.with_llm_spec(spec)
+    
+    Security Note:
+        All presets have api_key=None by default. You must provide API keys
+        at runtime via environment variables or explicit overrides.
+    """
+    
+    # OpenAI Presets
+    GPT4O_MINI = LLMSpec(
+        provider=LLMProvider.OPENAI,
+        model="gpt-4o-mini",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.00015"),
+        output_cost_per_1k_tokens=Decimal("0.0006"),
+    )
+    
+    GPT4O = LLMSpec(
+        provider=LLMProvider.OPENAI,
+        model="gpt-4o",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.0025"),
+        output_cost_per_1k_tokens=Decimal("0.01"),
+    )
+    
+    # Together.AI Presets
+    TOGETHER_AI_LLAMA_70B = LLMSpec(
+        provider=LLMProvider.OPENAI_COMPATIBLE,
+        provider_name="Together.AI",
+        model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        base_url="https://api.together.xyz/v1",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.0006"),
+        output_cost_per_1k_tokens=Decimal("0.0006"),
+    )
+    
+    TOGETHER_AI_LLAMA_8B = LLMSpec(
+        provider=LLMProvider.OPENAI_COMPATIBLE,
+        provider_name="Together.AI",
+        model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        base_url="https://api.together.xyz/v1",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.0001"),
+        output_cost_per_1k_tokens=Decimal("0.0001"),
+    )
+    
+    # Ollama Local Presets
+    OLLAMA_LLAMA_70B = LLMSpec(
+        provider=LLMProvider.OPENAI_COMPATIBLE,
+        provider_name="Ollama-Local",
+        model="llama3.1:70b",
+        base_url="http://localhost:11434/v1",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.0"),
+        output_cost_per_1k_tokens=Decimal("0.0"),
+    )
+    
+    OLLAMA_LLAMA_8B = LLMSpec(
+        provider=LLMProvider.OPENAI_COMPATIBLE,
+        provider_name="Ollama-Local",
+        model="llama3.1:8b",
+        base_url="http://localhost:11434/v1",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.0"),
+        output_cost_per_1k_tokens=Decimal("0.0"),
+    )
+    
+    # Groq Presets
+    GROQ_LLAMA_70B = LLMSpec(
+        provider=LLMProvider.GROQ,
+        model="llama-3.1-70b-versatile",
+        temperature=0.0,
+        input_cost_per_1k_tokens=Decimal("0.00059"),
+        output_cost_per_1k_tokens=Decimal("0.00079"),
+    )
+    
+    # Anthropic Presets
+    CLAUDE_SONNET_4 = LLMSpec(
+        provider=LLMProvider.ANTHROPIC,
+        model="claude-sonnet-4-20250514",
+        temperature=0.0,
+        max_tokens=8192,
+        input_cost_per_1k_tokens=Decimal("0.003"),
+        output_cost_per_1k_tokens=Decimal("0.015"),
+    )
+    
+    @classmethod
+    def create_custom_openai_compatible(
+        cls,
+        provider_name: str,
+        model: str,
+        base_url: str,
+        input_cost_per_1k: float = 0.0,
+        output_cost_per_1k: float = 0.0,
+        **kwargs
+    ) -> LLMSpec:
+        """
+        Factory method for custom OpenAI-compatible providers.
+        
+        Use this for providers like vLLM, LocalAI, Anyscale, or any custom
+        OpenAI-compatible API endpoint.
+        
+        Args:
+            provider_name: Display name for the provider (for logging/metrics)
+            model: Model identifier
+            base_url: API endpoint URL (e.g., http://localhost:8000/v1)
+            input_cost_per_1k: Input token cost per 1K tokens (default: 0.0)
+            output_cost_per_1k: Output token cost per 1K tokens (default: 0.0)
+            **kwargs: Additional LLMSpec parameters (temperature, max_tokens, etc.)
+            
+        Returns:
+            Configured LLMSpec for the custom provider
+            
+        Example:
+            spec = LLMProviderPresets.create_custom_openai_compatible(
+                provider_name="My vLLM Server",
+                model="mistral-7b-instruct",
+                base_url="http://my-server:8000/v1",
+                temperature=0.7
+            )
+        """
+        return LLMSpec(
+            provider=LLMProvider.OPENAI_COMPATIBLE,
+            provider_name=provider_name,
+            model=model,
+            base_url=base_url,
+            input_cost_per_1k_tokens=Decimal(str(input_cost_per_1k)),
+            output_cost_per_1k_tokens=Decimal(str(output_cost_per_1k)),
+            **kwargs
+        )
