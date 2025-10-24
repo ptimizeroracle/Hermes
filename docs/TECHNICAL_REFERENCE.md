@@ -161,7 +161,7 @@ graph TB
 
 | Library | Version | Category | License | Why Chosen | Alternatives Considered |
 |---------|---------|----------|---------|------------|------------------------|
-| **llama-index** | >=0.12.0 | LLM | MIT | Multi-provider abstraction, mature ecosystem | LangChain (more complex), direct APIs (no abstraction) |
+| **llama-index** | >=0.12.0 | LLM | MIT | LLM provider clients (OpenAI, Anthropic, Groq). Hermes adds batch orchestration, cost tracking, checkpointing, YAML config. | LangChain (more complex), direct APIs (no abstraction) |
 | **llama-index-llms-openai** | >=0.3.0 | LLM | MIT | Official OpenAI integration | `openai` package (less abstraction) |
 | **llama-index-llms-azure-openai** | >=0.3.0 | LLM | MIT | Enterprise Azure support | Custom Azure client |
 | **llama-index-llms-anthropic** | >=0.3.0 | LLM | MIT | Claude integration | `anthropic` package (less abstraction) |
@@ -243,7 +243,7 @@ graph TD
 
 ### Critical Dependencies (Cannot Be Removed)
 
-1. **llama-index** - Core LLM abstraction, removing would require reimplementing all provider integrations
+1. **llama-index** - LLM provider clients (OpenAI, Anthropic, Groq, Azure). Hermes wraps these with LLMSpec/LLMClient for batch processing, cost tracking, unified config.
 2. **pandas** - Data manipulation backbone, used throughout
 3. **pydantic** - Configuration validation, type safety
 4. **structlog** - Structured logging, observability

@@ -22,7 +22,7 @@
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
-Production-grade SDK for processing tabular datasets using Large Language Models with reliability, observability, and cost control.
+Production-grade SDK for batch processing tabular datasets with LLMs. Built on LlamaIndex for provider abstraction, adds batch orchestration, automatic cost tracking, checkpointing, and YAML configuration for dataset transformation at scale.
 
 ## Features
 
@@ -270,7 +270,7 @@ pipeline = (
 )
 ```
 
-**Requirements**: 
+**Requirements**:
 - macOS with Apple Silicon (M1/M2/M3/M4)
 - Install with: `pip install hermes[mlx]`
 
@@ -353,7 +353,7 @@ pipeline = (
 # Single LLM call generates multiple output columns
 pipeline = (
     PipelineBuilder.create()
-    .from_csv("products.csv", 
+    .from_csv("products.csv",
               input_columns=["description"],
               output_columns=["brand", "category", "price"])  # Multiple outputs!
     .with_prompt("""
@@ -364,7 +364,7 @@ pipeline = (
           "category": "...",
           "price": "..."
         }
-        
+
         Description: {description}
     """)
     .with_llm(provider="openai", model="gpt-4o-mini", temperature=0.0)
@@ -395,8 +395,8 @@ sentiment_pipeline = (
 # Pipeline 2: Generate explanation (depends on sentiment)
 explanation_pipeline = (
     PipelineBuilder.create()
-    .from_dataframe(df, 
-                    input_columns=["review", "sentiment"], 
+    .from_dataframe(df,
+                    input_columns=["review", "sentiment"],
                     output_columns=["explanation"])
     .with_prompt("Explain why this review has {sentiment}% sentiment: {review}")
     .with_llm(provider="openai", model="gpt-4o-mini")
@@ -616,7 +616,8 @@ MIT License - see LICENSE file for details
 
 ## Acknowledgments
 
-- Built with [LlamaIndex](https://www.llamaindex.ai/) for LLM abstraction
+- Built with [LlamaIndex](https://www.llamaindex.ai/) for LLM provider abstraction
+- Hermes adds batch processing, cost tracking, checkpointing, and configuration management on top of LlamaIndex's LLM clients
 - Thanks to the open-source community
 
 ## Support
