@@ -274,10 +274,56 @@ pipeline = (
 - macOS with Apple Silicon (M1/M2/M3/M4)
 - Install with: `pip install hermes[mlx]`
 
-### 8. Custom OpenAI-Compatible APIs
+### 8. Provider Presets (Simplified Configuration)
 
 ```python
-# Works with Ollama, vLLM, Together.AI, or any OpenAI-compatible API
+from hermes import PipelineBuilder
+from hermes.core.specifications import LLMProviderPresets
+
+# Use pre-configured providers (80% less boilerplate!)
+pipeline = (
+    PipelineBuilder.create()
+    .from_csv("data.csv", input_columns=["text"], output_columns=["result"])
+    .with_prompt("Process: {text}")
+    .with_llm_spec(LLMProviderPresets.TOGETHER_AI_LLAMA_70B)  # One line!
+    .build()
+)
+
+# Available presets:
+# - LLMProviderPresets.GPT4O_MINI
+# - LLMProviderPresets.GPT4O
+# - LLMProviderPresets.TOGETHER_AI_LLAMA_70B
+# - LLMProviderPresets.TOGETHER_AI_LLAMA_8B
+# - LLMProviderPresets.OLLAMA_LLAMA_70B (free, local)
+# - LLMProviderPresets.OLLAMA_LLAMA_8B (free, local)
+# - LLMProviderPresets.GROQ_LLAMA_70B
+# - LLMProviderPresets.CLAUDE_SONNET_4
+
+# Override preset settings:
+custom = LLMProviderPresets.GPT4O_MINI.model_copy(
+    update={"temperature": 0.9, "max_tokens": 500}
+)
+pipeline.with_llm_spec(custom)
+
+# Custom provider via factory:
+custom_vllm = LLMProviderPresets.create_custom_openai_compatible(
+    provider_name="My vLLM Server",
+    model="mistral-7b-instruct",
+    base_url="http://my-server:8000/v1"
+)
+pipeline.with_llm_spec(custom_vllm)
+```
+
+**Benefits**:
+- Zero configuration errors (pre-validated)
+- Correct pricing and URLs built-in
+- IDE autocomplete for discovery
+- 80% code reduction vs parameter-based config
+
+### 9. Custom OpenAI-Compatible APIs (Parameter-Based)
+
+```python
+# Alternative: Configure providers with individual parameters
 pipeline = (
     PipelineBuilder.create()
     .from_csv("data.csv", input_columns=["text"], output_columns=["result"])
@@ -301,7 +347,7 @@ pipeline = (
 - **vLLM** (self-hosted): Your custom endpoint
 - **Any OpenAI-compatible API**
 
-### 9. Multi-Column Output with JSON Parsing
+### 10. Multi-Column Output with JSON Parsing
 
 ```python
 # Single LLM call generates multiple output columns
@@ -329,7 +375,7 @@ result = pipeline.execute()
 # Result has 3 new columns: brand, category, price
 ```
 
-### 10. Pipeline Composition (Multi-Column with Dependencies)
+### 11. Pipeline Composition (Multi-Column with Dependencies)
 
 ```python
 from hermes import PipelineComposer
@@ -585,6 +631,8 @@ MIT License - see LICENSE file for details
 ### Version 1.0.0 (October 2025)
 
 **New Features:**
+- ✅ **Provider Presets**: Pre-configured LLMSpec objects for common providers (80% code reduction)
+- ✅ **Simplified Configuration**: New `with_llm_spec()` method accepting LLMSpec objects
 - ✅ **MLX Integration**: Local inference on Apple Silicon (M1/M2/M3/M4) - 100% free, private, offline
 - ✅ **OpenAI-Compatible Provider**: Support for Ollama, vLLM, Together.AI, and custom APIs
 - ✅ **Multi-Column Processing**: Generate multiple output columns with JSON parsing
@@ -594,10 +642,11 @@ MIT License - see LICENSE file for details
 - ✅ **Custom LLM Clients**: Extend `LLMClient` base class for exotic APIs
 
 **Improvements:**
+- Zero configuration errors with validated presets
 - Enhanced error handling for multi-column outputs
 - Better streaming implementation
 - Improved documentation with provider comparison guide
-- More examples (10+ new example files)
+- More examples (14+ example files including provider presets demo)
 
 ## Roadmap
 

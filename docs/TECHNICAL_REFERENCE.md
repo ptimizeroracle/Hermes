@@ -1714,7 +1714,260 @@ client = MLXClient(spec, _mlx_lm_module=mock_mlx)
 
 ---
 
-**Document Status**: 🚧 IN PROGRESS (Layer 0 complete, Layer 1 MLX documented)
+## 5.4 LLM Provider Presets
+
+### Purpose
+Simplify LLM provider configuration by providing pre-configured specifications for common providers, eliminating boilerplate and configuration errors.
+
+### Class: `LLMProviderPresets`
+
+**Location**: `hermes/core/specifications.py` (lines 301-453)
+
+**Responsibility**: Provide pre-validated LLMSpec instances for popular providers
+
+**Design Pattern**: Static Registry Pattern
+
+**Key Features**:
+- ✅ Zero boilerplate for common providers (80% code reduction)
+- ✅ Pre-validated configurations (correct URLs, pricing)
+- ✅ No hardcoded API keys (security by design)
+- ✅ IDE autocomplete support
+- ✅ Pydantic validation throughout
+
+### Available Presets
+
+#### OpenAI Presets
+
+```python
+GPT4O_MINI = LLMSpec(
+    provider=LLMProvider.OPENAI,
+    model="gpt-4o-mini",
+    input_cost_per_1k_tokens=Decimal("0.00015"),
+    output_cost_per_1k_tokens=Decimal("0.0006"),
+)
+
+GPT4O = LLMSpec(
+    provider=LLMProvider.OPENAI,
+    model="gpt-4o",
+    input_cost_per_1k_tokens=Decimal("0.0025"),
+    output_cost_per_1k_tokens=Decimal("0.01"),
+)
+```
+
+#### Together.AI Presets
+
+```python
+TOGETHER_AI_LLAMA_70B = LLMSpec(
+    provider=LLMProvider.OPENAI_COMPATIBLE,
+    provider_name="Together.AI",
+    model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    base_url="https://api.together.xyz/v1",
+    input_cost_per_1k_tokens=Decimal("0.0006"),
+)
+
+TOGETHER_AI_LLAMA_8B = LLMSpec(
+    provider=LLMProvider.OPENAI_COMPATIBLE,
+    provider_name="Together.AI",
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    base_url="https://api.together.xyz/v1",
+    input_cost_per_1k_tokens=Decimal("0.0001"),
+)
+```
+
+#### Ollama Local Presets (Free)
+
+```python
+OLLAMA_LLAMA_70B = LLMSpec(
+    provider=LLMProvider.OPENAI_COMPATIBLE,
+    provider_name="Ollama-Local",
+    model="llama3.1:70b",
+    base_url="http://localhost:11434/v1",
+    input_cost_per_1k_tokens=Decimal("0.0"),  # FREE!
+    output_cost_per_1k_tokens=Decimal("0.0"),
+)
+```
+
+#### Groq & Anthropic Presets
+
+```python
+GROQ_LLAMA_70B = LLMSpec(
+    provider=LLMProvider.GROQ,
+    model="llama-3.1-70b-versatile",
+    input_cost_per_1k_tokens=Decimal("0.00059"),
+)
+
+CLAUDE_SONNET_4 = LLMSpec(
+    provider=LLMProvider.ANTHROPIC,
+    model="claude-sonnet-4-20250514",
+    max_tokens=8192,
+    input_cost_per_1k_tokens=Decimal("0.003"),
+)
+```
+
+### Factory Method: `create_custom_openai_compatible()`
+
+**Purpose**: Simplify custom provider configuration (vLLM, LocalAI, etc.)
+
+```python
+@classmethod
+def create_custom_openai_compatible(
+    cls,
+    provider_name: str,
+    model: str,
+    base_url: str,
+    input_cost_per_1k: float = 0.0,
+    output_cost_per_1k: float = 0.0,
+    **kwargs
+) -> LLMSpec:
+    """Factory for custom OpenAI-compatible providers."""
+    return LLMSpec(
+        provider=LLMProvider.OPENAI_COMPATIBLE,
+        provider_name=provider_name,
+        model=model,
+        base_url=base_url,
+        input_cost_per_1k_tokens=Decimal(str(input_cost_per_1k)),
+        output_cost_per_1k_tokens=Decimal(str(output_cost_per_1k)),
+        **kwargs
+    )
+```
+
+### Usage with `PipelineBuilder.with_llm_spec()`
+
+**New Method**: `with_llm_spec(spec: LLMSpec) -> PipelineBuilder`
+
+**Location**: `hermes/api/pipeline_builder.py` (lines 260-311)
+
+**Purpose**: Accept pre-built LLMSpec objects instead of individual parameters
+
+**Example Usage**:
+
+```python
+from hermes.core.specifications import LLMProviderPresets
+
+# Simple preset usage
+pipeline = (
+    PipelineBuilder.create()
+    .from_csv("data.csv", input_columns=["text"], output_columns=["result"])
+    .with_prompt("Process: {text}")
+    .with_llm_spec(LLMProviderPresets.TOGETHER_AI_LLAMA_70B)
+    .build()
+)
+
+# Override preset settings
+custom = LLMProviderPresets.GPT4O_MINI.model_copy(
+    update={"temperature": 0.9, "max_tokens": 500}
+)
+pipeline.with_llm_spec(custom)
+
+# Custom provider via factory
+custom_vllm = LLMProviderPresets.create_custom_openai_compatible(
+    provider_name="My vLLM Server",
+    model="mistral-7b-instruct",
+    base_url="http://my-server:8000/v1",
+    temperature=0.7
+)
+pipeline.with_llm_spec(custom_vllm)
+```
+
+### Comparison: Before vs After
+
+**Before (parameter-based)**:
+```python
+.with_llm(
+    provider="openai_compatible",
+    provider_name="Together.AI",
+    model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    base_url="https://api.together.xyz/v1",
+    api_key="${TOGETHER_API_KEY}",
+    input_cost_per_1k_tokens=0.0006,
+    output_cost_per_1k_tokens=0.0006
+)
+```
+
+**After (preset-based)**:
+```python
+.with_llm_spec(LLMProviderPresets.TOGETHER_AI_LLAMA_70B)
+```
+
+**Result**: 80% code reduction, zero configuration errors
+
+### Design Decisions
+
+**Why Static Class Instead of Enum?**
+- Allows class methods (factory)
+- Better IDE autocomplete
+- Can include documentation in docstrings
+- Easier to extend without breaking existing code
+
+**Why No Hardcoded API Keys?**
+- Security: API keys should never be in code
+- All presets have `api_key=None` by default
+- Users must provide via environment variables or `model_copy(update={"api_key": "..."})`
+
+**Why Pydantic `model_copy()` for Overrides?**
+- Immutability: Original presets unchanged
+- Type safety: Validation on override
+- Pythonic: Standard Pydantic pattern
+- Flexible: Override any field
+
+### Security Validation
+
+**Test**: All presets must have `api_key=None`
+```python
+def test_presets_have_no_api_keys(self):
+    """Security requirement: No hardcoded API keys."""
+    presets = [
+        LLMProviderPresets.GPT4O_MINI,
+        LLMProviderPresets.TOGETHER_AI_LLAMA_70B,
+        # ... all presets
+    ]
+    for preset in presets:
+        assert preset.api_key is None
+```
+
+### Backward Compatibility
+
+**100% backward compatible**: Existing `with_llm()` method unchanged
+```python
+# Old way still works
+pipeline.with_llm(provider="openai", model="gpt-4o-mini")
+
+# New way
+pipeline.with_llm_spec(LLMProviderPresets.GPT4O_MINI)
+
+# Both methods can be mixed (last call wins)
+```
+
+### Testing Coverage
+
+**26 unit tests** (100% pass):
+- Preset configuration validation
+- Security checks (no API keys)
+- Type safety verification
+- `with_llm_spec()` method tests
+- Override via `model_copy()` tests
+- Factory method tests
+- Backward compatibility tests
+
+### Examples
+
+**Complete example**: `examples/14_provider_presets.py`
+- Demonstrates all preset usage patterns
+- Shows customization via `model_copy()`
+- Compares old vs new approach
+- Lists all available presets
+
+### Future Improvements
+
+- [ ] Add more provider presets (Cohere, AI21, Mistral)
+- [ ] Add model size variants (405B, 8B, etc.)
+- [ ] Version-specific presets with deprecation warnings
+- [ ] Auto-update pricing from provider APIs
+- [ ] YAML preset files for user-defined presets
+
+---
+
+**Document Status**: 🚧 IN PROGRESS (Layer 0 complete, Layer 1 documented with MLX and Presets)
 
 **Next Sections**:
 - 3.6 `utils/logging_utils.py`

@@ -257,6 +257,59 @@ class PipelineBuilder:
         )
         return self
 
+    def with_llm_spec(self, spec: LLMSpec) -> "PipelineBuilder":
+        """
+        Configure LLM using a pre-built LLMSpec object.
+
+        This method allows using LLMSpec objects directly, enabling:
+        - Reusable provider configurations
+        - Use of LLMProviderPresets for common providers
+        - Custom LLMSpec instances for advanced use cases
+
+        Args:
+            spec: LLM specification object
+
+        Returns:
+            Self for chaining
+
+        Raises:
+            TypeError: If spec is not an LLMSpec instance
+
+        Example:
+            # Use preset
+            from hermes.core.specifications import LLMProviderPresets
+
+            pipeline = (
+                PipelineBuilder.create()
+                .from_csv("data.csv", input_columns=["text"], output_columns=["result"])
+                .with_prompt("Process: {text}")
+                .with_llm_spec(LLMProviderPresets.TOGETHER_AI_LLAMA_70B)
+                .build()
+            )
+
+            # Custom spec
+            custom = LLMSpec(
+                provider=LLMProvider.OPENAI,
+                model="gpt-4o-mini",
+                temperature=0.7
+            )
+            pipeline.with_llm_spec(custom)
+
+            # Override preset
+            spec = LLMProviderPresets.GPT4O_MINI.model_copy(
+                update={"temperature": 0.9}
+            )
+            pipeline.with_llm_spec(spec)
+        """
+        if not isinstance(spec, LLMSpec):
+            raise TypeError(
+                f"Expected LLMSpec, got {type(spec).__name__}. "
+                f"Use with_llm() for parameter-based configuration."
+            )
+
+        self._llm_spec = spec
+        return self
+
     def with_custom_llm_client(self, client: any) -> "PipelineBuilder":
         """
         Provide a custom LLM client instance directly.
